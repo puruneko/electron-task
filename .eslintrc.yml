@@ -1,0 +1,40 @@
+env:
+  browser: true
+  es2021: true
+extends:
+  - 'plugin:react/recommended'
+  - google
+  - 'plugin:@typescript-eslint/recommended'
+  - prettier
+parser: '@typescript-eslint/parser'
+parserOptions:
+  ecmaFeatures:
+    jsx: true
+  ecmaVersion: 12
+  sourceType: module
+plugins:
+  - react
+  - '@typescript-eslint'
+  - prettier
+rules:
+  # 関数の複雑さを 10 以下にする
+  complexity: ['error', 10]
+  # React のプロパティの型チェックを省略する (TypeScript でチェックされるため)
+  react/prop-types: off
+  # インターフェースの先頭文字を "I" にする
+  #'@typescript-eslint/interface-name-prefix':
+  #  - error
+  #  - prefixWithI: 'always'
+  # https://note.com/dafujii/n/n35f964b1bd70
+  "@typescript-eslint/naming-convention":
+    - error
+    - selector: interface
+      format:
+        - PascalCase
+      custom:
+        regex: ^I[A-Z]
+        match: false
+  # prettier のチェックでErrorとするための設定。
+  prettier/prettier:
+    - error
+
