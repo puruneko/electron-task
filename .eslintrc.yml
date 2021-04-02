@@ -21,6 +21,8 @@ rules:
   complexity: ['error', 10]
   # React のプロパティの型チェックを省略する (TypeScript でチェックされるため)
   react/prop-types: off
+  prettier/prettier:
+    - error
   # インターフェースの先頭文字を "I" にする
   #'@typescript-eslint/interface-name-prefix':
   #  - error
@@ -33,8 +35,4 @@ rules:
         - PascalCase
       custom:
         regex: ^I[A-Z]
-        match: false
-  # prettier のチェックでErrorとするための設定。
-  prettier/prettier:
-    - error
-
+        match: true

@@ -1,0 +1,11 @@
+
+= readme
+
+== 参考資料
+
+=== 環境構築
+https://qiita.com/EBIHARA_kenji/items/25e59f7132b96cb886f3
+
+=== main/renderer通信
+https://code.st40.xyz/article/502
+
