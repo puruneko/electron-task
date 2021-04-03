@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
-import { ceilfloor, IPos, IRect, overlappingArea } from '../lib/utils';
+import { ceilfloor } from '../lib/utils';
 import { getTimedelta, getTimeBlocks, getYYYYMMDD, getHHMMSS } from '../lib/time';
 
 const Timeline: React.FC = () => {
@@ -178,7 +178,8 @@ const Timeline: React.FC = () => {
         width: ${c.cell.width * 0.1};
         border-radius: 7px;
         background-color: transparent;
-        overflow: visible;
+        cursor: col-resize;
+        z-index: 4;
     `;
     //
     const createParentTimelineLabel = () => {
@@ -197,8 +198,10 @@ const Timeline: React.FC = () => {
     };
     const [firstDragParam, setFirstDragParam] = useState({
         id: -1,
-        cell: { x: -1, y: -1 },
+        targetType: null,
+        rect: { width: -1, height: -1 },
         pos: { x: -1, y: -1 },
+        cell: { x: -1, y: -1 },
     });
     const getTimeberWidth = (start: Date, end: Date): number => {
         return c.cell.width * cellDivideNumber * getTimeBlocks(start, end, 'date');
@@ -210,7 +213,21 @@ const Timeline: React.FC = () => {
             firstDragParam.pos.y >= 0
         );
     };
-    const getElementByPosition = (x, y, targetType = 'whole') => {
+    const canOver = cellElem => {
+        if (canDrag()) {
+            if (firstDragParam.targetType == 'whole') {
+                return true;
+            } else if (
+                firstDragParam.targetType == 'left' ||
+                firstDragParam.targetType == 'right'
+            ) {
+                return parseInt(cellElem.dataset.y) == firstDragParam.cell.y;
+            }
+        } else {
+            return false;
+        }
+    };
+    const getElementByPosition = (x, y, targetType = 'wrap') => {
         const elems = document.querySelectorAll(`[data-target='${targetType}']`);
         if (!elems || !elems.length) {
             return null;
@@ -228,16 +245,26 @@ const Timeline: React.FC = () => {
         const timebar = event.target;
         if (!canDrag(timebar)) {
             const id = timebar.dataset.id;
-            const cell = {
-                x: parseInt(timebar.dataset.x),
-                y: parseInt(timebar.dataset.y),
-            };
+            const targetType = timebar.dataset.target;
             const pos = {
                 x: event.pageX,
                 y: event.pageY,
             };
-            console.log('setFirstDragParam', { id, cell, pos });
-            setFirstDragParam({ id, cell, pos });
+            const cell = {
+                x: parseInt(timebar.dataset.x),
+                y: parseInt(timebar.dataset.y),
+            };
+            const wrapElem = getElementByPosition(cell.x, cell.y);
+            const rect = {
+                width: wrapElem.offsetWidth,
+                height: wrapElem.offsetHeight,
+            };
+            console.log(
+                'setFirstDragParam',
+                { id, targetType, rect, pos, cell },
+                timebar.dataset.target,
+            );
+            setFirstDragParam({ id, targetType, rect, pos, cell });
         }
     };
     const onTimebarDrag = event => {
@@ -255,33 +282,46 @@ const Timeline: React.FC = () => {
                 tb.style.opacity = 0.5;
             }
             // 移動
-            const wrapElem = getElementByPosition(
-                firstDragParam.cell.x,
-                firstDragParam.cell.y,
-                'wrap',
-            );
+            const wrapElem = getElementByPosition(firstDragParam.cell.x, firstDragParam.cell.y);
             const x = event.pageX;
             const y = event.pageY;
-            wrapElem.style.top = y - firstDragParam.pos.y;
-            wrapElem.style.left = x - firstDragParam.pos.x;
+            const targetType = timebar.dataset.target;
+            console.log('drag', { x, y }, 'targetType', targetType);
+            if (targetType == 'whole') {
+                wrapElem.style.top = y - firstDragParam.pos.y;
+                wrapElem.style.left = x - firstDragParam.pos.x;
+            } else if (targetType == 'left') {
+                const dx = firstDragParam.pos.x - x;
+                wrapElem.style.width = `${firstDragParam.rect.width + dx}px`;
+                wrapElem.style.minWidth = `${firstDragParam.rect.width + dx}px`;
+                wrapElem.style.left = x - firstDragParam.pos.x;
+                console.log('dx', dx, 'wrap.width', wrapElem.style.width);
+            } else if (targetType == 'right') {
+                const dx = x - firstDragParam.pos.x;
+                wrapElem.style.width = `${firstDragParam.rect.width + dx}px`;
+                wrapElem.style.minWidth = `${firstDragParam.rect.width + dx}px`;
+                console.log('dx', dx, 'wrap.width', wrapElem.style.width);
+            }
         }
     };
     const onTimebarDragEnd = event => {
         console.log('dragend', event.target.className);
         setFirstDragParam({
             id: -1,
-            cell: { x: -1, y: -1 },
+            targetType: null,
+            rect: { width: -1, height: -1 },
             pos: { x: -1, y: -1 },
+            cell: { x: -1, y: -1 },
         });
     };
     const onTimebarDragOver = event => {
-        if (canDrag()) {
+        if (canOver(event.target)) {
             console.log('dragover', event.target.className);
             event.target.style.backgroundColor = 'yellow';
         }
     };
     const onTimebarDragLeave = event => {
-        if (canDrag()) {
+        if (canOver(event.target)) {
             console.log('dragleave', event.target.className);
             event.target.style.backgroundColor = '';
         }
@@ -290,6 +330,17 @@ const Timeline: React.FC = () => {
     console.log(calenderRange, calenderRangeDiff, tasks);
     return (
         <div>
+            <div
+                style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: 10,
+                    height: 10,
+                    borderRadius: 5,
+                    backgroundColor: 'red',
+                }}
+            ></div>
             <Header></Header>
             <Main>
                 <TimelineTaskContainer>
@@ -419,17 +470,27 @@ const Timeline: React.FC = () => {
                                                             >
                                                                 <TimelineCalenderTimebarSide
                                                                     className="timelineCalenderTimebarGroup"
+                                                                    draggable={true}
                                                                     data-id={task.id}
                                                                     data-x={x}
                                                                     data-y={y}
                                                                     data-target="left"
+                                                                    onMouseDown={onTimebarMouseDown}
+                                                                    onDragStart={onTimebarMouseDown}
+                                                                    onDrag={onTimebarDrag}
+                                                                    onDragEnd={onTimebarDragEnd}
                                                                 />
                                                                 <TimelineCalenderTimebarSide
                                                                     className="timelineCalenderTimebarGroup"
+                                                                    draggable={true}
                                                                     data-id={task.id}
                                                                     data-x={x}
                                                                     data-y={y}
                                                                     data-target="right"
+                                                                    onMouseDown={onTimebarMouseDown}
+                                                                    onDragStart={onTimebarMouseDown}
+                                                                    onDrag={onTimebarDrag}
+                                                                    onDragEnd={onTimebarDragEnd}
                                                                 />
                                                             </TimelineCalenderTimebar>
                                                         </TimelineCalenderTimebar>

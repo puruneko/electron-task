@@ -29,14 +29,7 @@ const createWindow = (): void => {
         // 'node_modules/.bin/electronPath'
         /* eslint @typescript-eslint/no-var-requires: 0 */
         require('electron-reload')(__dirname, {
-            electron: path.join(
-                __dirname,
-                '..',
-                '..',
-                'node_modules',
-                '.bin',
-                'electron',
-            ),
+            electron: path.join(__dirname, '..', '..', 'node_modules', '.bin', 'electron'),
             forceHardReset: true,
             hardResetMethod: 'exit',
         });
