@@ -1,5 +1,5 @@
 semi: true # 文末のセミコロンを強制する
-printWidth: 80 # 行の文字数を"80"文字に制限
+printWidth: 100 # 行の文字数を"100"文字に制限
 tabWidth: 4 # インデント幅をスペース"2"個
 singleQuote: true # 文字列リテラルのシングルクォーテーションとする
 quoteProps: as-needed # オブジェクトリテラルのプロパティ名のクォーテーションは"必要なときのみ"とする

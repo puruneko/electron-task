@@ -1,6 +1,27 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { Provider } from 'react-redux';
+import { createBrowserHistory } from 'history';
+import { Router, Route, Redirect } from 'react-router-dom';
 
-const container = document.getElementById('contents');
+import Store from './store';
+import Top from './pages/top';
+import Timeline from './pages/timeline';
 
-ReactDOM.render(<p>こんにちは、世界</p>, container);
+const container = document.getElementById('container');
+const history = createBrowserHistory();
+
+if (!location.hash.length) {
+    location.hash = '/';
+}
+
+ReactDOM.render(
+    <Provider store={Store}>
+        <Router history={history}>
+            <Route exact path="/" component={Top} />
+            <Route exact path="/timeline" component={Timeline} />
+            <Redirect to="/" />
+        </Router>
+    </Provider>,
+    container,
+);
