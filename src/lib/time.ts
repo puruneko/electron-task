@@ -34,6 +34,7 @@ export const getTimeBlocks = (start: Date, end: Date, period: string): number =>
             const e = new Date(end);
             e.setHours(e.getHours() < 12 ? 12 : 24);
             b = getTimedelta(s, e).hours / 24;
+            b = (e.getTime() - s.getTime()) / (60 * 60 * 24 * 1000);
             break;
     }
     const blocks = Math.floor(b) + (b - Math.floor(b) >= 0.5 ? 0.5 : 0);

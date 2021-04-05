@@ -1,17 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
 import { ceilfloor } from '../lib/utils';
 import { getTimedelta, getTimeBlocks, getYYYYMMDD, getHHMMSS } from '../lib/time';
 
 const Timeline: React.FC = () => {
+    const calenderPeriod = 'date';
+    const cellXUnit = 60 * 60 * 24; // [s]
     const cellDivideNumber = 2;
     const calenderRange = {
         start: new Date(2021, 3, 1, 0, 0),
         end: new Date(2021, 5, 1, 0, 0),
     };
     const calenderRangeDiff = getTimedelta(calenderRange.start, calenderRange.end).date;
-    const tasks = [
+    const [tasks, setTasks] = useState([
         {
             id: 1,
             title: 'task1',
@@ -51,7 +53,7 @@ const Timeline: React.FC = () => {
             properties: [],
             body: [],
         },
-    ];
+    ]);
     const c = {
         header: {
             height: 50,
@@ -137,12 +139,11 @@ const Timeline: React.FC = () => {
     const TimelineCalenderBodyWrapper = styled.div`
         position: relative;
         width: 100%;
-        background-color: lightgray;
+        background-color: pink; //lightgray
     `;
     const TimelineCalenderBody = styled.div`
         position: relative;
         width: 100%;
-        background-color: lightgray;
         z-index: ${c.calenderBody.zIndex};
     `;
     const TimelineCalenderRow = styled.div`
@@ -160,11 +161,21 @@ const Timeline: React.FC = () => {
         justify-content: start;
         align-items: center;
     `;
+    const TimelineCalenderTimebarWrap = styled.div`
+        position: absolute;
+        margin-left: ${c.cell.width * 0.05};
+        margin-right: ${c.cell.width * 0.05};
+        height: ${c.cell.height * 0.8};
+        border-radius: 7px;
+        background-color: gray;
+        overflow: visible;
+        display: flex;
+        justify-content: space-between;
+        z-index: 3;
+    `;
     const TimelineCalenderTimebar = styled.div`
         position: absolute;
-        padding-left: ${c.cell.width * 0.05};
-        padding-right: ${c.cell.width * 0.05};
-        height: ${c.cell.height * 0.9};
+        height: ${c.cell.height * 0.8};
         border-radius: 7px;
         background-color: gray;
         overflow: visible;
@@ -173,9 +184,8 @@ const Timeline: React.FC = () => {
         z-index: 3;
     `;
     const TimelineCalenderTimebarSide = styled.div`
-        position: relative;
         height: 100%;
-        width: ${c.cell.width * 0.1};
+        width: ${c.cell.width * 0.2};
         border-radius: 7px;
         background-color: transparent;
         cursor: col-resize;
@@ -196,33 +206,108 @@ const Timeline: React.FC = () => {
             };
         });
     };
+    //
     const [firstDragParam, setFirstDragParam] = useState({
         id: -1,
         targetType: null,
         rect: { width: -1, height: -1 },
         pos: { x: -1, y: -1 },
-        cell: { x: -1, y: -1 },
+        cell: { start: { x: -1, y: -1 }, pointed: { x: -1, y: -1 } },
     });
+    // const [selectedCell, setSelectedCell] = useState({ x: -1, y: -1 });
+    const selectedCell = useRef({ x: -1, y: -1 });
+    //
     const getTimeberWidth = (start: Date, end: Date): number => {
-        return c.cell.width * cellDivideNumber * getTimeBlocks(start, end, 'date');
+        let block: number;
+        switch (calenderPeriod) {
+            case 'date':
+                const days = end.getDate() - start.getDate();
+                const startDivideNumber = Math.floor(start.getHours() / (24 / cellDivideNumber));
+                const endDivideNumber = Math.floor(end.getHours() / (24 / cellDivideNumber));
+                block = days * cellDivideNumber + 1 + endDivideNumber - startDivideNumber;
+                break;
+        }
+        return c.cell.width * block;
     };
     const canDrag = (elem = null) => {
         return (
             (!elem || firstDragParam.id == elem.dataset?.id) &&
+            // firstDragParam.rect.width >= 0 &&
+            // firstDragParam.rect.height >= 0 &&
+            firstDragParam.cell.start.x >= 0 &&
+            firstDragParam.cell.start.y >= 0 &&
+            firstDragParam.cell.pointed.x >= 0 &&
+            firstDragParam.cell.pointed.y >= 0 &&
             firstDragParam.pos.x >= 0 &&
-            firstDragParam.pos.y >= 0
+            firstDragParam.pos.y >= 0 &&
+            selectedCell.current.x >= 0 &&
+            selectedCell.current.y >= 0
         );
+        /*
+        if (!elem || firstDragParam.id == elem.dataset?.id) {
+            if (firstDragParam.cell.start.x >= 0 && firstDragParam.cell.start.y >= 0) {
+                if (firstDragParam.cell.pointed.x >= 0 && firstDragParam.cell.pointed.y >= 0) {
+                    if (firstDragParam.pos.x >= 0 && firstDragParam.pos.y >= 0) {
+                        if (selectedCell.current.x >= 0 && selectedCell.current.y >= 0) {
+                            return true;
+                        } else {
+                            console.log(
+                                'CANDRAG(5)',
+                                selectedCell.current.x >= 0,
+                                selectedCell.current.y >= 0,
+                            );
+                            return false;
+                        }
+                    } else {
+                        console.log(
+                            'CANDRAG(4)',
+                            firstDragParam.pos.x >= 0,
+                            firstDragParam.pos.y >= 0,
+                        );
+                        return false;
+                    }
+                } else {
+                    console.log(
+                        'CANDRAG(3)',
+                        firstDragParam.cell.pointed.x >= 0,
+                        firstDragParam.cell.pointed.y >= 0,
+                    );
+                    return false;
+                }
+            } else {
+                console.log(
+                    'CANDRAG(2)',
+                    firstDragParam.cell.start.x >= 0,
+                    firstDragParam.cell.start.y >= 0,
+                );
+                return false;
+            }
+        } else {
+            console.log('CANDRAG(1)', elem, firstDragParam.id, elem.dataset?.id);
+            return false;
+        }
+        /*
+             &&
+            
+        );
+        */
     };
     const canOver = cellElem => {
         if (canDrag()) {
             if (firstDragParam.targetType == 'whole') {
                 return true;
-            } else if (
-                firstDragParam.targetType == 'left' ||
-                firstDragParam.targetType == 'right'
-            ) {
-                return parseInt(cellElem.dataset.y) == firstDragParam.cell.y;
+            } else if (firstDragParam.targetType == 'left') {
+                return (
+                    parseInt(cellElem.dataset.y) == firstDragParam.cell.start.y &&
+                    parseInt(cellElem.dataset.x) <= firstDragParam.cell.pointed.x
+                );
+            } else if (firstDragParam.targetType == 'right') {
+                return (
+                    parseInt(cellElem.dataset.y) == firstDragParam.cell.start.y &&
+                    parseInt(cellElem.dataset.x) >= firstDragParam.cell.pointed.x
+                );
             }
+            return false;
         } else {
             return false;
         }
@@ -240,94 +325,238 @@ const Timeline: React.FC = () => {
         }
         return elem;
     };
-    const onTimebarMouseDown = event => {
-        console.log('mousedown', event.target.className);
+    const onTimebarDragStart = event => {
         const timebar = event.target;
-        if (!canDrag(timebar)) {
-            const id = timebar.dataset.id;
-            const targetType = timebar.dataset.target;
-            const pos = {
-                x: event.pageX,
-                y: event.pageY,
-            };
-            const cell = {
-                x: parseInt(timebar.dataset.x),
+        const id = timebar.dataset.id;
+        const targetType = timebar.dataset.target;
+        const pos = {
+            x: event.pageX,
+            y: event.pageY,
+        };
+        const cellStart = {
+            x: parseInt(timebar.dataset.x),
+            y: parseInt(timebar.dataset.y),
+        };
+        const wrapElem = getElementByPosition(cellStart.x, cellStart.y);
+        const rect = {
+            width: wrapElem.offsetWidth,
+            height: wrapElem.offsetHeight,
+        };
+        const wrapElemPos = {
+            top: wrapElem.getBoundingClientRect().top,
+            left: wrapElem.getBoundingClientRect().left,
+        };
+        const cell = {
+            start: cellStart,
+            pointed: {
+                x:
+                    Math.floor((pos.x - wrapElemPos.left) / c.cell.width) +
+                    parseInt(timebar.dataset.x),
                 y: parseInt(timebar.dataset.y),
-            };
-            const wrapElem = getElementByPosition(cell.x, cell.y);
-            const rect = {
-                width: wrapElem.offsetWidth,
-                height: wrapElem.offsetHeight,
-            };
-            console.log(
-                'setFirstDragParam',
-                { id, targetType, rect, pos, cell },
-                timebar.dataset.target,
-            );
-            setFirstDragParam({ id, targetType, rect, pos, cell });
-        }
+            },
+        };
+        console.log(
+            'DRAGSTART',
+            event.target.className,
+            'wrapElemPos',
+            wrapElemPos,
+            'setFirstDragParam',
+            { id, targetType, rect, pos, cell },
+            timebar.dataset.target,
+        );
+        setFirstDragParam({ id, targetType, rect, pos, cell });
+        selectedCell.current = cell.start;
     };
     const onTimebarDrag = event => {
-        console.log('drag', event.target.className);
         const timebar = event.target;
         if (canDrag(timebar)) {
             // timebarを半透明に
             const timebars = document.getElementsByClassName('timelineCalenderTimebarGroup');
             for (const tb of timebars) {
-                if (tb.dataset.id == timebar.dataset.id) {
-                    tb.style.zIndex = 0;
-                    // continue;
-                }
                 tb.style.zIndex = -1;
+                if (tb.dataset.id == timebar.dataset.id) {
+                    continue;
+                }
                 tb.style.opacity = 0.5;
             }
             // 移動
-            const wrapElem = getElementByPosition(firstDragParam.cell.x, firstDragParam.cell.y);
+            const wrapElem = getElementByPosition(
+                firstDragParam.cell.start.x,
+                firstDragParam.cell.start.y,
+            );
             const x = event.pageX;
             const y = event.pageY;
             const targetType = timebar.dataset.target;
-            console.log('drag', { x, y }, 'targetType', targetType);
             if (targetType == 'whole') {
                 wrapElem.style.top = y - firstDragParam.pos.y;
                 wrapElem.style.left = x - firstDragParam.pos.x;
+                console.log(
+                    'DRAG',
+                    '(pageX,pageY)',
+                    { x, y },
+                    'targetType',
+                    targetType,
+                    'wrap.width(left,top)',
+                    { left: wrapElem.style.left, top: wrapElem.style.top },
+                    'firstDragParam',
+                    firstDragParam,
+                );
             } else if (targetType == 'left') {
                 const dx = firstDragParam.pos.x - x;
-                wrapElem.style.width = `${firstDragParam.rect.width + dx}px`;
-                wrapElem.style.minWidth = `${firstDragParam.rect.width + dx}px`;
-                wrapElem.style.left = x - firstDragParam.pos.x;
-                console.log('dx', dx, 'wrap.width', wrapElem.style.width);
+                wrapElem.style.left = Math.min(
+                    x - firstDragParam.pos.x,
+                    firstDragParam.rect.width - c.cell.width,
+                );
+                const width = Math.max(firstDragParam.rect.width + dx, c.cell.width);
+                wrapElem.style.setProperty('width', `${width}px`);
+                wrapElem.style.setProperty('min-width', `${width}px`);
+                wrapElem.style.setProperty('max-width', `${width}px`);
+                console.log(
+                    'DRAG',
+                    '(pageX,pageY)',
+                    { x, y },
+                    'targetType',
+                    targetType,
+                    'dx',
+                    dx,
+                    'wrap.width',
+                    wrapElem.style.width,
+                    'firstDragParam',
+                    firstDragParam,
+                );
             } else if (targetType == 'right') {
                 const dx = x - firstDragParam.pos.x;
-                wrapElem.style.width = `${firstDragParam.rect.width + dx}px`;
-                wrapElem.style.minWidth = `${firstDragParam.rect.width + dx}px`;
-                console.log('dx', dx, 'wrap.width', wrapElem.style.width);
+                const width = Math.max(firstDragParam.rect.width + dx, c.cell.width);
+                wrapElem.style.width = `${width}px`;
+                wrapElem.style.minWidth = `${width}px`;
+                wrapElem.style.maxWidth = `${width}px`;
+                console.log(
+                    'DRAG',
+                    '(pageX,pageY)',
+                    { x, y },
+                    'targetType',
+                    targetType,
+                    'dx',
+                    dx,
+                    'wrap.width',
+                    wrapElem.style.width,
+                    'firstDragParam',
+                    firstDragParam,
+                );
             }
+        } else {
+            console.log('DRAG', false);
         }
     };
     const onTimebarDragEnd = event => {
-        console.log('dragend', event.target.className);
-        setFirstDragParam({
-            id: -1,
-            targetType: null,
-            rect: { width: -1, height: -1 },
-            pos: { x: -1, y: -1 },
-            cell: { x: -1, y: -1 },
-        });
+        event.preventDefault();
+        console.log('DRAGEND', event.target.className);
+        if (canDrag()) {
+            // 期間更新
+            console.log('DRAGEND', 'selectedCell.current.x', selectedCell.current.x);
+            let modifiedIndex = -1;
+            const modifiedTasks = tasks.map((task, index) => {
+                if (task.id == firstDragParam.id) {
+                    const dx = selectedCell.current.x - firstDragParam.cell.pointed.x;
+                    const dp = dx * (cellXUnit / cellDivideNumber) * 1000; // [ms]
+                    const start = task.period.start.getTime();
+                    const end = task.period.end.getTime();
+                    let newStart: Date;
+                    let newEnd: Date;
+                    if (firstDragParam.targetType == 'whole') {
+                        newStart = new Date(start + dp);
+                        newEnd = new Date(end + dp);
+                    } else if (firstDragParam.targetType == 'left') {
+                        newStart = new Date(start + dp);
+                        newEnd = new Date(end);
+                    } else if (firstDragParam.targetType == 'right') {
+                        newStart = new Date(start);
+                        newEnd = new Date(end + dp);
+                    }
+                    modifiedIndex = index;
+                    console.log('dp[h]', dp / 1000 / (60 * 60), 'start', start, 'end', end);
+                    return {
+                        ...task,
+                        period: {
+                            start: newStart,
+                            end: newEnd,
+                        },
+                    };
+                } else {
+                    return { ...task };
+                }
+            });
+            // 順序入れ替え
+            let newTasks;
+            if (
+                firstDragParam.targetType == 'whole' &&
+                firstDragParam.cell.start.y != selectedCell.current.y
+            ) {
+                let counter = modifiedIndex == 0 ? 0 : -1;
+                newTasks = modifiedTasks.map((task, index) => {
+                    if (index == selectedCell.current.y) {
+                        return { ...modifiedTasks[modifiedIndex] };
+                    } else {
+                        counter++;
+                        if (counter == modifiedIndex) {
+                            counter++;
+                        }
+                        return { ...modifiedTasks[counter] };
+                    }
+                });
+            } else {
+                newTasks = [...modifiedTasks];
+            }
+            // タスク更新
+            setTasks(newTasks);
+            // 初期化
+            setFirstDragParam({
+                id: -1,
+                targetType: null,
+                rect: { width: -1, height: -1 },
+                pos: { x: -1, y: -1 },
+                cell: { start: { x: -1, y: -1 }, pointed: { x: -1, y: -1 } },
+            });
+            selectedCell.current = { x: -1, y: -1 };
+        }
     };
     const onTimebarDragOver = event => {
         if (canOver(event.target)) {
-            console.log('dragover', event.target.className);
-            event.target.style.backgroundColor = 'yellow';
+            const newSelectedCell = {
+                x: parseInt(event.target.dataset.x),
+                y: parseInt(event.target.dataset.y),
+            };
+            selectedCell.current = newSelectedCell;
+            event.target.style.backgroundColor = 'gray';
+            event.target.style.opacity = '0.5';
+            event.target.style.borderRadius = '8px';
+            console.log(
+                'DRAGOVER',
+                event.target.className,
+                'selectedCell',
+                selectedCell,
+                'newSelectedCell',
+                newSelectedCell,
+                'dataset',
+                event.target.dataset,
+            );
+            if (!selectedCell.current.x) {
+                console.log('selectedCell', selectedCell, event.target.dataset);
+            }
+        } else {
+            console.log('DRAGOVER', false, event.target.className);
         }
     };
     const onTimebarDragLeave = event => {
         if (canOver(event.target)) {
             console.log('dragleave', event.target.className);
             event.target.style.backgroundColor = '';
+            event.target.style.opacity = '';
+            event.target.style.borderRadius = '';
         }
     };
     //
-    console.log(calenderRange, calenderRangeDiff, tasks);
+    //
     return (
         <div>
             <div
@@ -408,10 +637,9 @@ const Timeline: React.FC = () => {
                         <TimelineCalenderBody id="TimelineCalenderBody">
                             <div style={{ position: 'absolute', top: 0, left: 0 }}>test</div>
                             {tasks.map((task, y) => {
-                                const minWidth = getTimeberWidth(
-                                    task.period.start,
-                                    task.period.end,
-                                );
+                                const minWidth =
+                                    getTimeberWidth(task.period.start, task.period.end) -
+                                    c.cell.width * 0.02;
                                 const tps = task.period.start;
                                 return (
                                     <TimelineCalenderRow key={`calender-row-${y}`}>
@@ -437,9 +665,8 @@ const Timeline: React.FC = () => {
                                                     onDragLeave={onTimebarDragLeave}
                                                 >
                                                     {year && month && date && hour ? (
-                                                        <TimelineCalenderTimebar
+                                                        <TimelineCalenderTimebarWrap
                                                             className="timelineCalenderTimebarGroup"
-                                                            draggable={true}
                                                             data-id={task.id}
                                                             data-x={x}
                                                             data-y={y}
@@ -451,7 +678,7 @@ const Timeline: React.FC = () => {
                                                             {x}
                                                             <TimelineCalenderTimebar
                                                                 className="timelineCalenderTimebarGroup"
-                                                                draggable={true}
+                                                                draggable="true"
                                                                 data-id={task.id}
                                                                 data-x={x}
                                                                 data-y={y}
@@ -463,37 +690,34 @@ const Timeline: React.FC = () => {
                                                                     minWidth,
                                                                     backgroundColor: 'transparent',
                                                                 }}
-                                                                onMouseDown={onTimebarMouseDown}
-                                                                onDragStart={onTimebarMouseDown}
+                                                                onMouseDown={onTimebarDragStart}
                                                                 onDrag={onTimebarDrag}
                                                                 onDragEnd={onTimebarDragEnd}
                                                             >
                                                                 <TimelineCalenderTimebarSide
                                                                     className="timelineCalenderTimebarGroup"
-                                                                    draggable={true}
+                                                                    draggable="true"
                                                                     data-id={task.id}
                                                                     data-x={x}
                                                                     data-y={y}
                                                                     data-target="left"
-                                                                    onMouseDown={onTimebarMouseDown}
-                                                                    onDragStart={onTimebarMouseDown}
+                                                                    onMouseDown={onTimebarDragStart}
                                                                     onDrag={onTimebarDrag}
                                                                     onDragEnd={onTimebarDragEnd}
                                                                 />
                                                                 <TimelineCalenderTimebarSide
                                                                     className="timelineCalenderTimebarGroup"
-                                                                    draggable={true}
+                                                                    draggable="true"
                                                                     data-id={task.id}
                                                                     data-x={x}
                                                                     data-y={y}
                                                                     data-target="right"
-                                                                    onMouseDown={onTimebarMouseDown}
-                                                                    onDragStart={onTimebarMouseDown}
+                                                                    onMouseDown={onTimebarDragStart}
                                                                     onDrag={onTimebarDrag}
                                                                     onDragEnd={onTimebarDragEnd}
                                                                 />
                                                             </TimelineCalenderTimebar>
-                                                        </TimelineCalenderTimebar>
+                                                        </TimelineCalenderTimebarWrap>
                                                     ) : (
                                                         <></>
                                                     )}
