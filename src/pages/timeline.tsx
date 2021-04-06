@@ -615,77 +615,94 @@ const Timeline: React.FC = () => {
     };
     //
     useEffect(() => {
-        /*
         document.addEventListener('mousedown', event => {
+            console.log('mousedoown', event.target.className);
             if (!event.target.className.match('timelineCalenderTimebarGroup')) {
                 console.log('document.mousedown', event.target.className);
-                // 選択されていいるtimebarの解除
-                if (selectedTimebar.current.length) {
-                    for (const elem of selectedTimebar.current) {
-                        elem.style.backgroundColor = '';
-                    }
-                    selectedTimebar.current = [];
+                // 範囲内のtimebarを元に戻す
+                const timebars = [
+                    ...document.getElementsByClassName('timelineCalenderTimebarGroup'),
+                ].filter(e => e.dataset.target == 'wrap');
+                for (const timebar of timebars) {
+                    timebar.style.backgroundColor = '';
+                    timebar.style.opacity = '';
                 }
+                selectedTimebar.current = [];
                 // マウス移動の起点を作成
                 mousedownStart.current = { x: event.clientX, y: event.clientY };
             }
         });
         document.addEventListener('mousemove', event => {
-            if (!event.target.className.match('timelineCalenderTimebarGroup')) {
-                // マウス起点が作られていたら、移動したぶんだけ長方形を描画
-                if (mousedownStart.current.x >= 0 && mousedownStart.current.y >= 0) {
-                    console.log('document.mousemove');
-                    const x = event.clientX;
-                    const y = event.clientY;
-                    const sx = mousedownStart.current.x;
-                    const sy = mousedownStart.current.y;
-                    const dx = x - sx;
-                    const dy = y - sy;
-                    const left = dx > 0 ? sx : x;
-                    const top = dy > 0 ? sy : y;
-                    const selectedAreaElem = document.getElementById('selectedArea');
-                    selectedAreaElem.style.display = 'block';
-                    selectedAreaElem.style.position = 'fixed';
-                    selectedAreaElem.style.top = `${top}px`;
-                    selectedAreaElem.style.left = `${left}px`;
-                    selectedAreaElem.style.width = `${Math.abs(dx)}px`;
-                    selectedAreaElem.style.height = `${Math.abs(dy)}px`;
-                    selectedAreaElem.style.backgroundColor = 'blue';
-                    selectedAreaElem.style.opacity = '0.3';
-                    selectedAreaElem.style.zIndex = '100';
+            // マウス起点が作られていたら、移動したぶんだけ長方形を描画
+            if (mousedownStart.current.x >= 0 && mousedownStart.current.y >= 0) {
+                console.log('document.mousemove');
+                // 長方形描画
+                const x = event.clientX;
+                const y = event.clientY;
+                const sx = mousedownStart.current.x;
+                const sy = mousedownStart.current.y;
+                const dx = x - sx;
+                const dy = y - sy;
+                const left = dx > 0 ? sx : x;
+                const top = dy > 0 ? sy : y;
+                const selectedAreaElem = document.getElementById('selectedArea');
+                selectedAreaElem.style.display = 'block';
+                selectedAreaElem.style.position = 'fixed';
+                selectedAreaElem.style.top = `${top}px`;
+                selectedAreaElem.style.left = `${left}px`;
+                selectedAreaElem.style.width = `${Math.abs(dx)}px`;
+                selectedAreaElem.style.height = `${Math.abs(dy)}px`;
+                selectedAreaElem.style.backgroundColor = 'blue';
+                selectedAreaElem.style.opacity = '0.3';
+                selectedAreaElem.style.zIndex = '100';
+                // 範囲内のtimebarを反転
+                const timebars = [
+                    ...document.getElementsByClassName('timelineCalenderTimebarGroup'),
+                ].filter(e => e.dataset.target == 'wrap');
+                for (const timebar of timebars) {
+                    const rect = timebar.getBoundingClientRect();
+                    // 領域内の場合
+                    if (
+                        ((x <= rect.left && rect.left <= sx) ||
+                            (sx <= rect.left && rect.left <= x)) &&
+                        ((y <= rect.top && rect.top <= sy) || (sy <= rect.top && rect.top <= y))
+                    ) {
+                        timebar.style.backgroundColor = 'green';
+                        timebar.style.opacity = '0.5';
+                        selectedTimebar.current.push(timebar.dataset.id);
+                        // 領域外の場合
+                    } else {
+                        timebar.style.backgroundColor = '';
+                        timebar.style.opacity = '';
+                    }
                 }
             }
         });
         document.addEventListener('mouseup', event => {
-            if (!event.target.className.match('timelineCalenderTimebarGroup')) {
-                if (mousedownStart.current.x >= 0 && mousedownStart.current.y >= 0) {
-                    console.log('document.mouseup');
-                    // selection取得
-                    const selectedObject = window.getSelection();
-                    const selectedDOM = selectedObject.getRangeAt(0).cloneContents();
-                    const selectedTimebarWhole = selectedDOM.querySelectorAll(
-                        '[data-target="whole"]',
-                    );
-                    // 色変更
-                    for (const elem of selectedTimebarWhole) {
-                        elem.style.backgroundColor = 'blue';
-                        selectedTimebar.current.push(elem);
-                    }
-                    // マウス移動を終了
-                    mousedownStart.current = { x: -1, y: -1 };
-                    const selectedAreaElem = document.getElementById('selectedArea');
-                    selectedAreaElem.style.display = 'none';
-                    selectedAreaElem.style.position = 'fixed';
-                    selectedAreaElem.style.top = `0`;
-                    selectedAreaElem.style.left = `0`;
-                    selectedAreaElem.style.width = `0`;
-                    selectedAreaElem.style.height = `0`;
-                    selectedAreaElem.style.backgroundColor = '';
-                    selectedAreaElem.style.opacity = '';
+            if (mousedownStart.current.x >= 0 && mousedownStart.current.y >= 0) {
+                console.log('document.mouseup');
+                // selection取得
+                const selectedObject = window.getSelection();
+                const selectedDOM = selectedObject.getRangeAt(0).cloneContents();
+                const selectedTimebarWhole = selectedDOM.querySelectorAll('[data-target="whole"]');
+                // 色変更
+                for (const elem of selectedTimebarWhole) {
+                    elem.style.backgroundColor = 'blue';
+                    selectedTimebar.current.push(elem);
                 }
+                // マウス移動を終了
+                mousedownStart.current = { x: -1, y: -1 };
+                const selectedAreaElem = document.getElementById('selectedArea');
+                selectedAreaElem.style.display = 'none';
+                selectedAreaElem.style.position = 'fixed';
+                selectedAreaElem.style.top = `0`;
+                selectedAreaElem.style.left = `0`;
+                selectedAreaElem.style.width = `0`;
+                selectedAreaElem.style.height = `0`;
+                selectedAreaElem.style.backgroundColor = '';
+                selectedAreaElem.style.opacity = '';
             }
         });
-        */
     }, []);
     //
     return (
