@@ -1,23 +1,32 @@
 import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
+import Modal from 'react-modal';
 
-import { ceilfloor } from '../lib/utils';
-import { getTimedelta, getTimeBlocks, getYYYYMMDD, getHHMMSS } from '../lib/time';
-import { start } from 'repl';
+import { floor, ceil, ceilfloor, topbottom } from '../lib/utils';
+import { getTimedelta, getYYYYMMDD, getHHMMSS, getMMDD, getHH } from '../lib/time';
+import {
+    Second,
+    Period,
+    Pos,
+    CalenderPeriod,
+    ITask,
+    ITimebarDragInitial,
+    ICalenderElement,
+} from '../type/timeline';
 
 const Timeline: React.FC = () => {
-    const calenderPeriod = 'date';
-    const cellXUnit = 60 * 60 * 24; // [s]
+    const calenderPeriod: CalenderPeriod = 'date';
+    const cellXUnit: Second = 60 * 60 * 24; // [s]
     const cellDivideNumber = 2;
-    const calenderRange = {
+    const calenderRange: Period = {
         start: new Date(2021, 3, 1, 0, 0),
         end: new Date(2021, 5, 1, 0, 0),
     };
     const calenderRangeDiff = getTimedelta(calenderRange.start, calenderRange.end).date;
-    const [tasks, setTasks] = useState([
+    const [tasks, setTasks] = useState<Array<ITask>>([
         {
             id: 1,
-            title: 'task1',
+            title: '1_task',
             period: {
                 start: new Date(2021, 3, 2, 10, 30),
                 end: new Date(2021, 3, 2, 11, 0),
@@ -30,7 +39,7 @@ const Timeline: React.FC = () => {
         },
         {
             id: 2,
-            title: 'task_2',
+            title: '2_task',
             period: {
                 start: new Date(2021, 3, 3, 10, 0),
                 end: new Date(2021, 3, 4, 16, 0),
@@ -43,7 +52,7 @@ const Timeline: React.FC = () => {
         },
         {
             id: 3,
-            title: 'task_3',
+            title: '3_task',
             period: {
                 start: new Date(2021, 3, 3, 16, 0),
                 end: new Date(2021, 3, 5, 10, 0),
@@ -54,8 +63,38 @@ const Timeline: React.FC = () => {
             properties: [],
             body: [],
         },
+        {
+            id: 4,
+            title: '4_task',
+            period: {
+                start: new Date(2021, 3, 5, 16, 0),
+                end: new Date(2021, 3, 9, 10, 0),
+            },
+            status: 'DOING',
+            assign: null,
+            tags: [],
+            properties: [],
+            body: [],
+        },
+        {
+            id: 5,
+            title: '5_task',
+            period: {
+                start: new Date(2021, 3, 6, 16, 0),
+                end: new Date(2021, 3, 7, 10, 0),
+            },
+            status: 'DOING',
+            assign: null,
+            tags: [],
+            properties: [],
+            body: [],
+        },
     ]);
     const c = {
+        color: {
+            multiSelected: 'rgba(0, 181, 51, 0.5)',
+            dragArea: 'rgba(0, 12, 181, 0.5)',
+        },
         header: {
             height: 50,
         },
@@ -73,8 +112,12 @@ const Timeline: React.FC = () => {
         cell: {
             width: 40,
             height: 30,
+            zIndex: 1,
         },
         timebar: {
+            marginXCoef: 0.05,
+            yShrinkCoef: 0.8,
+            sideWidthCoef: 0.2,
             zIndex: 2,
         },
     };
@@ -96,6 +139,7 @@ const Timeline: React.FC = () => {
         left: 0;
         width: 0;
         height: 0;
+        z-index: 100;
     `;
     const TimelineTaskContainer = styled.div`
         position: absolute;
@@ -153,7 +197,6 @@ const Timeline: React.FC = () => {
     const TimelineCalenderBody = styled.div`
         position: relative;
         width: 100%;
-        z-index: ${c.calenderBody.zIndex};
     `;
     const TimelineCalenderRow = styled.div`
         position: relative;
@@ -169,35 +212,37 @@ const Timeline: React.FC = () => {
         display: flex;
         justify-content: start;
         align-items: center;
+        float: 'left';
+        user-select: none;
     `;
     const TimelineCalenderTimebarWrap = styled.div`
         position: absolute;
-        margin-left: ${c.cell.width * 0.05};
-        margin-right: ${c.cell.width * 0.05};
-        height: ${c.cell.height * 0.8};
+        left: ${c.cell.width * c.timebar.marginXCoef};
+        height: ${c.cell.height * c.timebar.yShrinkCoef};
         border-radius: 7px;
         background-color: gray;
-        z-index: 3;
+        z-index: 1;
+        user-select: none;
     `;
     const TimelineCalenderTimebar = styled.div`
         position: absolute;
-        height: ${c.cell.height * 0.8};
+        top: 0;
+        left: 0;
+        height: ${c.cell.height * c.timebar.yShrinkCoef};
         border-radius: 7px;
-        background-color: gray;
+        background-color: transparent;
         overflow: hidden;
         display: flex;
         justify-content: space-between;
-        z-index: 3;
     `;
     const TimelineCalenderTimebarSide = styled.div`
         height: 100%;
-        width: ${c.cell.width * 0.2};
+        width: ${c.cell.width * c.timebar.sideWidthCoef};
         border-radius: 7px;
         background-color: transparent;
         cursor: col-resize;
-        z-index: 4;
     `;
-    //
+    // --------------------------------------------------------
     const createParentTimelineLabel = () => {
         const start = calenderRange.start;
         const parents = [...Array(calenderRangeDiff).keys()].map(i => {
@@ -212,72 +257,16 @@ const Timeline: React.FC = () => {
             };
         });
     };
-    //
-    const timebarDragParam = useRef({
-        id: -1,
-        targetType: null,
-        rect: { width: -1, height: -1 },
-        pos: { x: -1, y: -1 },
-        cell: { start: { x: -1, y: -1 }, pointed: { x: -1, y: -1 } },
-    });
-    const selectedCell = useRef({ x: -1, y: -1 });
-    const dragReady = useRef(false);
-    const mousedownStart = useRef({ x: -1, y: -1 });
-    const selectedTimebar = useRef([]);
-    //
-    const getTimeberWidth = (start: Date, end: Date): number => {
-        let block: number;
-        switch (calenderPeriod) {
-            case 'date':
-                const days = end.getDate() - start.getDate();
-                const startDivideNumber = Math.floor(start.getHours() / (24 / cellDivideNumber));
-                const endDivideNumber = Math.floor(end.getHours() / (24 / cellDivideNumber));
-                block = days * cellDivideNumber + 1 + endDivideNumber - startDivideNumber;
-                break;
-        }
-        return c.cell.width * block;
-    };
-    const canDrag = (elem = null) => {
-        return (
-            (!elem || timebarDragParam.current.id == elem.dataset?.id) &&
-            // timebarDragParam.current.rect.width >= 0 &&
-            // timebarDragParam.current.rect.height >= 0 &&
-            timebarDragParam.current.cell.start.x >= 0 &&
-            timebarDragParam.current.cell.start.y >= 0 &&
-            timebarDragParam.current.cell.pointed.x >= 0 &&
-            timebarDragParam.current.cell.pointed.y >= 0 &&
-            timebarDragParam.current.pos.x >= 0 &&
-            timebarDragParam.current.pos.y >= 0 &&
-            selectedCell.current.x >= 0 &&
-            selectedCell.current.y >= 0
-        );
-    };
-    const canOver = cellElem => {
-        if (canDrag()) {
-            if (cellElem.dataset.target == 'cell') {
-                const timebarCellWidth = Math.floor(
-                    timebarDragParam.current.rect.width / c.cell.width,
-                );
-                if (timebarDragParam.current.targetType == 'whole') {
-                    return true;
-                } else if (timebarDragParam.current.targetType == 'left') {
-                    return (
-                        parseInt(cellElem.dataset.y) == timebarDragParam.current.cell.start.y &&
-                        parseInt(cellElem.dataset.x) <=
-                            timebarDragParam.current.cell.start.x + timebarCellWidth
-                    );
-                } else if (timebarDragParam.current.targetType == 'right') {
-                    return (
-                        parseInt(cellElem.dataset.y) == timebarDragParam.current.cell.start.y &&
-                        parseInt(cellElem.dataset.x) >= timebarDragParam.current.cell.start.x
-                    );
-                }
-            }
-            return false;
-        } else {
-            return false;
-        }
-    };
+    // --------------------------------------------------------
+    const [selectedTask, setSelectedTask] = useState(null);
+    // --------------------------------------------------------
+    const calenderBodyParam = useRef<ICalenderElement>(null);
+    const timebarDragInitial = useRef<ITimebarDragInitial>(null);
+    const lastScroll = useRef<Pos>({ x: 0, y: 0 });
+    const mousedownStart = useRef<Pos>({ x: -1, y: -1 });
+    const selectedCElem = useRef<Array<ICalenderElement>>([]);
+    const keydown = useRef(null);
+    // --------------------------------------------------------
     const getElementByPosition = (x, y, targetType = 'wrap') => {
         const elems = document.querySelectorAll(`[data-target='${targetType}']`);
         if (!elems || !elems.length) {
@@ -291,164 +280,469 @@ const Timeline: React.FC = () => {
         }
         return elem;
     };
+    const getTimeberWidth = (start: Date, end: Date): number => {
+        let block: number;
+        switch (calenderPeriod) {
+            case 'date':
+                const days = end.getDate() - start.getDate();
+                const startDivideNumber = floor(start.getHours() / (24 / cellDivideNumber));
+                const endDivideNumber = floor(end.getHours() / (24 / cellDivideNumber));
+                block = days * cellDivideNumber + 1 + endDivideNumber - startDivideNumber;
+                break;
+        }
+        return c.cell.width * block;
+    };
+    const width2cellNum = (width: number): number => {
+        return floor(width / c.cell.width);
+    };
+    const height2cellNum = (height: number): number => {
+        return floor(height / c.cell.height);
+    };
+    const getCalemderElementSnapshot = (elem): ICalenderElement => {
+        // スクロールが0の状態のときのパラメータ
+        const scroll = getScroll();
+        const rect = elem.getBoundingClientRect();
+        const pos = { x: rect.left + scroll.x, y: rect.top + scroll.y };
+        const size = { width: elem.offsetWidth, height: elem.offsetHeight };
+        const cell =
+            calenderBodyParam.current !== null
+                ? {
+                      x: width2cellNum(pos.x - calenderBodyParam.current.pos.x),
+                      y: height2cellNum(rect.top - calenderBodyParam.current.pos.y),
+                  }
+                : { x: -1, y: -1 };
+        return {
+            pos,
+            size,
+            cell,
+            dataset: elem.dataset,
+            ref: elem,
+        };
+    };
+    const isDragging = () => {
+        return timebarDragInitial.current !== null;
+    };
+    const getScroll = (): Pos => {
+        const calenderContainer = document.getElementById('timelineCalenderContainer');
+        return {
+            x: calenderContainer.scrollLeft,
+            y: calenderContainer.scrollTop,
+        };
+    };
     const onTimebarDragStart = event => {
+        // timberをクリックしたか判定
         if (event.target.className.match('timelineCalenderTimebarGroup')) {
-            const timebar = event.target;
-            const id = timebar.dataset.id;
-            const targetType = timebar.dataset.target;
-            const pos = {
-                x: event.pageX,
-                y: event.pageY,
+            console.log('DRAGSTART', 'scrollLeft', event.target.scrollLeft);
+            event.dataTransfer.setDragImage(new Image(), 0, 0);
+            // 代表要素
+            const pointedTimebar = event.target;
+            if (selectedCElem.current.length == 0) {
+                const wrap = getElementByPosition(
+                    pointedTimebar.dataset.x,
+                    pointedTimebar.dataset.y,
+                );
+                selectedCElem.current = [getCalemderElementSnapshot(wrap)];
+            }
+            // ----各パラメータを計算
+            const id = pointedTimebar.dataset.id;
+            const targetType = pointedTimebar.dataset.target;
+            const scroll = getScroll();
+            const pointedMousePos = {
+                x: event.clientX + scroll.x,
+                y: event.clientY + scroll.y,
             };
-            const cellStart = {
-                x: parseInt(timebar.dataset.x),
-                y: parseInt(timebar.dataset.y),
+            const pointed = getCalemderElementSnapshot(pointedTimebar);
+            // 最大最小を計算
+            const allPos = {
+                x: Math.min(
+                    ...selectedCElem.current.map(timebar => {
+                        return timebar.pos.x;
+                    }),
+                ),
+                y: Math.min(
+                    ...selectedCElem.current.map(timebar => {
+                        return timebar.pos.y;
+                    }),
+                ),
             };
-            const wrapElem = getElementByPosition(cellStart.x, cellStart.y);
-            const rect = {
-                width: wrapElem.offsetWidth,
-                height: wrapElem.offsetHeight,
+            const allSize = {
+                width:
+                    Math.max(
+                        ...selectedCElem.current.map(timebar => {
+                            return timebar.pos.x + timebar.size.width;
+                        }),
+                    ) - allPos.x,
+                height:
+                    Math.max(
+                        ...selectedCElem.current.map(timebar => {
+                            return timebar.pos.y + timebar.size.height;
+                        }),
+                    ) - allPos.y,
             };
-            const wrapElemPos = {
-                top: wrapElem.getBoundingClientRect().top,
-                left: wrapElem.getBoundingClientRect().left,
+            const allCell = {
+                x: width2cellNum(allPos.x - calenderBodyParam.current.pos.x),
+                y: height2cellNum(allPos.y - calenderBodyParam.current.pos.y),
             };
-            const cell = {
-                start: cellStart,
-                pointed: {
-                    x:
-                        Math.floor((pos.x - wrapElemPos.left) / c.cell.width) +
-                        parseInt(timebar.dataset.x),
-                    y: parseInt(timebar.dataset.y),
-                },
+            // width最小
+            const min = selectedCElem.current.sort((a, b) => {
+                return a.size.width - b.size.width;
+            })[0];
+            // allのデータまとめ
+            const all = {
+                pos: allPos,
+                size: allSize,
+                cell: allCell,
+                dataset: null,
+                ref: null,
+            };
+            // protectedCellCountの計算
+            const tasksProtectedCellCount = selectedCElem.current.map(timebar => {
+                const task = tasks.filter(t => t.id == timebar.dataset.id)[0];
+                const diff =
+                    (task.period.end.getTime() - task.period.start.getTime()) / (cellXUnit * 1000);
+                return diff - Math.trunc(diff) < 1.0 / cellDivideNumber ? 1 : 0;
+            });
+            const protectedCellCount = tasksProtectedCellCount.indexOf(1) != -1 ? 1 : 0;
+            // パラメータセット
+            timebarDragInitial.current = {
+                id,
+                targetType,
+                all,
+                min,
+                pointed,
+                pointedMousePos,
+                protectedCellCount,
             };
             console.log(
                 'DRAGSTART',
                 event.target.className,
-                'wrapElemPos',
-                wrapElemPos,
-                'settimebarDragParam.current',
-                { id, targetType, rect, pos, cell },
-                timebar.dataset.target,
+                'timebarDragInitial',
+                timebarDragInitial.current,
+                'selectedCElem',
+                selectedCElem.current,
             );
-            timebarDragParam.current = { id, targetType, rect, pos, cell };
-            selectedCell.current = cell.start;
-            dragReady.current = true;
+            // セル反転
+            if (targetType == 'whole') {
+                for (const timebar of selectedCElem.current) {
+                    const wrapElem = getElementByPosition(timebar.dataset.x, timebar.dataset.y);
+                    const cellWidth = width2cellNum(timebar.size.width + 1);
+                    const wrapCElem = getCalemderElementSnapshot(wrapElem);
+                    for (const index of [...Array(cellWidth).keys()]) {
+                        const cell = getElementByPosition(
+                            wrapCElem.cell.x + index,
+                            wrapCElem.cell.y,
+                            'cell',
+                        );
+                        cell.style.backgroundColor = 'rgba(179, 179, 179, 0.5)';
+                    }
+                }
+                console.log('DRAG whole');
+            } else if (targetType == 'left') {
+                for (const timebar of selectedCElem.current) {
+                    const wrapElem = getElementByPosition(timebar.dataset.x, timebar.dataset.y);
+                    const wrapCElem = getCalemderElementSnapshot(wrapElem);
+                    // スタイル適用
+                    const updatedCell = getElementByPosition(
+                        wrapCElem.cell.x,
+                        wrapCElem.cell.y,
+                        'cell',
+                    );
+                    updatedCell.style.backgroundColor = 'rgba(179, 179, 179, 0.5)';
+                }
+            } else if (targetType == 'right') {
+                for (const timebar of selectedCElem.current) {
+                    const wrapElem = getElementByPosition(timebar.dataset.x, timebar.dataset.y);
+                    const wrapCElem = getCalemderElementSnapshot(wrapElem);
+                    // スタイル適用
+                    const updatedCell = getElementByPosition(
+                        wrapCElem.cell.x + width2cellNum(wrapCElem.size.width),
+                        wrapCElem.cell.y,
+                        'cell',
+                    );
+                    updatedCell.style.backgroundColor = 'rgba(179, 179, 179, 0.5)';
+                }
+            }
         }
     };
     const onTimebarDrag = event => {
-        const timebar = event.target;
-        if (canDrag(timebar) && dragReady.current) {
-            dragReady.current = false;
+        if (isDragging()) {
+            const timebar = event.target;
+            const scroll = getScroll();
+            const tdi = timebarDragInitial.current;
+            const cbp = calenderBodyParam.current;
             // timebarを半透明に
             const timebars = document.getElementsByClassName('timelineCalenderTimebarGroup');
             for (const tb of timebars) {
-                tb.style.zIndex = -1;
-                if (tb.dataset.id == timebar.dataset.id) {
+                if (
+                    parseInt(tb.dataset.id) == timebar.dataset.id ||
+                    selectedCElem.current
+                        .map(timebar => {
+                            return timebar.dataset.id;
+                        })
+                        .indexOf(parseInt(tb.dataset.id)) != -1
+                ) {
                     continue;
                 }
                 tb.style.opacity = 0.5;
             }
-            // 移動
-            const wrapElem = getElementByPosition(
-                timebarDragParam.current.cell.start.x,
-                timebarDragParam.current.cell.start.y,
-            );
-            const x = event.pageX;
-            const y = event.pageY;
+            // ----移動
+            const x = event.clientX + scroll.x;
+            const y = event.clientY + scroll.y;
+            if (x == 0 && y == 0) {
+                // ジャンプ回避
+                return;
+            }
+            const dx = x - tdi.pointedMousePos.x;
+            const dy = y - tdi.pointedMousePos.y;
+            console.log('DRAG', '(dx,dy)', { dx, dy });
+            // 移動計算
             const targetType = timebar.dataset.target;
             if (targetType == 'whole') {
-                wrapElem.style.left = x - timebarDragParam.current.pos.x;
-                wrapElem.style.top = y - timebarDragParam.current.pos.y;
-                console.log(
-                    'DRAG',
-                    '(pageX,pageY)',
-                    { x, y },
-                    'targetType',
-                    targetType,
-                    'wrap.width(left,top)',
-                    { left: wrapElem.style.left, top: wrapElem.style.top },
-                    'timebarDragParam.current',
-                    timebarDragParam.current,
-                );
+                // 左上座標チェック
+                const updateX =
+                    tdi.all.pos.x + dx - c.cell.width * 0.01 > cbp.pos.x &&
+                    tdi.all.pos.x + tdi.all.size.width + dx + c.cell.width * 0.01 <
+                        cbp.pos.x + cbp.size.width;
+                const updateY =
+                    tdi.all.pos.y + dy - c.cell.height * 0.1 > cbp.pos.y &&
+                    tdi.all.pos.y + tdi.all.size.height + dy + c.cell.height * 0.01 <
+                        cbp.pos.y + cbp.size.height;
+                for (const timebar of selectedCElem.current) {
+                    const wrapElem = getElementByPosition(timebar.dataset.x, timebar.dataset.y);
+                    const wrapCElem = getCalemderElementSnapshot(wrapElem);
+                    const cellWidth = width2cellNum(timebar.size.width + 1);
+                    if (updateX) {
+                        // 移動
+                        const left = dx;
+                        wrapElem.style.left = `${left}px`;
+                    }
+                    if (updateY) {
+                        // 移動
+                        const top = dy;
+                        wrapElem.style.top = `${top}px`;
+                    }
+                    // セル反転
+                    const updatedWrapCElem = getCalemderElementSnapshot(wrapElem);
+                    if (
+                        wrapCElem.cell.x != updatedWrapCElem.cell.x ||
+                        wrapCElem.cell.y != updatedWrapCElem.cell.y
+                    ) {
+                        // 消す
+                        for (const index of [...Array(cellWidth).keys()]) {
+                            const cell = getElementByPosition(
+                                wrapCElem.cell.x + index,
+                                wrapCElem.cell.y,
+                                'cell',
+                            );
+                            cell.style.backgroundColor = '';
+                        }
+                        // 反転
+                        for (const index of [...Array(cellWidth).keys()]) {
+                            const cell = getElementByPosition(
+                                updatedWrapCElem.cell.x + index,
+                                updatedWrapCElem.cell.y,
+                                'cell',
+                            );
+                            cell.style.backgroundColor = 'rgba(179, 179, 179, 0.5)';
+                        }
+                    }
+                    console.log('wrap move', wrapElem.style.left, wrapElem.style.top);
+                }
+                console.log('DRAG whole');
             } else if (targetType == 'left') {
-                // left
-                const left = Math.min(
-                    x - timebarDragParam.current.pos.x,
-                    timebarDragParam.current.rect.width - c.cell.width,
-                );
-                wrapElem.style.left = left;
-                // width
-                const dx = timebarDragParam.current.pos.x - x;
-                const width = Math.max(timebarDragParam.current.rect.width + dx, c.cell.width);
-                wrapElem.style.width = width;
-                console.log(
-                    'DRAG',
-                    '(pageX,pageY)',
-                    { x, y },
-                    'targetType',
-                    targetType,
-                    'dx',
-                    dx,
-                    'wrap.width',
-                    {
-                        width: wrapElem.style.width,
-                        maxWidth: wrapElem.style.maxWidth,
-                        minWidth: wrapElem.style.minWidth,
-                    },
-                    'timebarDragParam.current',
-                    timebarDragParam.current,
-                );
+                const updateX =
+                    tdi.min.size.width - dx > c.cell.width * (0.9 + tdi.protectedCellCount) &&
+                    tdi.all.pos.x + dx > cbp.pos.x;
+                console.log('updateX', updateX);
+                for (const timebar of selectedCElem.current) {
+                    const wrapElem = getElementByPosition(timebar.dataset.x, timebar.dataset.y);
+                    const wrapCElem = getCalemderElementSnapshot(wrapElem);
+                    // 移動
+                    if (updateX) {
+                        const width = timebar.size.width - dx;
+                        const left = dx - (tdi.pointed.pos.x - tdi.pointedMousePos.x);
+                        wrapElem.style.left = `${left}px`;
+                        wrapElem.style.width = `${width}px`;
+                    }
+                    // スタイル適用
+                    const updatedWrapCElem = getCalemderElementSnapshot(wrapElem);
+                    if (
+                        wrapCElem.cell.x != updatedWrapCElem.cell.x ||
+                        wrapCElem.cell.y != updatedWrapCElem.cell.y
+                    ) {
+                        // スタイル戻し
+                        const cell = getElementByPosition(
+                            wrapCElem.cell.x,
+                            wrapCElem.cell.y,
+                            'cell',
+                        );
+                        cell.style.backgroundColor = '';
+                        // スタイル適用
+                        const updatedCell = getElementByPosition(
+                            updatedWrapCElem.cell.x,
+                            updatedWrapCElem.cell.y,
+                            'cell',
+                        );
+                        updatedCell.style.backgroundColor = 'rgba(179, 179, 179, 0.5)';
+                    }
+                }
             } else if (targetType == 'right') {
-                // width
-                const dx = x - timebarDragParam.current.pos.x;
-                const width = Math.max(timebarDragParam.current.rect.width + dx, c.cell.width);
-                wrapElem.style.width = width;
-                console.log(
-                    'DRAG',
-                    '(pageX,pageY)',
-                    { x, y },
-                    'targetType',
-                    targetType,
-                    'dx',
-                    dx,
-                    'wrap.width',
-                    wrapElem.style.width,
-                    'timebarDragParam.current',
-                    timebarDragParam.current,
-                );
+                const updateX =
+                    tdi.min.size.width + dx > c.cell.width * (0.9 + tdi.protectedCellCount) &&
+                    tdi.all.pos.x + tdi.all.size.width + dx < cbp.pos.x + cbp.size.width;
+                for (const timebar of selectedCElem.current) {
+                    const wrapElem = getElementByPosition(timebar.dataset.x, timebar.dataset.y);
+                    const wrapCElem = getCalemderElementSnapshot(wrapElem);
+                    // 移動
+                    if (updateX) {
+                        const width = timebar.size.width + dx;
+                        wrapElem.style.width = `${width}px`;
+                    }
+                    // スタイル適用
+                    const updatedWrapCElem = getCalemderElementSnapshot(wrapElem);
+                    if (
+                        wrapCElem.cell.x + width2cellNum(wrapCElem.size.width) !=
+                            updatedWrapCElem.cell.x + width2cellNum(updatedWrapCElem.size.width) ||
+                        wrapCElem.cell.y != updatedWrapCElem.cell.y
+                    ) {
+                        // スタイル戻し
+                        const cell = getElementByPosition(
+                            wrapCElem.cell.x + width2cellNum(wrapCElem.size.width),
+                            wrapCElem.cell.y,
+                            'cell',
+                        );
+                        cell.style.backgroundColor = '';
+                        // スタイル適用
+                        const updatedCell = getElementByPosition(
+                            updatedWrapCElem.cell.x + width2cellNum(updatedWrapCElem.size.width),
+                            updatedWrapCElem.cell.y,
+                            'cell',
+                        );
+                        updatedCell.style.backgroundColor = 'rgba(179, 179, 179, 0.5)';
+                        console.log('DRAG right', wrapCElem, updatedWrapCElem);
+                    }
+                }
             }
-            dragReady.current = true;
-        } else {
-            console.log('DRAG', false);
         }
     };
     const onTimebarDragEnd = event => {
         console.log('DRAGEND', event.target.className);
-        if (canDrag()) {
+        if (isDragging()) {
+            const tdi = timebarDragInitial.current;
+            const cbp = calenderBodyParam.current;
             // 期間更新
-            console.log('DRAGEND', 'selectedCell.current.x', selectedCell.current.x);
-            let modifiedIndex = -1;
-            const modifiedTasks = tasks.map((task, index) => {
-                if (task.id == timebarDragParam.current.id) {
-                    const dx = selectedCell.current.x - timebarDragParam.current.cell.pointed.x;
-                    const dp = dx * (cellXUnit / cellDivideNumber) * 1000; // [ms]
+            const scroll = getScroll();
+            const x = event.clientX + scroll.x;
+            const y = event.clientY + scroll.y;
+            const dx = x - tdi.pointedMousePos.x;
+            const dy = y - tdi.pointedMousePos.y;
+            let baseCellX;
+            let baseCellY;
+            let corDx;
+            if (tdi.targetType == 'whole') {
+                corDx = topbottom(
+                    tdi.all.pos.x - cbp.pos.x + dx,
+                    cbp.size.width - tdi.all.size.width,
+                    0,
+                );
+                baseCellX = tdi.all.cell.x;
+                baseCellY = tdi.all.cell.y;
+            } else if (tdi.targetType == 'left') {
+                corDx = topbottom(
+                    tdi.all.pos.x - cbp.pos.x + dx,
+                    tdi.all.pos.x - cbp.pos.x + tdi.min.size.width - c.cell.width,
+                    0,
+                );
+                baseCellX = tdi.all.cell.x;
+                baseCellY = tdi.all.cell.y;
+            } else if (tdi.targetType == 'right') {
+                corDx = topbottom(
+                    tdi.all.pos.x + tdi.all.size.width - cbp.pos.x + dx,
+                    cbp.size.width - tdi.all.size.width,
+                    tdi.all.pos.x - cbp.pos.x + c.cell.width * 0.9,
+                );
+                baseCellX = tdi.all.cell.x + floor(tdi.all.size.width / c.cell.width);
+                baseCellY = tdi.all.cell.y;
+            }
+            const corDy = topbottom(
+                tdi.all.pos.y - cbp.pos.y + dy,
+                cbp.size.height - tdi.all.size.height,
+                0,
+            );
+            const cx = width2cellNum(corDx);
+            const cy = height2cellNum(corDy);
+            let dcx;
+            if (tdi.targetType == 'whole') {
+                dcx = topbottom(
+                    cx - baseCellX,
+                    width2cellNum(
+                        cbp.pos.x + cbp.size.width - (tdi.all.pos.x + tdi.all.size.width),
+                    ),
+                    -tdi.all.cell.x,
+                );
+            } else if (tdi.targetType == 'left') {
+                dcx = topbottom(
+                    cx - baseCellX,
+                    width2cellNum(tdi.min.size.width) - tdi.protectedCellCount,
+                    -tdi.all.cell.x,
+                );
+                console.log(
+                    'DRAGEND left',
+                    tdi.targetType,
+                    'dcx default',
+                    cx - baseCellX,
+                    'topvalue',
+                    width2cellNum(tdi.min.size.width) - tdi.protectedCellCount,
+                    'bottomvalue',
+                    -tdi.all.cell.x,
+                );
+            } else if (tdi.targetType == 'right') {
+                dcx = topbottom(
+                    cx - baseCellX,
+                    width2cellNum(
+                        cbp.pos.x + cbp.size.width - (tdi.all.pos.x + tdi.all.size.width),
+                    ),
+                    -width2cellNum(tdi.min.size.width) + tdi.protectedCellCount,
+                );
+                console.log(
+                    'DRAGEND right',
+                    tdi.targetType,
+                    'dcx default',
+                    cx - baseCellX,
+                    'topvalue',
+                    width2cellNum(
+                        cbp.pos.x + cbp.size.width - (tdi.all.pos.x + tdi.all.size.width),
+                    ),
+                    'bottomvalue',
+                    -width2cellNum(tdi.min.size.width) + tdi.protectedCellCount,
+                );
+            }
+            const dcy = cy - baseCellY;
+            const dp = dcx * (cellXUnit / cellDivideNumber) * 1000; // [ms]
+            const selectedTimebarIds = selectedCElem.current.map(timebar =>
+                parseInt(timebar.dataset.id as string),
+            );
+            console.log('DRAGEND', 'param', { x, dx, corDx, corDy, cx, dcx, dp, tdi });
+            const modifiedIndex = [];
+            const dateModifiedTasks = tasks.map((task, index) => {
+                if (selectedTimebarIds.indexOf(task.id) != -1) {
+                    // 期間の編集
                     const start = task.period.start.getTime();
                     const end = task.period.end.getTime();
                     let newStart: Date;
                     let newEnd: Date;
-                    if (timebarDragParam.current.targetType == 'whole') {
+                    if (tdi.targetType == 'whole') {
                         newStart = new Date(start + dp);
                         newEnd = new Date(end + dp);
-                    } else if (timebarDragParam.current.targetType == 'left') {
+                    } else if (tdi.targetType == 'left') {
                         newStart = new Date(start + dp);
                         newEnd = new Date(end);
-                    } else if (timebarDragParam.current.targetType == 'right') {
+                    } else if (tdi.targetType == 'right') {
                         newStart = new Date(start);
                         newEnd = new Date(end + dp);
                     }
-                    modifiedIndex = index;
-                    console.log('dp[h]', dp / 1000 / (60 * 60), 'start', start, 'end', end);
+                    modifiedIndex.push(index);
+                    //
                     return {
                         ...task,
                         period: {
@@ -462,174 +756,96 @@ const Timeline: React.FC = () => {
             });
             // 順序入れ替え
             let newTasks;
-            if (
-                timebarDragParam.current.targetType == 'whole' &&
-                timebarDragParam.current.cell.start.y != selectedCell.current.y
-            ) {
-                let counter = modifiedIndex == 0 ? 0 : -1;
-                newTasks = modifiedTasks.map((task, index) => {
-                    if (index == selectedCell.current.y) {
-                        return { ...modifiedTasks[modifiedIndex] };
+            if (tdi.targetType == 'whole' && tdi.pointed.cell.y != cy) {
+                let counter = -1;
+                let modifiedCounter = 0;
+                newTasks = dateModifiedTasks.map((task, index) => {
+                    if (modifiedIndex[modifiedCounter] + dcy == index) {
+                        const newone = { ...dateModifiedTasks[modifiedIndex[modifiedCounter]] };
+                        modifiedCounter++;
+                        return newone;
                     } else {
                         counter++;
-                        if (counter == modifiedIndex) {
+                        while (modifiedIndex.indexOf(counter) != -1) {
                             counter++;
                         }
-                        return { ...modifiedTasks[counter] };
+                        return { ...dateModifiedTasks[counter] };
                     }
                 });
             } else {
-                newTasks = [...modifiedTasks];
+                newTasks = [...dateModifiedTasks];
             }
             // 初期化
-            timebarDragParam.current = {
-                id: -1,
-                targetType: null,
-                rect: { width: -1, height: -1 },
-                pos: { x: -1, y: -1 },
-                cell: { start: { x: -1, y: -1 }, pointed: { x: -1, y: -1 } },
-            };
-            selectedCell.current = { x: -1, y: -1 };
+            timebarDragInitial.current = null;
+            releaseSelectedCElem();
             // タスク更新
             setTasks(newTasks);
+            // スクロール量の引き継ぎ
+            lastScroll.current = scroll;
         }
     };
-    const onTimebarDragOver = event => {
-        if (canOver(event.target)) {
-            // 選択中セルの更新
-            const newSelectedCell = {
-                x: parseInt(event.target.dataset.x),
-                y: parseInt(event.target.dataset.y),
-            };
-            selectedCell.current = newSelectedCell;
-            console.log('DRAGOVER', 'selectedCell', selectedCell.current);
-            // 選択中セルの背景色変更
-            if (
-                timebarDragParam.current.targetType == 'left' ||
-                timebarDragParam.current.targetType == 'right'
-            ) {
-                event.target.style.backgroundColor = 'gray';
-                event.target.style.opacity = '0.5';
-                event.target.style.borderRadius = '8px';
-            } else if (timebarDragParam.current.targetType == 'whole') {
-                const x = event.pageX;
-                const y = event.pageY;
-                const wrapElem = getElementByPosition(
-                    timebarDragParam.current.cell.start.x,
-                    timebarDragParam.current.cell.start.y,
-                );
-                const wrapRect = {
-                    width: wrapElem.offsetWidth,
-                    height: wrapElem.offsetHeight,
-                };
-                const wrapCellWidth = Math.ceil(wrapRect.width / c.cell.width);
-                const wrapElemPos = {
-                    top: wrapElem.getBoundingClientRect().top,
-                    left: wrapElem.getBoundingClientRect().left,
-                };
-                const startCell = {
-                    x: newSelectedCell.x - Math.floor((x - wrapElemPos.left) / c.cell.width),
-                    y: newSelectedCell.y,
-                };
-                console.log('startCell', startCell, 'wrapCellWidth', wrapCellWidth);
-                const overElems = [...Array(wrapCellWidth).keys()].map(i => {
-                    return getElementByPosition(i + startCell.x, newSelectedCell.y, 'cell');
-                });
-                if (overElems.length == 1) {
-                    overElems[0].style.backgroundColor = 'gray';
-                    overElems[0].style.opacity = '0.5';
-                    overElems[0].style.borderRadius = '8px';
-                } else {
-                    for (const [index, elem] of overElems.entries()) {
-                        elem.style.backgroundColor = 'gray';
-                        elem.style.opacity = '0.5';
-                        if (index == 0) {
-                            elem.style.borderTopLeftRadius = '8px';
-                            elem.style.borderBottomLeftRadius = '8px';
-                        } else if (index == wrapCellWidth - 1) {
-                            elem.style.borderTopRightRadius = '8px';
-                            elem.style.borderBottomRightRadius = '8px';
-                        }
-                    }
-                }
-            }
-        } else {
-            console.log('DRAGOVER', false, event.target.className);
+    const releaseSelectedCElem = (dataReset = true) => {
+        console.log('release', dataReset);
+        for (const timebar of selectedCElem.current) {
+            timebar.ref.style.backgroundColor = '';
+        }
+        selectedCElem.current = null;
+        if (dataReset) {
+            selectedCElem.current = [];
         }
     };
-    const onTimebarDragLeave = event => {
-        if (canOver(event.target)) {
-            // 選択中セルの背景色変更
-            if (
-                timebarDragParam.current.targetType == 'left' ||
-                timebarDragParam.current.targetType == 'right'
-            ) {
-                event.target.style.backgroundColor = '';
-                event.target.style.opacity = '';
-                event.target.style.borderRadius = '';
-            } else if (timebarDragParam.current.targetType == 'whole') {
-                const x = event.pageX;
-                const y = event.pageY;
-                const wrapElem = getElementByPosition(
-                    timebarDragParam.current.cell.start.x,
-                    timebarDragParam.current.cell.start.y,
-                );
-                const wrapRect = {
-                    width: wrapElem.offsetWidth,
-                    height: wrapElem.offsetHeight,
-                };
-                const wrapCellWidth = Math.ceil(wrapRect.width / c.cell.width);
-                const wrapElemPos = {
-                    top: wrapElem.getBoundingClientRect().top,
-                    left: wrapElem.getBoundingClientRect().left,
-                };
-                const startCell = {
-                    x: selectedCell.current.x - Math.floor((x - wrapElemPos.left) / c.cell.width),
-                    y: selectedCell.current.y,
-                };
-                console.log('startCell', startCell, 'wrapCellWidth', wrapCellWidth);
-                const overElems = [...Array(wrapCellWidth).keys()].map(i => {
-                    return getElementByPosition(i + startCell.x, selectedCell.current.y, 'cell');
-                });
-                if (overElems.length == 1) {
-                    overElems[0].style.backgroundColor = '';
-                    overElems[0].style.opacity = '';
-                    overElems[0].style.borderRadius = '';
-                } else {
-                    for (const [index, elem] of overElems.entries()) {
-                        elem.style.backgroundColor = '';
-                        elem.style.opacity = '';
-                        if (index == 0) {
-                            elem.style.borderTopLeftRadius = '';
-                            elem.style.borderBottomLeftRadius = '';
-                        } else if (index == wrapCellWidth - 1) {
-                            elem.style.borderTopRightRadius = '';
-                            elem.style.borderBottomRightRadius = '';
-                        }
-                    }
-                }
-            }
-        } else {
-            console.log('DRAGLEAVE', false, event.target.className);
-        }
+    // --------------------------------------------------------
+    const onTimebarDoubleClick = event => {
+        console.log('double clicked');
+        const task = tasks.filter(t => t.id == event.target.dataset.id)[0];
+        setSelectedTask(task);
     };
-    //
+    const closeTaskModal = () => {
+        setSelectedTask(null);
+    };
+    // --------------------------------------------------------
     useEffect(() => {
+        document.addEventListener('keydown', event => {
+            console.log('key', event.key);
+            if (event.key == 'Control') {
+                keydown.current = event.key;
+            }
+        });
+        document.addEventListener('keyup', () => {
+            keydown.current = null;
+        });
         document.addEventListener('mousedown', event => {
-            console.log('mousedoown', event.target.className);
-            if (!event.target.className.match('timelineCalenderTimebarGroup')) {
-                console.log('document.mousedown', event.target.className);
+            console.log('document.mousedown', event.target.className, mousedownStart.current);
+            // cellのクリック
+            if (event.target.className.match('timelineCalenderCell')) {
                 // 範囲内のtimebarを元に戻す
-                const timebars = [
-                    ...document.getElementsByClassName('timelineCalenderTimebarGroup'),
-                ].filter(e => e.dataset.target == 'wrap');
-                for (const timebar of timebars) {
-                    timebar.style.backgroundColor = '';
-                    timebar.style.opacity = '';
-                }
-                selectedTimebar.current = [];
+                releaseSelectedCElem();
                 // マウス移動の起点を作成
-                mousedownStart.current = { x: event.clientX, y: event.clientY };
+                if (mousedownStart.current.x == -1 && mousedownStart.current.y == -1) {
+                    mousedownStart.current = { x: event.clientX, y: event.clientY };
+                } else {
+                    mousedownStart.current = { x: -1, y: -1 };
+                    const selectedAreaElem = document.getElementById('selectedArea');
+                    selectedAreaElem.style.display = 'none';
+                    selectedAreaElem.style.position = 'fixed';
+                    selectedAreaElem.style.top = `0`;
+                    selectedAreaElem.style.left = `0`;
+                    selectedAreaElem.style.width = `0`;
+                    selectedAreaElem.style.height = `0`;
+                    selectedAreaElem.style.backgroundColor = '';
+                    selectedAreaElem.style.opacity = '';
+                }
+            }
+            // Ctrl + timebarのクリック
+            if (
+                event.target.className.match('timelineCalenderTimebarGroup') &&
+                keydown.current == 'Control'
+            ) {
+                const x = event.target.dataset.x;
+                const y = event.target.dataset.y;
+                const wrapElem = getElementByPosition(x, y);
+                wrapElem.style.backgroundColor = c.color.multiSelected;
+                selectedCElem.current.push(getCalemderElementSnapshot(wrapElem));
             }
         });
         document.addEventListener('mousemove', event => {
@@ -652,13 +868,12 @@ const Timeline: React.FC = () => {
                 selectedAreaElem.style.left = `${left}px`;
                 selectedAreaElem.style.width = `${Math.abs(dx)}px`;
                 selectedAreaElem.style.height = `${Math.abs(dy)}px`;
-                selectedAreaElem.style.backgroundColor = 'blue';
-                selectedAreaElem.style.opacity = '0.3';
-                selectedAreaElem.style.zIndex = '100';
+                selectedAreaElem.style.backgroundColor = c.color.dragArea;
                 // 範囲内のtimebarを反転
                 const timebars = [
                     ...document.getElementsByClassName('timelineCalenderTimebarGroup'),
                 ].filter(e => e.dataset.target == 'wrap');
+                const selected = [];
                 for (const timebar of timebars) {
                     const rect = timebar.getBoundingClientRect();
                     // 領域内の場合
@@ -667,30 +882,21 @@ const Timeline: React.FC = () => {
                             (sx <= rect.left && rect.left <= x)) &&
                         ((y <= rect.top && rect.top <= sy) || (sy <= rect.top && rect.top <= y))
                     ) {
-                        timebar.style.backgroundColor = 'green';
-                        timebar.style.opacity = '0.5';
-                        selectedTimebar.current.push(timebar.dataset.id);
+                        timebar.style.backgroundColor = c.color.multiSelected;
+                        selected.push(getCalemderElementSnapshot(timebar));
                         // 領域外の場合
                     } else {
                         timebar.style.backgroundColor = '';
-                        timebar.style.opacity = '';
                     }
                 }
+                selectedCElem.current = selected;
             }
         });
-        document.addEventListener('mouseup', event => {
+        document.addEventListener('mouseup', () => {
+            // 範囲選択終了
             if (mousedownStart.current.x >= 0 && mousedownStart.current.y >= 0) {
                 console.log('document.mouseup');
-                // selection取得
-                const selectedObject = window.getSelection();
-                const selectedDOM = selectedObject.getRangeAt(0).cloneContents();
-                const selectedTimebarWhole = selectedDOM.querySelectorAll('[data-target="whole"]');
-                // 色変更
-                for (const elem of selectedTimebarWhole) {
-                    elem.style.backgroundColor = 'blue';
-                    selectedTimebar.current.push(elem);
-                }
-                // マウス移動を終了
+                // 範囲選択長方形の描画終了
                 mousedownStart.current = { x: -1, y: -1 };
                 const selectedAreaElem = document.getElementById('selectedArea');
                 selectedAreaElem.style.display = 'none';
@@ -700,11 +906,36 @@ const Timeline: React.FC = () => {
                 selectedAreaElem.style.width = `0`;
                 selectedAreaElem.style.height = `0`;
                 selectedAreaElem.style.backgroundColor = '';
-                selectedAreaElem.style.opacity = '';
             }
         });
     }, []);
-    //
+    useEffect(() => {
+        // calenderBodyParamを更新
+        calenderBodyParam.current = getCalemderElementSnapshot(
+            document.getElementById('TimelineCalenderBody'),
+        );
+        console.log('calenderBodyParam', calenderBodyParam.current);
+        // スクロール量を保持
+        const calenderContainer = document.getElementById('timelineCalenderContainer');
+        calenderContainer.scrollTo(lastScroll.current.x, lastScroll.current.y);
+        //
+        console.log('tasks', tasks);
+    }, [calenderBodyParam.current, tasks]);
+    // --------------------------------------------------------
+    const defaultContentStyle = {
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        right: 'auto',
+        bottom: 'auto',
+        marginRight: '-50%',
+        transform: 'translate(-50%, -50%)',
+        minWidth: '40vw',
+        minHeight: '40vh',
+        maxWidth: '80vw',
+        maxHeight: '80vh',
+        backgroundColor: 'white',
+    };
     return (
         <div>
             <div
@@ -721,6 +952,35 @@ const Timeline: React.FC = () => {
             <Header></Header>
             <Main>
                 <SelectedArea id="selectedArea" />
+                <Modal
+                    contentLabel="Example Modal"
+                    style={defaultContentStyle}
+                    isOpen={!!selectedTask}
+                    onRequestClose={closeTaskModal}
+                    ariaHideApp={false}
+                >
+                    {!!selectedTask ? (
+                        <div>
+                            <p>{selectedTask.title}</p>
+                            <p>
+                                {`「${getMMDD(selectedTask.period.start)}:${getHH(
+                                    selectedTask.period.start,
+                                )}`}
+                                〜
+                                {`${getMMDD(selectedTask.period.end)}:${getHH(
+                                    selectedTask.period.end,
+                                )}」`}
+                            </p>
+                            <p>{selectedTask.status}</p>
+                            <p>{selectedTask.assign}</p>
+                            <p>{selectedTask.tags}</p>
+                            <p>{selectedTask.properties}</p>
+                            <p>{selectedTask.body}</p>
+                        </div>
+                    ) : (
+                        <div>工事中</div>
+                    )}
+                </Modal>
                 <TimelineTaskContainer>
                     <TimelineTaskHeader></TimelineTaskHeader>
                     <TimelineTaskList>
@@ -729,13 +989,11 @@ const Timeline: React.FC = () => {
                                 <TimelineTaskRow key={`task-row-${index}`}>
                                     <TimelineTaskTitle>{task.title}</TimelineTaskTitle>
                                     <TimelineTaskProperty>
-                                        {`${getYYYYMMDD(task.period.start)} ${getHHMMSS(
+                                        {`「${getMMDD(task.period.start)}:${getHH(
                                             task.period.start,
                                         )}`}
                                         〜
-                                        {`${getYYYYMMDD(task.period.end)} ${getHHMMSS(
-                                            task.period.end,
-                                        )}`}
+                                        {`${getMMDD(task.period.end)}:${getHH(task.period.end)}」`}
                                     </TimelineTaskProperty>
                                     <TimelineTaskProperty>{task.status}</TimelineTaskProperty>
                                 </TimelineTaskRow>
@@ -743,7 +1001,7 @@ const Timeline: React.FC = () => {
                         })}
                     </TimelineTaskList>
                 </TimelineTaskContainer>
-                <TimelineCalenderContainer>
+                <TimelineCalenderContainer id="timelineCalenderContainer">
                     <TimelineCalenderHeader>
                         <TimelineCalenderHeaderParentContainer>
                             {createParentTimelineLabel().map((parent, index) => {
@@ -806,12 +1064,10 @@ const Timeline: React.FC = () => {
                                             return (
                                                 <TimelineCalenderCell
                                                     key={`calender-cell-${y}-${x}`}
-                                                    className="TimelineCalenderCell"
+                                                    className="timelineCalenderCell"
                                                     data-x={x}
                                                     data-y={y}
                                                     data-target="cell"
-                                                    onDragOver={onTimebarDragOver}
-                                                    onDragLeave={onTimebarDragLeave}
                                                 >
                                                     {year && month && date && hour ? (
                                                         <TimelineCalenderTimebarWrap
@@ -824,7 +1080,7 @@ const Timeline: React.FC = () => {
                                                                 width,
                                                             }}
                                                         >
-                                                            {x}
+                                                            {task.id}
                                                             <TimelineCalenderTimebar
                                                                 className="timelineCalenderTimebarGroup"
                                                                 draggable="true"
@@ -833,13 +1089,10 @@ const Timeline: React.FC = () => {
                                                                 data-y={y}
                                                                 data-target="whole"
                                                                 style={{
-                                                                    position: 'absolute',
-                                                                    top: 0,
-                                                                    left: 0,
                                                                     width,
-                                                                    backgroundColor: 'transparent',
                                                                 }}
-                                                                onMouseDown={onTimebarDragStart}
+                                                                onDoubleClick={onTimebarDoubleClick}
+                                                                onDragStart={onTimebarDragStart}
                                                                 onDrag={onTimebarDrag}
                                                                 onDragEnd={onTimebarDragEnd}
                                                             >
@@ -850,7 +1103,7 @@ const Timeline: React.FC = () => {
                                                                     data-x={x}
                                                                     data-y={y}
                                                                     data-target="left"
-                                                                    onMouseDown={onTimebarDragStart}
+                                                                    onDragStart={onTimebarDragStart}
                                                                     onDrag={onTimebarDrag}
                                                                     onDragEnd={onTimebarDragEnd}
                                                                 />
@@ -861,7 +1114,7 @@ const Timeline: React.FC = () => {
                                                                     data-x={x}
                                                                     data-y={y}
                                                                     data-target="right"
-                                                                    onMouseDown={onTimebarDragStart}
+                                                                    onDragStart={onTimebarDragStart}
                                                                     onDrag={onTimebarDrag}
                                                                     onDragEnd={onTimebarDragEnd}
                                                                 />

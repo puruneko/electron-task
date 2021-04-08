@@ -47,3 +47,9 @@ export const getYYYYMMDD = (d: Date, sep = '/'): string => {
 export const getHHMMSS = (d: Date, sep = ':'): string => {
     return `${d.getHours()}${sep}${d.getMinutes()}${sep}${d.getSeconds()}`;
 };
+export const getMMDD = (d: Date, sep = '/'): string => {
+    return `${d.getMonth()}${sep}${d.getDate()}`;
+};
+export const getHH = (d: Date, sep = ':'): string => {
+    return `${d.getHours()}`;
+};
