@@ -3,7 +3,6 @@ env:
   es2021: true
 extends:
   - 'plugin:react/recommended'
-  - google
   - 'plugin:@typescript-eslint/recommended'
   - prettier
 parser: '@typescript-eslint/parser'
@@ -18,11 +17,11 @@ plugins:
   - prettier
 rules:
   # 関数の複雑さを 10 以下にする
-  complexity: ['error', 15]
+  complexity: ['error', 50]
   # React のプロパティの型チェックを省略する (TypeScript でチェックされるため)
   react/prop-types: off
   prettier/prettier:
-    - error
+    - warn
   # インターフェースの先頭文字を "I" にする
   #'@typescript-eslint/interface-name-prefix':
   #  - error
