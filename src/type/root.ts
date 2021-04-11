@@ -44,4 +44,8 @@ export interface IPage {
     status: ID;
     assign: Array<ID>;
     tags: Array<ID>;
+    settings: {
+        focusedId: ID;
+        nextId: ID;
+    };
 }

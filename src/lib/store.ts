@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useMemo } from 'react';
 import { createStore, applyMiddleware } from 'redux';
 import { composeWithDevTools } from 'redux-devtools-extension';
@@ -122,7 +123,7 @@ const initialState = {
             pages: [
                 {
                     id: 1,
-                    title: 'sample1',
+                    title: 'sample1 page',
                     documents: [
                         {
                             id: 1,
@@ -142,6 +143,10 @@ const initialState = {
                     status: 1,
                     assign: [1],
                     tags: [1],
+                    settings: {
+                        focusedId: 1,
+                        nextId: 2 + 1,
+                    },
                 },
                 {
                     id: 2,
@@ -165,6 +170,10 @@ const initialState = {
                     status: [1],
                     assign: [1],
                     tags: [1],
+                    settings: {
+                        focusedId: 1,
+                        nextId: 2 + 1,
+                    },
                 },
             ],
             tasks: [
@@ -315,7 +324,7 @@ const initialState = {
 export const reducer = (state, action) => {
     switch (action.type) {
         case 'initialize':
-            logger.debug('initialize');
+            logger.debug('reducer initialize', action);
             return initialState;
         case 'get':
             return state;
@@ -330,6 +339,7 @@ export const reducer = (state, action) => {
         case 'setTasks':
             // projectName
             // tasks
+            logger.debug('reducer setTasks', action);
             return Object.assign(
                 {},
                 {
@@ -346,6 +356,7 @@ export const reducer = (state, action) => {
         case 'setPages':
             // projectName
             // pages
+            logger.debug('reducer setPages', action);
             return Object.assign(
                 {},
                 {
@@ -363,6 +374,19 @@ export const reducer = (state, action) => {
             // projectName
             // pageId
             // page
+            logger.debug('reducer setPage', action);
+            const setPage = () => {
+                const newPages = state.projects[action.projectName].pages.map(page => {
+                    if (page.id == action.pageId) {
+                        return action.page;
+                    } else {
+                        return page;
+                    }
+                });
+                return {
+                    pages: newPages,
+                };
+            };
             return Object.assign(
                 {},
                 {
@@ -371,13 +395,7 @@ export const reducer = (state, action) => {
                         ...state.projects,
                         [action.projectName]: {
                             ...state.projects[action.projectName],
-                            pages: state.projects[action.projectName].pages.map(page => {
-                                if (page.id == action.pageId) {
-                                    return action.page;
-                                } else {
-                                    return page;
-                                }
-                            }),
+                            ...setPage(),
                         },
                     },
                 },
@@ -387,6 +405,71 @@ export const reducer = (state, action) => {
             // pageId
             // documentId
             // document
+            logger.debug('reducer setDocument', action);
+            const setDocument = () => {
+                const newPages = state.projects[action.projectName].pages.map(page => {
+                    if (page.id == action.pageId) {
+                        return {
+                            ...page,
+                            focusedId: action.documentId,
+                            documents: page.documents.map(documentObj => {
+                                if (documentObj.id == action.documentId) {
+                                    return {
+                                        ...documentObj,
+                                        document: action.document,
+                                    };
+                                } else {
+                                    return documentObj;
+                                }
+                            }),
+                        };
+                    } else {
+                        return page;
+                    }
+                });
+                return {
+                    pages: newPages,
+                };
+            };
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: {
+                        ...state.projects,
+                        [action.projectName]: {
+                            ...state.projects[action.projectName],
+                            ...setDocument(),
+                        },
+                    },
+                },
+            );
+        case 'insertDocumentAbove':
+            // projectName
+            // pageId
+            // documentId
+            // document?
+            logger.debug('reducer insertDocumentAbove', action);
+            const insertDocumentAbove = page => {
+                const newDocuments = [];
+                const newId = page.settings.nextId;
+                for (const documentObj of page.documents) {
+                    if (documentObj.id == action.documentId) {
+                        newDocuments.push({
+                            id: newId,
+                            document: action.document || '',
+                        });
+                    }
+                    newDocuments.push(documentObj);
+                }
+                return {
+                    documents: newDocuments,
+                    settings: {
+                        focusedId: newId,
+                        nextId: newId + 1,
+                    },
+                };
+            };
             return Object.assign(
                 {},
                 {
@@ -399,16 +482,320 @@ export const reducer = (state, action) => {
                                 if (page.id == action.pageId) {
                                     return {
                                         ...page,
-                                        documents: page.documents.map(documentObj => {
-                                            if (documentObj.id == action.documentId) {
-                                                return {
-                                                    ...documentObj,
-                                                    document: action.document,
-                                                };
-                                            } else {
-                                                return documentObj;
-                                            }
-                                        }),
+                                        ...insertDocumentAbove(page),
+                                    };
+                                } else {
+                                    return page;
+                                }
+                            }),
+                        },
+                    },
+                },
+            );
+        case 'insertDocumentBelow':
+            // projectName
+            // pageId
+            // documentId
+            // document?
+            logger.debug('reducer insertDocumentBelow', action);
+            const insertDocumentBelow = page => {
+                const newDocuments = [];
+                const newId = page.settings.nextId;
+                for (const documentObj of page.documents) {
+                    newDocuments.push(documentObj);
+                    if (documentObj.id == action.documentId) {
+                        newDocuments.push({
+                            id: newId,
+                            document: action.document || '',
+                        });
+                    }
+                }
+                return {
+                    documents: newDocuments,
+                    settings: {
+                        focusedId: newId,
+                        nextId: newId + 1,
+                    },
+                };
+            };
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: {
+                        ...state.projects,
+                        [action.projectName]: {
+                            ...state.projects[action.projectName],
+                            pages: state.projects[action.projectName].pages.map(page => {
+                                if (page.id == action.pageId) {
+                                    return {
+                                        ...page,
+                                        ...insertDocumentBelow(page),
+                                    };
+                                } else {
+                                    return page;
+                                }
+                            }),
+                        },
+                    },
+                },
+            );
+        case 'deleteDocument':
+            // projectName
+            // pageId
+            // documentId
+            logger.debug('reducer deleteDocument', action);
+            const deleteDocument = page => {
+                const newDocuments = [];
+                let nextFocusedId;
+                for (const documentObj of page.documents) {
+                    if (documentObj.id == action.documentId) {
+                        if (page.documents.length == 1) {
+                            nextFocusedId = 1;
+                        } else if (newDocuments.length == 0) {
+                            nextFocusedId = page.documents[1].id;
+                        } else {
+                            nextFocusedId = newDocuments[newDocuments.length - 1].id;
+                        }
+                        continue;
+                    }
+                    newDocuments.push(documentObj);
+                }
+                if (newDocuments.length == 0) {
+                    newDocuments.push({
+                        id: 1,
+                        document: '',
+                    });
+                }
+                return {
+                    documents: newDocuments,
+                    settings: {
+                        ...page.settings,
+                        focusedId: nextFocusedId,
+                    },
+                };
+            };
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: {
+                        ...state.projects,
+                        [action.projectName]: {
+                            ...state.projects[action.projectName],
+                            pages: state.projects[action.projectName].pages.map(page => {
+                                if (page.id == action.pageId) {
+                                    return {
+                                        ...page,
+                                        ...deleteDocument(page),
+                                    };
+                                } else {
+                                    return page;
+                                }
+                            }),
+                        },
+                    },
+                },
+            );
+        case 'moveDocumentUp':
+            // projectName
+            // pageId
+            // documentId
+            logger.debug('reducer moveDocumentUp', action);
+            const moveDocumentUp = page => {
+                const newDocuments = [];
+                const targetIndex = page.documents
+                    .map(documentObj => documentObj.id)
+                    .indexOf(action.documentId);
+                if (targetIndex == 0 || targetIndex == -1) {
+                    return {
+                        documents: page.documents,
+                        settings: {
+                            ...page.settings,
+                            focusedId: action.documentId,
+                        },
+                    };
+                }
+                for (const [index, documentObj] of page.documents.entries()) {
+                    if (index == targetIndex - 1) {
+                        newDocuments.push(page.documents[targetIndex]);
+                    } else if (index == targetIndex) {
+                        newDocuments.push(page.documents[targetIndex - 1]);
+                    } else {
+                        newDocuments.push(documentObj);
+                    }
+                }
+                return {
+                    documents: newDocuments,
+                    settings: {
+                        ...page.settings,
+                        focusedId: action.documentId,
+                    },
+                };
+            };
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: {
+                        ...state.projects,
+                        [action.projectName]: {
+                            ...state.projects[action.projectName],
+                            pages: state.projects[action.projectName].pages.map(page => {
+                                if (page.id == action.pageId) {
+                                    return {
+                                        ...page,
+                                        ...moveDocumentUp(page),
+                                    };
+                                } else {
+                                    return page;
+                                }
+                            }),
+                        },
+                    },
+                },
+            );
+        case 'moveDocumentDown':
+            // projectName
+            // pageId
+            // documentId
+            logger.debug('reducer moveDocumentDown', action);
+            const moveDocumentDown = page => {
+                const newDocuments = [];
+                const targetIndex = page.documents
+                    .map(documentObj => documentObj.id)
+                    .indexOf(action.documentId);
+                if (targetIndex == page.documents.length - 1 || targetIndex == -1) {
+                    return {
+                        documents: page.documents,
+                        settings: {
+                            ...page.settings,
+                            focusedId: action.documentId,
+                        },
+                    };
+                }
+                for (const [index, documentObj] of page.documents.entries()) {
+                    if (index == targetIndex + 1) {
+                        newDocuments.push(page.documents[targetIndex]);
+                    } else if (index == targetIndex) {
+                        newDocuments.push(page.documents[targetIndex + 1]);
+                    } else {
+                        newDocuments.push(documentObj);
+                    }
+                }
+                return {
+                    documents: newDocuments,
+                    settings: {
+                        ...page.settings,
+                        focusedId: action.documentId,
+                    },
+                };
+            };
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: {
+                        ...state.projects,
+                        [action.projectName]: {
+                            ...state.projects[action.projectName],
+                            pages: state.projects[action.projectName].pages.map(page => {
+                                if (page.id == action.pageId) {
+                                    return {
+                                        ...page,
+                                        ...moveDocumentDown(page),
+                                    };
+                                } else {
+                                    return page;
+                                }
+                            }),
+                        },
+                    },
+                },
+            );
+        case 'moveDocumentFocusUp':
+            // projectName
+            // pageId
+            // documentId
+            logger.debug('reducer moveDocumentFocusUp', action);
+            const moveDocumentFocusUp = page => {
+                const targetIndex = page.documents
+                    .map(documentObj => documentObj.id)
+                    .indexOf(action.documentId);
+                if (targetIndex == 0 || targetIndex == -1) {
+                    return {
+                        settings: {
+                            ...page.settings,
+                            focusedId: action.documentId,
+                        },
+                    };
+                }
+                return {
+                    settings: {
+                        ...page.settings,
+                        focusedId: page.documents[targetIndex - 1].id,
+                    },
+                };
+            };
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: {
+                        ...state.projects,
+                        [action.projectName]: {
+                            ...state.projects[action.projectName],
+                            pages: state.projects[action.projectName].pages.map(page => {
+                                if (page.id == action.pageId) {
+                                    return {
+                                        ...page,
+                                        ...moveDocumentFocusUp(page),
+                                    };
+                                } else {
+                                    return page;
+                                }
+                            }),
+                        },
+                    },
+                },
+            );
+        case 'moveDocumentFocusDown':
+            // projectName
+            // pageId
+            // documentId
+            logger.debug('reducer moveDocumentFocusDown', action);
+            const moveDocumentFocusDown = page => {
+                const targetIndex = page.documents
+                    .map(documentObj => documentObj.id)
+                    .indexOf(action.documentId);
+                if (targetIndex == page.documents.length - 1 || targetIndex == -1) {
+                    return {
+                        settings: {
+                            ...page.settings,
+                            focusedId: action.documentId,
+                        },
+                    };
+                }
+                return {
+                    settings: {
+                        ...page.settings,
+                        focusedId: page.documents[targetIndex + 1].id,
+                    },
+                };
+            };
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: {
+                        ...state.projects,
+                        [action.projectName]: {
+                            ...state.projects[action.projectName],
+                            pages: state.projects[action.projectName].pages.map(page => {
+                                if (page.id == action.pageId) {
+                                    return {
+                                        ...page,
+                                        ...moveDocumentFocusDown(page),
                                     };
                                 } else {
                                     return page;
