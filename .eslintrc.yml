@@ -3,7 +3,6 @@ env:
   es2021: true
 extends:
   - 'plugin:react/recommended'
-  - google
   - 'plugin:@typescript-eslint/recommended'
   - prettier
 parser: '@typescript-eslint/parser'

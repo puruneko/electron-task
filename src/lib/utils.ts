@@ -1,3 +1,5 @@
+import { useLocation } from 'react-router-dom';
+
 export const floor = Math.floor;
 export const ceil = Math.ceil;
 
@@ -13,4 +15,18 @@ export const topbottom = (target: number, top: number, bottom: number): number =
         top_ = bottom;
     }
     return Math.min(Math.max(target, bottom_), top_);
+};
+
+export const useQuery = (): { [key: string]: string } => {
+    const queries = new URLSearchParams(useLocation().search);
+    const pairs = {};
+    for (const [key, value] of queries.entries()) {
+        pairs[key] = value;
+    }
+    return pairs;
+};
+
+export const createDict = (keyArray: Array<any>, valueFunc) => {
+    console.log('createDict');
+    return keyArray.reduce((aft, key) => ({ ...aft, [key]: valueFunc(key) }), {});
 };

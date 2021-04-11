@@ -1,27 +1,28 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
-import { createBrowserHistory } from 'history';
-import { Router, Route, Redirect } from 'react-router-dom';
+import { BrowserRouter, Redirect, Route, Router, Switch } from 'react-router-dom';
 
-import Store from './store';
 import Top from './pages/top';
-import Timeline from './pages/timeline';
+import Gantt from './pages/gantt';
+import Common from './components/common';
+import Page from './pages/page';
+
+import { useStore } from './lib/store';
 
 const container = document.getElementById('container');
-const history = createBrowserHistory();
-
-if (!location.hash.length) {
-    location.hash = '/';
-}
+const store = useStore({});
+console.log('default location', window.location);
 
 ReactDOM.render(
-    <Provider store={Store}>
-        <Router history={history}>
-            <Route exact path="/" component={Top} />
-            <Route exact path="/timeline" component={Timeline} />
-            <Redirect to="/" />
-        </Router>
+    <Provider store={store}>
+        <BrowserRouter forceRefresh={false}>
+            <Common>
+                <Route exact path="/" component={Top} />
+                <Route key={'gantt'} path="/:projectName/gantt" component={Gantt} />
+                <Route key={'page'} path="/:projectName/page/:pageId" component={Page} />
+            </Common>
+        </BrowserRouter>
     </Provider>,
     container,
 );

@@ -6,6 +6,9 @@ export interface ITimedelta {
     minutes: number;
     seconds: number;
 }
+export const getTime = (d: Date): number => {
+    return d.getTime() - d.getTimezoneOffset() * 60 * 1000;
+};
 
 export const getTimedelta = (start: Date, end: Date): ITimedelta => {
     const m = end.getTime() - start.getTime();
@@ -42,14 +45,18 @@ export const getTimeBlocks = (start: Date, end: Date, period: string): number =>
 };
 
 export const getYYYYMMDD = (d: Date, sep = '/'): string => {
-    return `${d.getFullYear()}${sep}${d.getMonth()}${sep}${d.getDate()}`;
+    const d_ = new Date(d);
+    return `${d_.getFullYear()}${sep}${d_.getMonth()}${sep}${d_.getDate()}`;
 };
 export const getHHMMSS = (d: Date, sep = ':'): string => {
-    return `${d.getHours()}${sep}${d.getMinutes()}${sep}${d.getSeconds()}`;
+    const d_ = new Date(d);
+    return `${d_.getHours()}${sep}${d_.getMinutes()}${sep}${d_.getSeconds()}`;
 };
 export const getMMDD = (d: Date, sep = '/'): string => {
-    return `${d.getMonth()}${sep}${d.getDate()}`;
+    const d_ = new Date(d);
+    return `${d_.getMonth()}${sep}${d_.getDate()}`;
 };
-export const getHH = (d: Date, sep = ':'): string => {
-    return `${d.getHours()}`;
+export const getHH = (d: Date): string => {
+    const d_ = new Date(d);
+    return `${d_.getHours()}`;
 };

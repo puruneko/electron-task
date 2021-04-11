@@ -8,12 +8,13 @@ import * as isDev from 'electron-is-dev';
 const createWindow = (): void => {
     // レンダープロセスとなる、ウィンドウオブジェクトを作成する。
     const win = new BrowserWindow({
-        width: 1200,
-        height: 600,
+        width: 60,
+        height: 1000,
         webPreferences: {
             nodeIntegration: false,
             nodeIntegrationInWorker: false,
             contextIsolation: true,
+            preload: `${__dirname}/preload.js`,
         },
     });
     if (isDev) {

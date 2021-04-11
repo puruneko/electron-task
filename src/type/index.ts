@@ -1,2 +1,2 @@
-export type ID = numeber;
+export type ID = number;
 export type Index = number;

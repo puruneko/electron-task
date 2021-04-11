@@ -1,95 +1,56 @@
 import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import Modal from 'react-modal';
-
-import { floor, ceil, ceilfloor, topbottom } from '../lib/utils';
-import { getTimedelta, getYYYYMMDD, getHHMMSS, getMMDD, getHH } from '../lib/time';
+import { useParams } from 'react-router-dom';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { TargetType } from '../type/gantt';
+import { floor, ceil, ceilfloor, topbottom, useQuery } from '../lib/utils';
+import { getTimedelta, getYYYYMMDD, getHHMMSS, getMMDD, getHH, getTime } from '../lib/time';
+import { IPage } from '../type/root';
+import { IRootState } from '../type/store';
 import {
     Second,
     Period,
     Pos,
     CalenderPeriod,
-    ITask,
     ITimebarDragInitial,
     ICalenderElement,
-} from '../type/timeline';
+} from '../type/gantt';
 
-const Timeline: React.FC = () => {
-    const calenderPeriod: CalenderPeriod = 'date';
-    const cellXUnit: Second = 60 * 60 * 24; // [s]
-    const cellDivideNumber = 2;
+const Gantt: React.FC = () => {
+    const params = useParams<any>();
+    const queries = useQuery();
+    console.log('window.location', window.location, 'params', params, 'queries', queries);
+    const dispatch = useDispatch();
+    const { project, tasks } = useSelector(
+        (props: IRootState) => ({
+            project: props.projects[params.projectName],
+            tasks: props.projects[params.projectName].tasks,
+        }),
+        shallowEqual,
+    );
+    console.log('project data', project);
+    const setTasks = newTasks => {
+        dispatch({
+            type: 'setTasks',
+            projectName: project.name,
+            tasks: newTasks,
+        });
+    };
+    const ganttScale = project.settings.ganttScale;
+    const cellXUnit = (scale => {
+        switch (scale) {
+            case 'date':
+                return 60 * 60 * 24 * 1000; // [ms]
+        }
+    })(ganttScale);
+    const cellDivideNumber = project.settings.ganttCellDivideNumber;
     const calenderRange: Period = {
-        start: new Date(2021, 3, 1, 0, 0),
-        end: new Date(2021, 5, 1, 0, 0),
+        start: new Date(Date.now() - cellXUnit * 1), // 今の1cell前から
+        end: new Date(Date.now() + cellXUnit * 30), // 30cell後まで
     };
     const calenderRangeDiff = getTimedelta(calenderRange.start, calenderRange.end).date;
-    const [tasks, setTasks] = useState<Array<ITask>>([
-        {
-            id: 1,
-            title: '1_task',
-            period: {
-                start: new Date(2021, 3, 2, 10, 30),
-                end: new Date(2021, 3, 2, 11, 0),
-            },
-            status: 'TODO',
-            assign: null,
-            tags: [],
-            properties: [],
-            body: [],
-        },
-        {
-            id: 2,
-            title: '2_task',
-            period: {
-                start: new Date(2021, 3, 3, 10, 0),
-                end: new Date(2021, 3, 4, 16, 0),
-            },
-            status: 'DOING',
-            assign: null,
-            tags: [],
-            properties: [],
-            body: [],
-        },
-        {
-            id: 3,
-            title: '3_task',
-            period: {
-                start: new Date(2021, 3, 3, 16, 0),
-                end: new Date(2021, 3, 5, 10, 0),
-            },
-            status: 'DOING',
-            assign: null,
-            tags: [],
-            properties: [],
-            body: [],
-        },
-        {
-            id: 4,
-            title: '4_task',
-            period: {
-                start: new Date(2021, 3, 5, 16, 0),
-                end: new Date(2021, 3, 9, 10, 0),
-            },
-            status: 'DOING',
-            assign: null,
-            tags: [],
-            properties: [],
-            body: [],
-        },
-        {
-            id: 5,
-            title: '5_task',
-            period: {
-                start: new Date(2021, 3, 6, 16, 0),
-                end: new Date(2021, 3, 7, 10, 0),
-            },
-            status: 'DOING',
-            assign: null,
-            tags: [],
-            properties: [],
-            body: [],
-        },
-    ]);
+    console.log('calender params', ganttScale, cellDivideNumber, calenderRange, calenderRangeDiff);
     const c = {
         color: {
             multiSelected: 'rgba(0, 181, 51, 0.5)',
@@ -98,7 +59,7 @@ const Timeline: React.FC = () => {
         header: {
             height: 50,
         },
-        timelineHeader: {
+        ganttHeader: {
             height: 50,
         },
         task: {
@@ -121,15 +82,9 @@ const Timeline: React.FC = () => {
             zIndex: 2,
         },
     };
-    const Header = styled.div`
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: ${c.header.height};
-    `;
     const Main = styled.div`
         position: absolute;
-        top: ${c.header.height};
+        top: 0;
         left: 0;
     `;
     const SelectedArea = styled.div`
@@ -141,69 +96,69 @@ const Timeline: React.FC = () => {
         height: 0;
         z-index: 100;
     `;
-    const TimelineTaskContainer = styled.div`
+    const GanttTaskContainer = styled.div`
         position: absolute;
         top: 0;
         left: 0;
         width: ${c.task.container.width};
         background-color: red;
     `;
-    const TimelineTaskHeader = styled.div`
+    const GanttTaskHeader = styled.div`
         width: 100%;
-        height: ${c.timelineHeader.height};
+        height: ${c.ganttHeader.height};
         background-color: blue;
     `;
-    const TimelineTaskList = styled.div``;
-    const TimelineTaskRow = styled.div`
+    const GanttTaskList = styled.div``;
+    const GanttTaskRow = styled.div`
         display: flex;
         width: 100%;
         height: ${c.cell.height};
     `;
-    const TimelineTaskTitle = styled.div``;
-    const TimelineTaskProperty = styled.div``;
-    const TimelineCalenderContainer = styled.div`
+    const GanttTaskTitle = styled.div``;
+    const GanttTaskProperty = styled.div``;
+    const GanttCalenderContainer = styled.div`
         width: 100vw;
         margin-left: ${c.task.container.width};
         overflow-y: scroll;
     `;
-    const TimelineCalenderHeader = styled.div`
+    const GanttCalenderHeader = styled.div`
         background-color: blue;
         width: ${calenderRangeDiff * c.cell.width * cellDivideNumber + c.task.container.width};
-        height: ${c.timelineHeader.height};
+        height: ${c.ganttHeader.height};
     `;
-    const TimelineCalenderHeaderParentContainer = styled.div`
-        height: ${c.timelineHeader.height / 2};
+    const GanttCalenderHeaderParentContainer = styled.div`
+        height: ${c.ganttHeader.height / 2};
         display: flex;
         overflow: visible;
     `;
-    const TimelineCalenderHeaderParent = styled.div`
-        height: ${c.timelineHeader.height / 2};
+    const GanttCalenderHeaderParent = styled.div`
+        height: ${c.ganttHeader.height / 2};
         position: sticky;
     `;
-    const TimelineCalenderHeaderChildContainer = styled.div`
+    const GanttCalenderHeaderChildContainer = styled.div`
         width: 100%;
-        height: ${c.timelineHeader.height / 2};
+        height: ${c.ganttHeader.height / 2};
         display: flex;
     `;
-    const TimelineCalenderHeaderChild = styled.div`
+    const GanttCalenderHeaderChild = styled.div`
         width: ${c.cell.width * cellDivideNumber};
-        height: ${c.timelineHeader.height / 2};
+        height: ${c.ganttHeader.height / 2};
     `;
-    const TimelineCalenderBodyWrapper = styled.div`
+    const GanttCalenderBodyWrapper = styled.div`
         position: relative;
         width: 100%;
         background-color: pink; //lightgray
     `;
-    const TimelineCalenderBody = styled.div`
+    const GanttCalenderBody = styled.div`
         position: relative;
         width: 100%;
     `;
-    const TimelineCalenderRow = styled.div`
+    const GanttCalenderRow = styled.div`
         position: relative;
         display: flex;
         width: 100%;
     `;
-    const TimelineCalenderCell = styled.div`
+    const GanttCalenderCell = styled.div`
         position: relative;
         width: ${c.cell.width};
         height: ${c.cell.height};
@@ -215,7 +170,7 @@ const Timeline: React.FC = () => {
         float: 'left';
         user-select: none;
     `;
-    const TimelineCalenderTimebarWrap = styled.div`
+    const GanttCalenderTimebarWrap = styled.div`
         position: absolute;
         left: ${c.cell.width * c.timebar.marginXCoef};
         height: ${c.cell.height * c.timebar.yShrinkCoef};
@@ -224,7 +179,7 @@ const Timeline: React.FC = () => {
         z-index: 1;
         user-select: none;
     `;
-    const TimelineCalenderTimebar = styled.div`
+    const GanttCalenderTimebar = styled.div`
         position: absolute;
         top: 0;
         left: 0;
@@ -235,7 +190,7 @@ const Timeline: React.FC = () => {
         display: flex;
         justify-content: space-between;
     `;
-    const TimelineCalenderTimebarSide = styled.div`
+    const GanttCalenderTimebarSide = styled.div`
         height: 100%;
         width: ${c.cell.width * c.timebar.sideWidthCoef};
         border-radius: 7px;
@@ -243,12 +198,12 @@ const Timeline: React.FC = () => {
         cursor: col-resize;
     `;
     // --------------------------------------------------------
-    const createParentTimelineLabel = () => {
+    const createParentGanttLabel = () => {
         const start = calenderRange.start;
         const parents = [...Array(calenderRangeDiff).keys()].map(i => {
             const d = new Date(start);
             d.setDate(start.getDate() + i);
-            return d.getMonth();
+            return d.getMonth() + 1;
         });
         return [...new Set(parents)].map(i => {
             return {
@@ -267,26 +222,48 @@ const Timeline: React.FC = () => {
     const selectedCElem = useRef<Array<ICalenderElement>>([]);
     const keydown = useRef(null);
     // --------------------------------------------------------
-    const getElementByPosition = (x, y, targetType = 'wrap') => {
+    const getElementsByClassName = (
+        className: string | Element | HTMLElement,
+    ): Array<HTMLElement> => {
+        let cn;
+        if (className instanceof String) {
+            cn = className as string;
+        } else {
+            cn = (className as Element).className as string;
+        }
+        const elements = [...document.getElementsByClassName(cn)].map(elem => {
+            return elem as HTMLElement;
+        });
+        return elements;
+    };
+    const getElementByPosition = (
+        x: number | string,
+        y: number | string,
+        targetType = 'wrap',
+    ): HTMLElement => {
         const elems = document.querySelectorAll(`[data-target='${targetType}']`);
         if (!elems || !elems.length) {
             return null;
         }
         const elem = [...elems].filter(
-            e => parseInt(e.dataset.y) == y && parseInt(e.dataset.x) == x,
+            (e: HTMLElement) =>
+                parseInt(e.dataset.y) == parseInt(`${y}`) &&
+                parseInt(e.dataset.x) == parseInt(`${x}`),
         )[0];
         if (!elem) {
             return null;
         }
-        return elem;
+        return elem as HTMLElement;
     };
-    const getTimeberWidth = (start: Date, end: Date): number => {
+    const getTimeberWidth = (start: Date | number, end: Date | number): number => {
         let block: number;
-        switch (calenderPeriod) {
+        const start_ = new Date(start);
+        const end_ = new Date(end);
+        switch (ganttScale) {
             case 'date':
-                const days = end.getDate() - start.getDate();
-                const startDivideNumber = floor(start.getHours() / (24 / cellDivideNumber));
-                const endDivideNumber = floor(end.getHours() / (24 / cellDivideNumber));
+                const days = end_.getDate() - start_.getDate();
+                const startDivideNumber = floor(start_.getHours() / (24 / cellDivideNumber));
+                const endDivideNumber = floor(end_.getHours() / (24 / cellDivideNumber));
                 block = days * cellDivideNumber + 1 + endDivideNumber - startDivideNumber;
                 break;
         }
@@ -298,7 +275,7 @@ const Timeline: React.FC = () => {
     const height2cellNum = (height: number): number => {
         return floor(height / c.cell.height);
     };
-    const getCalemderElementSnapshot = (elem): ICalenderElement => {
+    const getCalemderElementSnapshot = (elem: HTMLElement): ICalenderElement => {
         // スクロールが0の状態のときのパラメータ
         const scroll = getScroll();
         const rect = elem.getBoundingClientRect();
@@ -316,26 +293,27 @@ const Timeline: React.FC = () => {
             size,
             cell,
             dataset: elem.dataset,
-            ref: elem,
+            ref: elem as HTMLElement,
         };
     };
     const isDragging = () => {
         return timebarDragInitial.current !== null;
     };
     const getScroll = (): Pos => {
-        const calenderContainer = document.getElementById('timelineCalenderContainer');
+        const calenderContainer = document.getElementById('ganttCalenderContainer');
         return {
             x: calenderContainer.scrollLeft,
             y: calenderContainer.scrollTop,
         };
     };
     const onTimebarDragStart = event => {
+        const target: HTMLElement = event.target as HTMLElement;
         // timberをクリックしたか判定
-        if (event.target.className.match('timelineCalenderTimebarGroup')) {
-            console.log('DRAGSTART', 'scrollLeft', event.target.scrollLeft);
+        if (target.className.match('ganttCalenderTimebarGroup')) {
+            console.log('DRAGSTART', 'scrollLeft', target.scrollLeft);
             event.dataTransfer.setDragImage(new Image(), 0, 0);
             // 代表要素
-            const pointedTimebar = event.target;
+            const pointedTimebar = target;
             if (selectedCElem.current.length == 0) {
                 const wrap = getElementByPosition(
                     pointedTimebar.dataset.x,
@@ -344,8 +322,8 @@ const Timeline: React.FC = () => {
                 selectedCElem.current = [getCalemderElementSnapshot(wrap)];
             }
             // ----各パラメータを計算
-            const id = pointedTimebar.dataset.id;
-            const targetType = pointedTimebar.dataset.target;
+            const id = parseInt(pointedTimebar.dataset.id);
+            const targetType = pointedTimebar.dataset.target as TargetType;
             const scroll = getScroll();
             const pointedMousePos = {
                 x: event.clientX + scroll.x,
@@ -399,7 +377,8 @@ const Timeline: React.FC = () => {
             const tasksProtectedCellCount = selectedCElem.current.map(timebar => {
                 const task = tasks.filter(t => t.id == timebar.dataset.id)[0];
                 const diff =
-                    (task.period.end.getTime() - task.period.start.getTime()) / (cellXUnit * 1000);
+                    (getTime(new Date(task.period.end)) - getTime(new Date(task.period.start))) /
+                    cellXUnit;
                 return diff - Math.trunc(diff) < 1.0 / cellDivideNumber ? 1 : 0;
             });
             const protectedCellCount = tasksProtectedCellCount.indexOf(1) != -1 ? 1 : 0;
@@ -415,7 +394,7 @@ const Timeline: React.FC = () => {
             };
             console.log(
                 'DRAGSTART',
-                event.target.className,
+                target.className,
                 'timebarDragInitial',
                 timebarDragInitial.current,
                 'selectedCElem',
@@ -471,7 +450,7 @@ const Timeline: React.FC = () => {
             const tdi = timebarDragInitial.current;
             const cbp = calenderBodyParam.current;
             // timebarを半透明に
-            const timebars = document.getElementsByClassName('timelineCalenderTimebarGroup');
+            const timebars = getElementsByClassName('ganttCalenderTimebarGroup');
             for (const tb of timebars) {
                 if (
                     parseInt(tb.dataset.id) == timebar.dataset.id ||
@@ -483,7 +462,7 @@ const Timeline: React.FC = () => {
                 ) {
                     continue;
                 }
-                tb.style.opacity = 0.5;
+                tb.style.opacity = '0.5';
             }
             // ----移動
             const x = event.clientX + scroll.x;
@@ -626,7 +605,8 @@ const Timeline: React.FC = () => {
         }
     };
     const onTimebarDragEnd = event => {
-        console.log('DRAGEND', event.target.className);
+        const target: HTMLElement = event.target as HTMLElement;
+        console.log('DRAGEND', target.className);
         if (isDragging()) {
             const tdi = timebarDragInitial.current;
             const cbp = calenderBodyParam.current;
@@ -718,7 +698,7 @@ const Timeline: React.FC = () => {
                 );
             }
             const dcy = cy - baseCellY;
-            const dp = dcx * (cellXUnit / cellDivideNumber) * 1000; // [ms]
+            const dp = dcx * (cellXUnit / cellDivideNumber); // [ms]
             const selectedTimebarIds = selectedCElem.current.map(timebar =>
                 parseInt(timebar.dataset.id as string),
             );
@@ -727,19 +707,19 @@ const Timeline: React.FC = () => {
             const dateModifiedTasks = tasks.map((task, index) => {
                 if (selectedTimebarIds.indexOf(task.id) != -1) {
                     // 期間の編集
-                    const start = task.period.start.getTime();
-                    const end = task.period.end.getTime();
+                    const start = task.period.start;
+                    const end = task.period.end;
                     let newStart: Date;
                     let newEnd: Date;
                     if (tdi.targetType == 'whole') {
-                        newStart = new Date(start + dp);
-                        newEnd = new Date(end + dp);
+                        newStart = start + dp;
+                        newEnd = end + dp;
                     } else if (tdi.targetType == 'left') {
-                        newStart = new Date(start + dp);
-                        newEnd = new Date(end);
+                        newStart = start + dp;
+                        newEnd = end;
                     } else if (tdi.targetType == 'right') {
-                        newStart = new Date(start);
-                        newEnd = new Date(end + dp);
+                        newStart = start;
+                        newEnd = end + dp;
                     }
                     modifiedIndex.push(index);
                     //
@@ -815,9 +795,10 @@ const Timeline: React.FC = () => {
             keydown.current = null;
         });
         document.addEventListener('mousedown', event => {
-            console.log('document.mousedown', event.target.className, mousedownStart.current);
+            const target: HTMLElement = event.target as HTMLElement;
+            console.log('document.mousedown', target.className, mousedownStart.current);
             // cellのクリック
-            if (event.target.className.match('timelineCalenderCell')) {
+            if (target.className.match('ganttCalenderCell')) {
                 // 範囲内のtimebarを元に戻す
                 releaseSelectedCElem();
                 // マウス移動の起点を作成
@@ -838,11 +819,11 @@ const Timeline: React.FC = () => {
             }
             // Ctrl + timebarのクリック
             if (
-                event.target.className.match('timelineCalenderTimebarGroup') &&
+                target.className.match('ganttCalenderTimebarGroup') &&
                 keydown.current == 'Control'
             ) {
-                const x = event.target.dataset.x;
-                const y = event.target.dataset.y;
+                const x = target.dataset.x;
+                const y = target.dataset.y;
                 const wrapElem = getElementByPosition(x, y);
                 wrapElem.style.backgroundColor = c.color.multiSelected;
                 selectedCElem.current.push(getCalemderElementSnapshot(wrapElem));
@@ -870,9 +851,9 @@ const Timeline: React.FC = () => {
                 selectedAreaElem.style.height = `${Math.abs(dy)}px`;
                 selectedAreaElem.style.backgroundColor = c.color.dragArea;
                 // 範囲内のtimebarを反転
-                const timebars = [
-                    ...document.getElementsByClassName('timelineCalenderTimebarGroup'),
-                ].filter(e => e.dataset.target == 'wrap');
+                const timebars = getElementsByClassName('ganttCalenderTimebarGroup').filter(
+                    e => e.dataset.target == 'wrap',
+                );
                 const selected = [];
                 for (const timebar of timebars) {
                     const rect = timebar.getBoundingClientRect();
@@ -912,11 +893,11 @@ const Timeline: React.FC = () => {
     useEffect(() => {
         // calenderBodyParamを更新
         calenderBodyParam.current = getCalemderElementSnapshot(
-            document.getElementById('TimelineCalenderBody'),
+            document.getElementById('GanttCalenderBody'),
         );
         console.log('calenderBodyParam', calenderBodyParam.current);
         // スクロール量を保持
-        const calenderContainer = document.getElementById('timelineCalenderContainer');
+        const calenderContainer = document.getElementById('ganttCalenderContainer');
         calenderContainer.scrollTo(lastScroll.current.x, lastScroll.current.y);
         //
         console.log('tasks', tasks);
@@ -949,7 +930,6 @@ const Timeline: React.FC = () => {
                     backgroundColor: 'red',
                 }}
             ></div>
-            <Header></Header>
             <Main>
                 <SelectedArea id="selectedArea" />
                 <Modal
@@ -959,7 +939,7 @@ const Timeline: React.FC = () => {
                     onRequestClose={closeTaskModal}
                     ariaHideApp={false}
                 >
-                    {!!selectedTask ? (
+                    {selectedTask ? (
                         <div>
                             <p>{selectedTask.title}</p>
                             <p>
@@ -981,32 +961,32 @@ const Timeline: React.FC = () => {
                         <div>工事中</div>
                     )}
                 </Modal>
-                <TimelineTaskContainer>
-                    <TimelineTaskHeader></TimelineTaskHeader>
-                    <TimelineTaskList>
+                <GanttTaskContainer>
+                    <GanttTaskHeader></GanttTaskHeader>
+                    <GanttTaskList>
                         {tasks.map((task, index) => {
                             return (
-                                <TimelineTaskRow key={`task-row-${index}`}>
-                                    <TimelineTaskTitle>{task.title}</TimelineTaskTitle>
-                                    <TimelineTaskProperty>
+                                <GanttTaskRow key={`task-row-${index}`}>
+                                    <GanttTaskTitle>{task.title}</GanttTaskTitle>
+                                    <GanttTaskProperty>
                                         {`「${getMMDD(task.period.start)}:${getHH(
                                             task.period.start,
                                         )}`}
                                         〜
                                         {`${getMMDD(task.period.end)}:${getHH(task.period.end)}」`}
-                                    </TimelineTaskProperty>
-                                    <TimelineTaskProperty>{task.status}</TimelineTaskProperty>
-                                </TimelineTaskRow>
+                                    </GanttTaskProperty>
+                                    <GanttTaskProperty>{task.status}</GanttTaskProperty>
+                                </GanttTaskRow>
                             );
                         })}
-                    </TimelineTaskList>
-                </TimelineTaskContainer>
-                <TimelineCalenderContainer id="timelineCalenderContainer">
-                    <TimelineCalenderHeader>
-                        <TimelineCalenderHeaderParentContainer>
-                            {createParentTimelineLabel().map((parent, index) => {
+                    </GanttTaskList>
+                </GanttTaskContainer>
+                <GanttCalenderContainer id="ganttCalenderContainer">
+                    <GanttCalenderHeader>
+                        <GanttCalenderHeaderParentContainer>
+                            {createParentGanttLabel().map((parent, index) => {
                                 return (
-                                    <TimelineCalenderHeaderParent
+                                    <GanttCalenderHeaderParent
                                         key={`calender-header-parent-${index}`}
                                     >
                                         <div
@@ -1024,54 +1004,54 @@ const Timeline: React.FC = () => {
                                                     parent.number * c.cell.width * cellDivideNumber,
                                             }}
                                         ></div>
-                                    </TimelineCalenderHeaderParent>
+                                    </GanttCalenderHeaderParent>
                                 );
                             })}
-                        </TimelineCalenderHeaderParentContainer>
-                        <TimelineCalenderHeaderChildContainer>
+                        </GanttCalenderHeaderParentContainer>
+                        <GanttCalenderHeaderChildContainer>
                             {[...Array(calenderRangeDiff).keys()].map(j => {
                                 const d = new Date(calenderRange.start);
                                 d.setDate(d.getDate() + j);
                                 return (
-                                    <TimelineCalenderHeaderChild key={`calender-header-child-${j}`}>
+                                    <GanttCalenderHeaderChild key={`calender-header-child-${j}`}>
                                         {d.getDate()}
-                                    </TimelineCalenderHeaderChild>
+                                    </GanttCalenderHeaderChild>
                                 );
                             })}
-                        </TimelineCalenderHeaderChildContainer>
-                    </TimelineCalenderHeader>
-                    <TimelineCalenderBodyWrapper>
-                        <TimelineCalenderBody id="TimelineCalenderBody">
+                        </GanttCalenderHeaderChildContainer>
+                    </GanttCalenderHeader>
+                    <GanttCalenderBodyWrapper>
+                        <GanttCalenderBody id="GanttCalenderBody">
                             <div style={{ position: 'absolute', top: 0, left: 0 }}>test</div>
                             {tasks.map((task, y) => {
                                 const width =
                                     getTimeberWidth(task.period.start, task.period.end) -
                                     c.cell.width * 0.02;
-                                const tps = task.period.start;
+                                const tps = new Date(task.period.start);
                                 return (
-                                    <TimelineCalenderRow key={`calender-row-${y}`}>
+                                    <GanttCalenderRow key={`calender-row-${y}`}>
                                         {[
                                             ...Array(calenderRangeDiff * cellDivideNumber).keys(),
                                         ].map(x => {
                                             const s = new Date(calenderRange.start);
-                                            s.setHours(s.getHours() + x * 12);
+                                            s.setHours(s.getHours() + x * (24 / cellDivideNumber));
                                             const year = s.getFullYear() == tps.getFullYear();
-                                            const month = s.getMonth() == tps.getMonth();
+                                            const month = s.getMonth() + 1 == tps.getMonth() + 1;
                                             const date = s.getDate() == tps.getDate();
                                             const hour =
                                                 ceilfloor(s.getHours() / 24) ==
                                                 ceilfloor(tps.getHours() / 24);
                                             return (
-                                                <TimelineCalenderCell
+                                                <GanttCalenderCell
                                                     key={`calender-cell-${y}-${x}`}
-                                                    className="timelineCalenderCell"
+                                                    className="ganttCalenderCell"
                                                     data-x={x}
                                                     data-y={y}
                                                     data-target="cell"
                                                 >
                                                     {year && month && date && hour ? (
-                                                        <TimelineCalenderTimebarWrap
-                                                            className="timelineCalenderTimebarGroup"
+                                                        <GanttCalenderTimebarWrap
+                                                            className="ganttCalenderTimebarGroup"
                                                             data-id={task.id}
                                                             data-x={x}
                                                             data-y={y}
@@ -1081,8 +1061,8 @@ const Timeline: React.FC = () => {
                                                             }}
                                                         >
                                                             {task.id}
-                                                            <TimelineCalenderTimebar
-                                                                className="timelineCalenderTimebarGroup"
+                                                            <GanttCalenderTimebar
+                                                                className="ganttCalenderTimebarGroup"
                                                                 draggable="true"
                                                                 data-id={task.id}
                                                                 data-x={x}
@@ -1096,8 +1076,8 @@ const Timeline: React.FC = () => {
                                                                 onDrag={onTimebarDrag}
                                                                 onDragEnd={onTimebarDragEnd}
                                                             >
-                                                                <TimelineCalenderTimebarSide
-                                                                    className="timelineCalenderTimebarGroup"
+                                                                <GanttCalenderTimebarSide
+                                                                    className="ganttCalenderTimebarGroup"
                                                                     draggable="true"
                                                                     data-id={task.id}
                                                                     data-x={x}
@@ -1107,8 +1087,8 @@ const Timeline: React.FC = () => {
                                                                     onDrag={onTimebarDrag}
                                                                     onDragEnd={onTimebarDragEnd}
                                                                 />
-                                                                <TimelineCalenderTimebarSide
-                                                                    className="timelineCalenderTimebarGroup"
+                                                                <GanttCalenderTimebarSide
+                                                                    className="ganttCalenderTimebarGroup"
                                                                     draggable="true"
                                                                     data-id={task.id}
                                                                     data-x={x}
@@ -1118,23 +1098,23 @@ const Timeline: React.FC = () => {
                                                                     onDrag={onTimebarDrag}
                                                                     onDragEnd={onTimebarDragEnd}
                                                                 />
-                                                            </TimelineCalenderTimebar>
-                                                        </TimelineCalenderTimebarWrap>
+                                                            </GanttCalenderTimebar>
+                                                        </GanttCalenderTimebarWrap>
                                                     ) : (
                                                         <></>
                                                     )}
-                                                </TimelineCalenderCell>
+                                                </GanttCalenderCell>
                                             );
                                         })}
-                                    </TimelineCalenderRow>
+                                    </GanttCalenderRow>
                                 );
                             })}
-                        </TimelineCalenderBody>
-                    </TimelineCalenderBodyWrapper>
-                </TimelineCalenderContainer>
+                        </GanttCalenderBody>
+                    </GanttCalenderBodyWrapper>
+                </GanttCalenderContainer>
             </Main>
         </div>
     );
 };
 
-export default Timeline;
+export default Gantt;
