@@ -44,19 +44,19 @@ export const getTimeBlocks = (start: Date, end: Date, period: string): number =>
     return blocks == 0 ? 0.5 : blocks;
 };
 
-export const getYYYYMMDD = (d: Date, sep = '/'): string => {
+export const getYYYYMMDD = (d: Date | number, sep = '/'): string => {
     const d_ = new Date(d);
     return `${d_.getFullYear()}${sep}${d_.getMonth()}${sep}${d_.getDate()}`;
 };
-export const getHHMMSS = (d: Date, sep = ':'): string => {
+export const getHHMMSS = (d: Date | number, sep = ':'): string => {
     const d_ = new Date(d);
     return `${d_.getHours()}${sep}${d_.getMinutes()}${sep}${d_.getSeconds()}`;
 };
-export const getMMDD = (d: Date, sep = '/'): string => {
+export const getMMDD = (d: Date | number, sep = '/'): string => {
     const d_ = new Date(d);
     return `${d_.getMonth()}${sep}${d_.getDate()}`;
 };
-export const getHH = (d: Date): string => {
+export const getHH = (d: Date | number): string => {
     const d_ = new Date(d);
     return `${d_.getHours()}`;
 };

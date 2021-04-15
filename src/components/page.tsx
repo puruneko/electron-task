@@ -21,7 +21,7 @@ marked.setOptions({
 });
 
 type Props = {
-    projectName?: string; //page view挿入用
+    projectId?: number; //page view挿入用
     pageId?: number; //page view挿入用
     headless?: boolean;
 };
@@ -44,35 +44,24 @@ const Documents = styled.div`
     width: 100%;
 `;
 
-const PageComponent: React.FC<Props> = ({ projectName, pageId, headless = true }) => {
+const PageComponent: React.FC<Props> = ({ projectId, pageId, headless = true }) => {
     const params = useParams<any>();
     const queries = useQuery();
     const pageProperty = {
-        projectName: params.projectName || projectName,
+        projectId: params.projectId || projectId,
         pageId: params.pageId || pageId,
     };
     const dispatch = useDispatch();
     const { project, page } = useSelector(
         (props: IRootState) => ({
-            project: props.projects[pageProperty.projectName],
-            page: props.projects[pageProperty.projectName].pages.filter(
-                page => page.id == pageProperty.pageId,
-            )[0],
+            project: props.projects.filter(project => project.id == pageProperty.projectId)[0],
+            page: props.projects
+                .filter(project => project.id == pageProperty.projectId)[0]
+                .pages.filter(page => page.id == pageProperty.pageId)[0],
         }),
         shallowEqual,
     );
     console.log('PageComponent', 'params', params, 'queries', queries, 'page', page);
-    // --------------------------------------------------------
-    const editorString = useRef(
-        createDict(
-            page.documents.map(document => {
-                return document.id;
-            }),
-            id => {
-                return page.documents.filter(documentObj => documentObj.id == id)[0].document;
-            },
-        ),
-    );
     // --------------------------------------------------------
     useEffect(() => {
         console.log('focusedId', page.settings.focusedId);
@@ -97,7 +86,6 @@ const PageComponent: React.FC<Props> = ({ projectName, pageId, headless = true }
                         <DocumentCell
                             key={`documentCell-${index}`}
                             pageProperty={pageProperty}
-                            textRef={editorString}
                             docId={documentObj.id}
                         />
                     );
@@ -122,11 +110,12 @@ const DocumentDisplay = styled.div`
     border-radius: 10px;
 `;
 
-const DocumentCell = ({ pageProperty, textRef, docId }) => {
+const DocumentCell = ({ pageProperty, docId }) => {
     const { documentObj } = useSelector(
         (props: IRootState) => ({
-            documentObj: props.projects[pageProperty.projectName].pages
-                .filter(page => page.id == pageProperty.pageId)[0]
+            documentObj: props.projects
+                .filter(project => project.id == pageProperty.projectId)[0]
+                .pages.filter(page => page.id == pageProperty.pageId)[0]
                 .documents.filter(documentObj => documentObj.id == docId)[0],
         }),
         shallowEqual,
@@ -180,49 +169,49 @@ const DocumentCell = ({ pageProperty, textRef, docId }) => {
             } else if (isKeyCombination(event, 'a')) {
                 dispatch({
                     type: 'insertDocumentAbove',
-                    projectName: pageProperty.projectName,
+                    projectId: pageProperty.projectId,
                     pageId: pageProperty.pageId,
                     documentId: docId,
                 });
             } else if (isKeyCombination(event, 'b')) {
                 dispatch({
                     type: 'insertDocumentBelow',
-                    projectName: pageProperty.projectName,
+                    projectId: pageProperty.projectId,
                     pageId: pageProperty.pageId,
                     documentId: docId,
                 });
             } else if (isKeyCombination(event, 'd', 'd')) {
                 dispatch({
                     type: 'deleteDocument',
-                    projectName: pageProperty.projectName,
+                    projectId: pageProperty.projectId,
                     pageId: pageProperty.pageId,
                     documentId: docId,
                 });
             } else if (isKeyCombination(event, 'Alt', 'ArrowUp')) {
                 dispatch({
                     type: 'moveDocumentUp',
-                    projectName: pageProperty.projectName,
+                    projectId: pageProperty.projectId,
                     pageId: pageProperty.pageId,
                     documentId: docId,
                 });
             } else if (isKeyCombination(event, 'Alt', 'ArrowDown')) {
                 dispatch({
                     type: 'moveDocumentDown',
-                    projectName: pageProperty.projectName,
+                    projectId: pageProperty.projectId,
                     pageId: pageProperty.pageId,
                     documentId: docId,
                 });
             } else if (isKeyCombination(event, 'ArrowUp')) {
                 dispatch({
                     type: 'moveDocumentFocusUp',
-                    projectName: pageProperty.projectName,
+                    projectId: pageProperty.projectId,
                     pageId: pageProperty.pageId,
                     documentId: docId,
                 });
             } else if (isKeyCombination(event, 'ArrowDown')) {
                 dispatch({
                     type: 'moveDocumentFocusDown',
-                    projectName: pageProperty.projectName,
+                    projectId: pageProperty.projectId,
                     pageId: pageProperty.pageId,
                     documentId: docId,
                 });
@@ -272,7 +261,6 @@ const DocumentCell = ({ pageProperty, textRef, docId }) => {
             />
             <DocumentEditor
                 pageProperty={pageProperty}
-                textRef={textRef}
                 docId={docId}
                 cellEditorMode={cellEditorMode}
                 setCellEditorMode={setCellEditorMode}
@@ -281,11 +269,12 @@ const DocumentCell = ({ pageProperty, textRef, docId }) => {
     );
 };
 
-const DocumentEditor = ({ pageProperty, textRef, docId, cellEditorMode, setCellEditorMode }) => {
+const DocumentEditor = ({ pageProperty, docId, cellEditorMode, setCellEditorMode }) => {
     const { documentObj } = useSelector(
         (props: IRootState) => ({
-            documentObj: props.projects[pageProperty.projectName].pages
-                .filter(page => page.id == pageProperty.pageId)[0]
+            documentObj: props.projects
+                .filter(project => project.id == pageProperty.projectId)[0]
+                .pages.filter(page => page.id == pageProperty.pageId)[0]
                 .documents.filter(documentObj => documentObj.id == docId)[0],
         }),
         shallowEqual,
@@ -314,7 +303,7 @@ const DocumentEditor = ({ pageProperty, textRef, docId, cellEditorMode, setCellE
             // テキスト保存
             dispatch({
                 type: 'setDocument',
-                projectName: pageProperty.projectName,
+                projectId: pageProperty.projectId,
                 pageId: pageProperty.pageId,
                 documentId: docId,
                 document: text,
@@ -384,4 +373,4 @@ const DocumentEditor = ({ pageProperty, textRef, docId, cellEditorMode, setCellE
     );
 };
 
-export default memo(PageComponent);
+export default PageComponent;

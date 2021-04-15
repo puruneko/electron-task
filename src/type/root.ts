@@ -22,14 +22,18 @@ export interface ITask {
     id: ID;
     title: string;
     type: string;
-    documents: Array<string>;
+    documents: Array<document>;
     period: {
-        start: Date;
-        end: Date;
+        start: number; //[[ms]]
+        end: number; //[ms]
     };
-    status: ID;
+    statusId: ID;
     assign: Array<ID>;
     tags: Array<ID>;
+    settings: {
+        focusedId: ID;
+        nextId: ID;
+    };
 }
 
 export interface IPage {
@@ -38,10 +42,10 @@ export interface IPage {
     type: string;
     documents: Array<document>;
     period: {
-        start: Date;
-        end: Date;
+        start: number; //[[ms]]
+        end: number; //[ms]
     };
-    status: ID;
+    statusId: ID;
     assign: Array<ID>;
     tags: Array<ID>;
     settings: {

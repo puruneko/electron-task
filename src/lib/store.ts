@@ -6,8 +6,13 @@ import { logger } from './logger';
 import { getTime } from './time';
 
 let store;
-
+const now = new Date();
 const initialState = {
+    componentStates: {
+        gantt: {},
+        kanban: {},
+        page: {},
+    },
     constants: {
         authority: [
             {
@@ -37,11 +42,11 @@ const initialState = {
                 name: 'todo',
             },
             {
-                id: 2,
+                id: 3,
                 name: 'doing',
             },
             {
-                id: 2,
+                id: 4,
                 name: 'done',
             },
         ],
@@ -68,10 +73,258 @@ const initialState = {
             },
         ],
     },
-    projects: {
-        sampleProject: {
+    projects: [
+        {
             id: 1,
             name: 'sampleProject',
+            settings: {
+                ganttScale: 'date',
+                ganttCellDivideNumber: 2,
+            },
+            status: [
+                {
+                    id: 1,
+                    name: 'backlog',
+                    statusType: 1,
+                    color: 'gray',
+                },
+                {
+                    id: 2,
+                    name: 'scheduled',
+                    statusType: 1,
+                    color: 'green',
+                },
+                {
+                    id: 3,
+                    name: 'todo',
+                    statusType: 2,
+                    color: 'orange',
+                },
+                {
+                    id: 4,
+                    name: 'doing',
+                    statusType: 3,
+                    color: 'red',
+                },
+                {
+                    id: 5,
+                    name: 'done',
+                    statusType: 4,
+                    color: 'purple',
+                },
+            ],
+            tags: [
+                {
+                    id: 1,
+                    name: 'Tag1',
+                    color: 'red',
+                },
+                {
+                    id: 2,
+                    name: 'Tag2',
+                    color: 'blue',
+                },
+            ],
+            pages: [
+                {
+                    id: 1,
+                    title: 'sample1 page',
+                    documents: [
+                        {
+                            id: 1,
+                            document:
+                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                        },
+                        {
+                            id: 2,
+                            document:
+                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                        },
+                    ],
+                    period: {
+                        start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                        end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                    },
+                    statusId: 1,
+                    assign: [1],
+                    tags: [1],
+                    settings: {
+                        focusedId: 1,
+                        nextId: 2 + 1,
+                    },
+                },
+                {
+                    id: 2,
+                    title: 'sample2',
+                    documents: [
+                        {
+                            id: 1,
+                            document:
+                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                        },
+                        {
+                            id: 2,
+                            document:
+                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                        },
+                    ],
+                    period: {
+                        start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                        end: getTime(new Date(2021, now.getMonth(), now.getDate(), 18, 30)),
+                    },
+                    statusId: [1],
+                    assign: [1],
+                    tags: [1],
+                    settings: {
+                        focusedId: 1,
+                        nextId: 2 + 1,
+                    },
+                },
+            ],
+            tasks: [
+                {
+                    id: 1,
+                    title: 'sample1',
+                    documents: [
+                        {
+                            id: 1,
+                            document:
+                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                        },
+                        {
+                            id: 2,
+                            document:
+                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                        },
+                    ],
+                    period: {
+                        start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                        end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                    },
+                    statusId: 1,
+                    assign: [1],
+                    tags: [1],
+                },
+                {
+                    id: 2,
+                    title: 'sample2',
+                    documents: [
+                        {
+                            id: 1,
+                            document:
+                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                        },
+                        {
+                            id: 2,
+                            document:
+                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                        },
+                    ],
+                    period: {
+                        start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                        end: getTime(new Date(2021, now.getMonth(), now.getDate(), 18, 30)),
+                    },
+                    statusId: 2,
+                    assign: [1],
+                    tags: [1],
+                },
+                {
+                    id: 3,
+                    title: 'sample3',
+                    documents: [
+                        {
+                            id: 1,
+                            document:
+                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                        },
+                        {
+                            id: 2,
+                            document:
+                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                        },
+                    ],
+                    period: {
+                        start: getTime(new Date(2021, now.getMonth(), now.getDate() + 1, 11, 50)),
+                        end: getTime(new Date(2021, now.getMonth(), now.getDate() + 1, 12, 30)),
+                    },
+                    statusId: 3,
+                    assign: [1],
+                    tags: [1],
+                },
+                {
+                    id: 4,
+                    title: 'sample4',
+                    documents: [
+                        {
+                            id: 1,
+                            document:
+                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                        },
+                        {
+                            id: 2,
+                            document:
+                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                        },
+                    ],
+                    period: {
+                        start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                        end: getTime(new Date(2021, now.getMonth(), now.getDate() + 5, 12, 30)),
+                    },
+                    statusId: 4,
+                    assign: [1],
+                    tags: [1],
+                },
+                {
+                    id: 5,
+                    title: 'sample5',
+                    documents: [
+                        {
+                            id: 1,
+                            document:
+                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                        },
+                        {
+                            id: 2,
+                            document:
+                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                        },
+                    ],
+                    period: {
+                        start: getTime(new Date(2021, now.getMonth(), now.getDate() + 3, 11, 50)),
+                        end: getTime(new Date(2021, now.getMonth(), now.getDate() + 3, 13, 30)),
+                    },
+                    statusId: 5,
+                    assign: [1],
+                    tags: [1],
+                },
+                {
+                    id: 6,
+                    title: 'sample6',
+                    documents: [
+                        {
+                            id: 1,
+                            document:
+                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                        },
+                        {
+                            id: 2,
+                            document:
+                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                        },
+                    ],
+                    period: {
+                        start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                        end: getTime(new Date(2021, now.getMonth(), now.getDate(), 18, 30)),
+                    },
+                    statusId: 1,
+                    assign: [1],
+                    tags: [1],
+                },
+            ],
+        },
+        {
+            id: 2,
+            name: 'sampleProject2',
             settings: {
                 ganttScale: 'date',
                 ganttCellDivideNumber: 2,
@@ -137,10 +390,10 @@ const initialState = {
                         },
                     ],
                     period: {
-                        start: getTime(new Date(2021, 4 - 1, 10, 11, 50)),
-                        end: getTime(new Date(2021, 4 - 1, 10, 12, 30)),
+                        start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                        end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
                     },
-                    status: 1,
+                    statusId: 1,
                     assign: [1],
                     tags: [1],
                     settings: {
@@ -164,10 +417,10 @@ const initialState = {
                         },
                     ],
                     period: {
-                        start: getTime(new Date(2021, 4 - 1, 10, 11, 50)),
-                        end: getTime(new Date(2021, 4 - 1, 10, 18, 30)),
+                        start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                        end: getTime(new Date(2021, now.getMonth(), now.getDate(), 18, 30)),
                     },
-                    status: [1],
+                    statusId: [1],
                     assign: [1],
                     tags: [1],
                     settings: {
@@ -193,10 +446,10 @@ const initialState = {
                         },
                     ],
                     period: {
-                        start: getTime(new Date(2021, 4 - 1, 10, 11, 50)),
-                        end: getTime(new Date(2021, 4 - 1, 10, 12, 30)),
+                        start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                        end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
                     },
-                    status: 1,
+                    statusId: 1,
                     assign: [1],
                     tags: [1],
                 },
@@ -216,10 +469,10 @@ const initialState = {
                         },
                     ],
                     period: {
-                        start: getTime(new Date(2021, 4 - 1, 10, 11, 50)),
-                        end: getTime(new Date(2021, 4 - 1, 10, 18, 30)),
+                        start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                        end: getTime(new Date(2021, now.getMonth(), now.getDate(), 18, 30)),
                     },
-                    status: [1],
+                    statusId: [1],
                     assign: [1],
                     tags: [1],
                 },
@@ -239,10 +492,10 @@ const initialState = {
                         },
                     ],
                     period: {
-                        start: getTime(new Date(2021, 4 - 1, 11, 11, 50)),
-                        end: getTime(new Date(2021, 4 - 1, 11, 12, 30)),
+                        start: getTime(new Date(2021, now.getMonth(), now.getDate() + 1, 11, 50)),
+                        end: getTime(new Date(2021, now.getMonth(), now.getDate() + 1, 12, 30)),
                     },
-                    status: [1],
+                    statusId: [1],
                     assign: [1],
                     tags: [1],
                 },
@@ -262,10 +515,10 @@ const initialState = {
                         },
                     ],
                     period: {
-                        start: getTime(new Date(2021, 4 - 1, 10, 11, 50)),
-                        end: getTime(new Date(2021, 4 - 1, 15, 12, 30)),
+                        start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                        end: getTime(new Date(2021, now.getMonth(), now.getDate() + 5, 12, 30)),
                     },
-                    status: [1],
+                    statusId: [1],
                     assign: [1],
                     tags: [1],
                 },
@@ -285,10 +538,10 @@ const initialState = {
                         },
                     ],
                     period: {
-                        start: getTime(new Date(2021, 4 - 1, 13, 11, 50)),
-                        end: getTime(new Date(2021, 4 - 1, 13, 13, 30)),
+                        start: getTime(new Date(2021, now.getMonth(), now.getDate() + 3, 11, 50)),
+                        end: getTime(new Date(2021, now.getMonth(), now.getDate() + 3, 13, 30)),
                     },
-                    status: [1],
+                    statusId: [1],
                     assign: [1],
                     tags: [1],
                 },
@@ -308,16 +561,16 @@ const initialState = {
                         },
                     ],
                     period: {
-                        start: getTime(new Date(2021, 4 - 1, 10, 11, 50)),
-                        end: getTime(new Date(2021, 4 - 1, 10, 18, 30)),
+                        start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                        end: getTime(new Date(2021, now.getMonth(), now.getDate(), 18, 30)),
                     },
-                    status: [1],
+                    statusId: [1],
                     assign: [1],
                     tags: [1],
                 },
             ],
         },
-    },
+    ],
 };
 
 //export const reducer = (state = initialState, action) => {
@@ -336,47 +589,70 @@ export const reducer = (state, action) => {
                     ...action.payload,
                 },
             );
+        case 'setComponentState': {
+            // componentName
+            // state
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    componentStates: {
+                        ...state.componentStates,
+                        [action.componentName]: {
+                            ...state.componentStates[action.componentName],
+                            ...action.state,
+                        },
+                    },
+                },
+            );
+        }
         case 'setTasks':
-            // projectName
+            // projectId
             // tasks
             logger.debug('reducer setTasks', action);
             return Object.assign(
                 {},
                 {
                     ...state,
-                    projects: {
-                        ...state.projects,
-                        [action.projectName]: {
-                            ...state.projects[action.projectName],
-                            tasks: action.tasks,
-                        },
-                    },
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                tasks: action.tasks,
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
                 },
             );
         case 'setPages':
-            // projectName
+            // projectId
             // pages
             logger.debug('reducer setPages', action);
             return Object.assign(
                 {},
                 {
                     ...state,
-                    projects: {
-                        ...state.projects,
-                        [action.projectName]: {
-                            ...state.projects[action.projectName],
-                            pages: action.pages,
-                        },
-                    },
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                pages: action.pages,
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
                 },
             );
         case 'setPage':
-            // projectName
+            // projectId
             // pageId
             // page
             logger.debug('reducer setPage', action);
-            const setPage = () => {
-                const newPages = state.projects[action.projectName].pages.map(page => {
+            const setPage = project => {
+                const newPages = project.pages.map(page => {
                     if (page.id == action.pageId) {
                         return action.page;
                     } else {
@@ -391,27 +667,29 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: {
-                        ...state.projects,
-                        [action.projectName]: {
-                            ...state.projects[action.projectName],
-                            ...setPage(),
-                        },
-                    },
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                ...setPage(project),
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
                 },
             );
         case 'setDocument':
-            // projectName
+            // projectId
             // pageId
             // documentId
             // document
             logger.debug('reducer setDocument', action);
-            const setDocument = () => {
-                const newPages = state.projects[action.projectName].pages.map(page => {
+            const setDocument = project => {
+                const newPages = project.pages.map(page => {
                     if (page.id == action.pageId) {
                         return {
                             ...page,
-                            focusedId: action.documentId,
                             documents: page.documents.map(documentObj => {
                                 if (documentObj.id == action.documentId) {
                                     return {
@@ -422,6 +700,10 @@ export const reducer = (state, action) => {
                                     return documentObj;
                                 }
                             }),
+                            settings: {
+                                ...page.settings,
+                                focusedId: action.documentId,
+                            },
                         };
                     } else {
                         return page;
@@ -435,17 +717,20 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: {
-                        ...state.projects,
-                        [action.projectName]: {
-                            ...state.projects[action.projectName],
-                            ...setDocument(),
-                        },
-                    },
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                ...setDocument(project),
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
                 },
             );
         case 'insertDocumentAbove':
-            // projectName
+            // projectId
             // pageId
             // documentId
             // document?
@@ -474,26 +759,29 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: {
-                        ...state.projects,
-                        [action.projectName]: {
-                            ...state.projects[action.projectName],
-                            pages: state.projects[action.projectName].pages.map(page => {
-                                if (page.id == action.pageId) {
-                                    return {
-                                        ...page,
-                                        ...insertDocumentAbove(page),
-                                    };
-                                } else {
-                                    return page;
-                                }
-                            }),
-                        },
-                    },
+                    projects: state.ptojects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                pages: project.pages.map(page => {
+                                    if (page.id == action.pageId) {
+                                        return {
+                                            ...page,
+                                            ...insertDocumentAbove(page),
+                                        };
+                                    } else {
+                                        return page;
+                                    }
+                                }),
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
                 },
             );
         case 'insertDocumentBelow':
-            // projectName
+            // projectId
             // pageId
             // documentId
             // document?
@@ -522,26 +810,29 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: {
-                        ...state.projects,
-                        [action.projectName]: {
-                            ...state.projects[action.projectName],
-                            pages: state.projects[action.projectName].pages.map(page => {
-                                if (page.id == action.pageId) {
-                                    return {
-                                        ...page,
-                                        ...insertDocumentBelow(page),
-                                    };
-                                } else {
-                                    return page;
-                                }
-                            }),
-                        },
-                    },
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                pages: project.pages.map(page => {
+                                    if (page.id == action.pageId) {
+                                        return {
+                                            ...page,
+                                            ...insertDocumentBelow(page),
+                                        };
+                                    } else {
+                                        return page;
+                                    }
+                                }),
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
                 },
             );
         case 'deleteDocument':
-            // projectName
+            // projectId
             // pageId
             // documentId
             logger.debug('reducer deleteDocument', action);
@@ -579,26 +870,29 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: {
-                        ...state.projects,
-                        [action.projectName]: {
-                            ...state.projects[action.projectName],
-                            pages: state.projects[action.projectName].pages.map(page => {
-                                if (page.id == action.pageId) {
-                                    return {
-                                        ...page,
-                                        ...deleteDocument(page),
-                                    };
-                                } else {
-                                    return page;
-                                }
-                            }),
-                        },
-                    },
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                pages: project.pages.map(page => {
+                                    if (page.id == action.pageId) {
+                                        return {
+                                            ...page,
+                                            ...deleteDocument(page),
+                                        };
+                                    } else {
+                                        return page;
+                                    }
+                                }),
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
                 },
             );
         case 'moveDocumentUp':
-            // projectName
+            // projectId
             // pageId
             // documentId
             logger.debug('reducer moveDocumentUp', action);
@@ -637,26 +931,29 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: {
-                        ...state.projects,
-                        [action.projectName]: {
-                            ...state.projects[action.projectName],
-                            pages: state.projects[action.projectName].pages.map(page => {
-                                if (page.id == action.pageId) {
-                                    return {
-                                        ...page,
-                                        ...moveDocumentUp(page),
-                                    };
-                                } else {
-                                    return page;
-                                }
-                            }),
-                        },
-                    },
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                pages: project.pages.map(page => {
+                                    if (page.id == action.pageId) {
+                                        return {
+                                            ...page,
+                                            ...moveDocumentUp(page),
+                                        };
+                                    } else {
+                                        return page;
+                                    }
+                                }),
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
                 },
             );
         case 'moveDocumentDown':
-            // projectName
+            // projectId
             // pageId
             // documentId
             logger.debug('reducer moveDocumentDown', action);
@@ -695,26 +992,29 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: {
-                        ...state.projects,
-                        [action.projectName]: {
-                            ...state.projects[action.projectName],
-                            pages: state.projects[action.projectName].pages.map(page => {
-                                if (page.id == action.pageId) {
-                                    return {
-                                        ...page,
-                                        ...moveDocumentDown(page),
-                                    };
-                                } else {
-                                    return page;
-                                }
-                            }),
-                        },
-                    },
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                pages: project.pages.map(page => {
+                                    if (page.id == action.pageId) {
+                                        return {
+                                            ...page,
+                                            ...moveDocumentDown(page),
+                                        };
+                                    } else {
+                                        return page;
+                                    }
+                                }),
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
                 },
             );
         case 'moveDocumentFocusUp':
-            // projectName
+            // projectId
             // pageId
             // documentId
             logger.debug('reducer moveDocumentFocusUp', action);
@@ -741,26 +1041,29 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: {
-                        ...state.projects,
-                        [action.projectName]: {
-                            ...state.projects[action.projectName],
-                            pages: state.projects[action.projectName].pages.map(page => {
-                                if (page.id == action.pageId) {
-                                    return {
-                                        ...page,
-                                        ...moveDocumentFocusUp(page),
-                                    };
-                                } else {
-                                    return page;
-                                }
-                            }),
-                        },
-                    },
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                pages: project.pages.map(page => {
+                                    if (page.id == action.pageId) {
+                                        return {
+                                            ...page,
+                                            ...moveDocumentFocusUp(page),
+                                        };
+                                    } else {
+                                        return page;
+                                    }
+                                }),
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
                 },
             );
         case 'moveDocumentFocusDown':
-            // projectName
+            // projectId
             // pageId
             // documentId
             logger.debug('reducer moveDocumentFocusDown', action);
@@ -787,22 +1090,25 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: {
-                        ...state.projects,
-                        [action.projectName]: {
-                            ...state.projects[action.projectName],
-                            pages: state.projects[action.projectName].pages.map(page => {
-                                if (page.id == action.pageId) {
-                                    return {
-                                        ...page,
-                                        ...moveDocumentFocusDown(page),
-                                    };
-                                } else {
-                                    return page;
-                                }
-                            }),
-                        },
-                    },
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                pages: project.pages.map(page => {
+                                    if (page.id == action.pageId) {
+                                        return {
+                                            ...page,
+                                            ...moveDocumentFocusDown(page),
+                                        };
+                                    } else {
+                                        return page;
+                                    }
+                                }),
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
                 },
             );
         default:

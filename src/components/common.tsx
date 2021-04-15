@@ -1,5 +1,5 @@
-import React, { memo, PropsWithChildren, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { memo, PropsWithChildren, useCallback, useEffect, useState } from 'react';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { IRootState } from '../type/store';
@@ -51,6 +51,12 @@ const Common: React.FC = ({ children }) => {
 
 const NavArea = () => {
     console.log('Navarea rerender');
+    const { projects } = useSelector(
+        (props: IRootState) => ({
+            projects: props.projects,
+        }),
+        shallowEqual,
+    );
     const [isOpenNavbar, setIsOpenNavbar] = useState(false);
     const Navs = styled.div`
         width: 100%;
@@ -68,9 +74,9 @@ const NavArea = () => {
         position: absolute;
         top: 0;
         left: 0;
-        width: 100px;
+        width: 200px;
         height: 100%;
-        background-color: gray;
+        background-color: rgba(143, 143, 143, 0.8);
         z-index: 1;
     `;
     return (
@@ -94,8 +100,37 @@ const NavArea = () => {
                 >
                     OFF
                 </button>
-                <Link to="/sampleProject/gantt?scale=date">Gantt</Link>
-                <Link to="/sampleProject/page/1">Page</Link>
+                {!!projects &&
+                    projects.map((project, index) => {
+                        return (
+                            <div key={`navbar-project-${index}`}>
+                                {project.name}
+                                <div>
+                                    <Link
+                                        to={`/${project.id}/gantt?scale=${project.settings.ganttScale}`}
+                                    >
+                                        Gantt
+                                    </Link>
+                                </div>
+                                <div>
+                                    <Link to={`/${project.id}/kanban`}>Kanban</Link>
+                                </div>
+                                <div>
+                                    Page
+                                    {project.pages.map((page, index2) => {
+                                        return (
+                                            <div key={`navbar-page-${index}-${index2}`}>
+                                                <Link to={`/${project.id}/page/${page.id}`}>
+                                                    {page.title}
+                                                </Link>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <hr />
+                            </div>
+                        );
+                    })}
             </Navbar>
         </Navs>
     );

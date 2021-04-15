@@ -6,7 +6,6 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { TargetType } from '../type/gantt';
 import { floor, ceil, ceilfloor, topbottom, useQuery } from '../lib/utils';
 import { getTimedelta, getYYYYMMDD, getHHMMSS, getMMDD, getHH, getTime } from '../lib/time';
-import { IPage } from '../type/root';
 import { IRootState } from '../type/store';
 import {
     Second,
@@ -24,8 +23,8 @@ const Gantt: React.FC = () => {
     const dispatch = useDispatch();
     const { project, tasks } = useSelector(
         (props: IRootState) => ({
-            project: props.projects[params.projectName],
-            tasks: props.projects[params.projectName].tasks,
+            project: props.projects.filter(project => project.id == params.projectId)[0],
+            tasks: props.projects.filter(project => project.id == params.projectId)[0].tasks,
         }),
         shallowEqual,
     );
@@ -33,7 +32,7 @@ const Gantt: React.FC = () => {
     const setTasks = newTasks => {
         dispatch({
             type: 'setTasks',
-            projectName: project.name,
+            projectId: project.id,
             tasks: newTasks,
         });
     };
@@ -709,8 +708,8 @@ const Gantt: React.FC = () => {
                     // 期間の編集
                     const start = task.period.start;
                     const end = task.period.end;
-                    let newStart: Date;
-                    let newEnd: Date;
+                    let newStart: number;
+                    let newEnd: number;
                     if (tdi.targetType == 'whole') {
                         newStart = start + dp;
                         newEnd = end + dp;
@@ -919,17 +918,6 @@ const Gantt: React.FC = () => {
     };
     return (
         <div>
-            <div
-                style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: 10,
-                    height: 10,
-                    borderRadius: 5,
-                    backgroundColor: 'red',
-                }}
-            ></div>
             <Main>
                 <SelectedArea id="selectedArea" />
                 <Modal
