@@ -9,7 +9,6 @@ export interface IProject {
     };
     status: Array<any>;
     tags: Array<any>;
-    tasks: Array<ITask>;
     pages: Array<IPage>;
 }
 
@@ -18,28 +17,10 @@ export type document = {
     document: string;
 };
 
-export interface ITask {
-    id: ID;
-    title: string;
-    type: string;
-    documents: Array<document>;
-    period: {
-        start: number; //[[ms]]
-        end: number; //[ms]
-    };
-    statusId: ID;
-    assign: Array<ID>;
-    tags: Array<ID>;
-    settings: {
-        focusedId: ID;
-        nextId: ID;
-    };
-}
-
 export interface IPage {
     id: ID;
-    title: string;
     type: string;
+    title: string;
     documents: Array<document>;
     period: {
         start: number; //[[ms]]

@@ -24,7 +24,9 @@ const Gantt: React.FC = () => {
     const { project, tasks } = useSelector(
         (props: IRootState) => ({
             project: props.projects.filter(project => project.id == params.projectId)[0],
-            tasks: props.projects.filter(project => project.id == params.projectId)[0].tasks,
+            tasks: props.projects
+                .filter(project => project.id == params.projectId)[0]
+                .pages.filter(page => page.type == 'task'),
         }),
         shallowEqual,
     );

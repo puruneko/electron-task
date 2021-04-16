@@ -117,15 +117,17 @@ const NavArea = () => {
                                 </div>
                                 <div>
                                     Page
-                                    {project.pages.map((page, index2) => {
-                                        return (
-                                            <div key={`navbar-page-${index}-${index2}`}>
-                                                <Link to={`/${project.id}/page/${page.id}`}>
-                                                    {page.title}
-                                                </Link>
-                                            </div>
-                                        );
-                                    })}
+                                    {project.pages
+                                        .filter(page => page.type == 'page')
+                                        .map((page, index2) => {
+                                            return (
+                                                <div key={`navbar-page-${index}-${index2}`}>
+                                                    <Link to={`/${project.id}/page/${page.id}`}>
+                                                        {page.title}
+                                                    </Link>
+                                                </div>
+                                            );
+                                        })}
                                 </div>
                                 <hr />
                             </div>

@@ -51,9 +51,12 @@ const Kanban: React.FC = () => {
     const params = useParams<any>();
     const queries = useQuery();
     const projectId = params.projectId;
-    const { project, openTaskId } = useSelector(
+    const { project, tasks, openTaskId } = useSelector(
         (props: IRootState) => ({
             project: props.projects.filter(project => project.id == projectId)[0],
+            tasks: props.projects
+                .filter(project => project.id == projectId)[0]
+                .pages.filter(page => page.type == 'task'),
             openTaskId: props.componentStates.kanban.openTaskId,
         }),
         shallowEqual,
@@ -91,17 +94,17 @@ const Kanban: React.FC = () => {
         const newTasks = [];
         if (currentOverElem.current.dataset.id == event.target.dataset.id) {
             // 自分自身にドロップしたら、何も変更しない
-            for (const task of project.tasks) {
+            for (const task of tasks) {
                 newTasks.push(task);
             }
         } else if (currentOverElem.current.dataset.id == -1) {
             // 最後尾にドロップした場合
-            const statusTaskEnd = project.tasks
+            const statusTaskEnd = tasks
                 .filter(task => task.statusId == currentOverElem.current.dataset.statusid)
                 .slice(-1)[0];
             // ステータスに要素が1つ以上存在する場合
             if (!!statusTaskEnd) {
-                for (const task of project.tasks) {
+                for (const task of tasks) {
                     if (task.id == statusTaskEnd.id) {
                         if (
                             selectedTaskElems.current.filter(stask => stask.dataset.id == task.id)
@@ -111,7 +114,7 @@ const Kanban: React.FC = () => {
                         }
                         for (const stask of selectedTaskElems.current) {
                             newTasks.push({
-                                ...project.tasks.filter(task => task.id == stask.dataset.id)[0],
+                                ...tasks.filter(task => task.id == stask.dataset.id)[0],
                                 statusId: task.statusId,
                             });
                         }
@@ -126,7 +129,7 @@ const Kanban: React.FC = () => {
                 }
             } else {
                 // ステータスに要素が0の場合
-                for (const task of project.tasks) {
+                for (const task of tasks) {
                     // taskがselectedTaskElemsの中にヒットするか
                     const stask = selectedTaskElems.current.filter(
                         stask => task.id == stask.dataset.id,
@@ -144,11 +147,11 @@ const Kanban: React.FC = () => {
                 }
             }
         } else {
-            for (const task of project.tasks) {
+            for (const task of tasks) {
                 if (task.id == currentOverElem.current.dataset.id) {
                     for (const stask of selectedTaskElems.current) {
                         newTasks.push({
-                            ...project.tasks.filter(task => task.id == stask.dataset.id)[0],
+                            ...tasks.filter(task => task.id == stask.dataset.id)[0],
                             statusId: task.statusId,
                         });
                     }
@@ -214,7 +217,7 @@ const Kanban: React.FC = () => {
                             <span style={{ color: status.color }}>{status.name}</span>
                         </StatusHeader>
                         <StatusTasks>
-                            {project.tasks
+                            {tasks
                                 .filter(task => task.statusId == status.id)
                                 .map((task, index2) => {
                                     return (
