@@ -28,7 +28,7 @@ const Common: React.FC = ({ children }) => {
     `;
     const Contents = styled.div`
         position: absolute;
-        top: 100px;
+        top: 30px;
         left: 0;
         min-height: calc(100vh-100px);
         width: 100%;
@@ -66,7 +66,7 @@ const NavArea = () => {
         top: 0;
         left: 0;
         width: 100%;
-        height: 100px;
+        height: 30px;
         background-color: lightgray;
     `;
     const Navbar = styled.div`

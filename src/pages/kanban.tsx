@@ -47,6 +47,8 @@ const TaskModalWrapper = styled.div`
     left: 15%;
     width: 70vw;
     height: 90vh;
+    max-width: 70vw;
+    max-height: 90vh;
     background-color: white;
 `;
 

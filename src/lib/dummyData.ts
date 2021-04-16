@@ -75,7 +75,6 @@ export const initialState = {
             settings: {
                 ganttScale: 'date',
                 ganttCellDivideNumber: 2,
-                pageNextId: 9,
             },
             status: [
                 {
@@ -111,12 +110,12 @@ export const initialState = {
             ],
             tags: [
                 {
-                    id: 1,
+                    id: 4,
                     name: 'Tag1',
                     color: 'red',
                 },
                 {
-                    id: 2,
+                    id: 5,
                     name: 'Tag2',
                     color: 'blue',
                 },
@@ -147,7 +146,6 @@ export const initialState = {
                     tags: [1],
                     settings: {
                         focusedId: 1,
-                        nextId: 2 + 1,
                     },
                 },
                 {
@@ -175,7 +173,6 @@ export const initialState = {
                     tags: [1],
                     settings: {
                         focusedId: 1,
-                        nextId: 2 + 1,
                     },
                 },
                 {
@@ -203,7 +200,6 @@ export const initialState = {
                     tags: [1],
                     settings: {
                         focusedId: 1,
-                        nextId: 2 + 1,
                     },
                 },
                 {
@@ -231,7 +227,6 @@ export const initialState = {
                     tags: [1],
                     settings: {
                         focusedId: 1,
-                        nextId: 2 + 1,
                     },
                 },
                 {
@@ -259,7 +254,6 @@ export const initialState = {
                     tags: [1],
                     settings: {
                         focusedId: 1,
-                        nextId: 2 + 1,
                     },
                 },
                 {
@@ -287,7 +281,6 @@ export const initialState = {
                     tags: [1],
                     settings: {
                         focusedId: 1,
-                        nextId: 2 + 1,
                     },
                 },
                 {
@@ -315,7 +308,6 @@ export const initialState = {
                     tags: [1],
                     settings: {
                         focusedId: 1,
-                        nextId: 2 + 1,
                     },
                 },
                 {
@@ -343,7 +335,6 @@ export const initialState = {
                     tags: [1],
                     settings: {
                         focusedId: 1,
-                        nextId: 2 + 1,
                     },
                 },
             ],
@@ -354,7 +345,6 @@ export const initialState = {
             settings: {
                 ganttScale: 'date',
                 ganttCellDivideNumber: 2,
-                pageNextId: 9,
             },
             status: [
                 {
@@ -390,12 +380,12 @@ export const initialState = {
             ],
             tags: [
                 {
-                    id: 1,
+                    id: 4,
                     name: 'Tag1',
                     color: 'red',
                 },
                 {
-                    id: 2,
+                    id: 5,
                     name: 'Tag2',
                     color: 'blue',
                 },
@@ -426,7 +416,6 @@ export const initialState = {
                     tags: [1],
                     settings: {
                         focusedId: 1,
-                        nextId: 2 + 1,
                     },
                 },
                 {
@@ -454,7 +443,6 @@ export const initialState = {
                     tags: [1],
                     settings: {
                         focusedId: 1,
-                        nextId: 2 + 1,
                     },
                 },
                 {
@@ -482,7 +470,6 @@ export const initialState = {
                     tags: [1],
                     settings: {
                         focusedId: 1,
-                        nextId: 2 + 1,
                     },
                 },
                 {
@@ -510,7 +497,6 @@ export const initialState = {
                     tags: [1],
                     settings: {
                         focusedId: 1,
-                        nextId: 2 + 1,
                     },
                 },
                 {
@@ -538,7 +524,6 @@ export const initialState = {
                     tags: [1],
                     settings: {
                         focusedId: 1,
-                        nextId: 2 + 1,
                     },
                 },
                 {
@@ -566,7 +551,6 @@ export const initialState = {
                     tags: [1],
                     settings: {
                         focusedId: 1,
-                        nextId: 2 + 1,
                     },
                 },
                 {
@@ -594,7 +578,6 @@ export const initialState = {
                     tags: [1],
                     settings: {
                         focusedId: 1,
-                        nextId: 2 + 1,
                     },
                 },
                 {
@@ -622,7 +605,6 @@ export const initialState = {
                     tags: [1],
                     settings: {
                         focusedId: 1,
-                        nextId: 2 + 1,
                     },
                 },
             ],

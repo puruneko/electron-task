@@ -31,6 +31,5 @@ export interface IPage {
     tags: Array<ID>;
     settings: {
         focusedId: ID;
-        nextId: ID;
     };
 }

@@ -179,7 +179,7 @@ export const reducer = (state, action) => {
             logger.debug('reducer insertDocumentAbove', action);
             const insertDocumentAbove = page => {
                 const newDocuments = [];
-                const newId = page.settings.nextId;
+                const newId = Math.max(...page.documents.map(document => document.id)) + 1;
                 for (const documentObj of page.documents) {
                     if (documentObj.id == action.documentId) {
                         newDocuments.push({
@@ -193,7 +193,6 @@ export const reducer = (state, action) => {
                     documents: newDocuments,
                     settings: {
                         focusedId: newId,
-                        nextId: newId + 1,
                     },
                 };
             };
@@ -230,7 +229,7 @@ export const reducer = (state, action) => {
             logger.debug('reducer insertDocumentBelow', action);
             const insertDocumentBelow = page => {
                 const newDocuments = [];
-                const newId = page.settings.nextId;
+                const newId = Math.max(...page.documents.map(document => document.id)) + 1;
                 for (const documentObj of page.documents) {
                     newDocuments.push(documentObj);
                     if (documentObj.id == action.documentId) {
@@ -244,7 +243,6 @@ export const reducer = (state, action) => {
                     documents: newDocuments,
                     settings: {
                         focusedId: newId,
-                        nextId: newId + 1,
                     },
                 };
             };

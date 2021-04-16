@@ -32,7 +32,8 @@ const PageComponentContainer = styled.div`
     border: none;
     width: 100%;
     height: 100%;
-    overflow-y: scroll;
+    max-height: 100vh;
+    overflow-y: auto;
 `;
 const Header = styled.div`
     width: 100%;
