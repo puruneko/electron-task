@@ -201,7 +201,7 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.ptojects.map(project => {
+                    projects: state.projects.map(project => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,

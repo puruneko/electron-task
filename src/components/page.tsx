@@ -41,7 +41,7 @@ const Header = styled.div`
 const Documents = styled.div`
     margin: 20x;
     padding: 20px;
-    width: 100%;
+    width: 90%;
 `;
 
 const PageComponent: React.FC<Props> = ({ projectId, pageId, headless = true }) => {
@@ -97,8 +97,8 @@ const PageComponent: React.FC<Props> = ({ projectId, pageId, headless = true }) 
 
 const DocumentCellContainer = styled.div`
     position: relative;
-    margin-top: 20px;
-    margin-bottom: 20px;
+    margin-top: 5px;
+    margin-bottom: 5px;
     width: 100%;
     min-height: 50px;
     height: auto;
@@ -106,8 +106,10 @@ const DocumentCellContainer = styled.div`
 const DocumentDisplay = styled.div`
     width: 100%;
     min-height: 50px;
-    border: 1px solid black;
-    border-radius: 10px;
+    padding-left: 10px;
+    border: solid lightgray;
+    border-width: 0 0 0 4px;
+    border-radius: 0;
 `;
 
 const DocumentCell = ({ pageProperty, docId }) => {

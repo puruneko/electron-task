@@ -201,6 +201,10 @@ export const initialState = {
                     statusId: 1,
                     assign: [1],
                     tags: [1],
+                    settings: {
+                        focusedId: 1,
+                        nextId: 2 + 1,
+                    },
                 },
                 {
                     id: 2,
@@ -225,6 +229,10 @@ export const initialState = {
                     statusId: 2,
                     assign: [1],
                     tags: [1],
+                    settings: {
+                        focusedId: 1,
+                        nextId: 2 + 1,
+                    },
                 },
                 {
                     id: 3,
@@ -249,6 +257,10 @@ export const initialState = {
                     statusId: 3,
                     assign: [1],
                     tags: [1],
+                    settings: {
+                        focusedId: 1,
+                        nextId: 2 + 1,
+                    },
                 },
                 {
                     id: 4,
@@ -273,6 +285,10 @@ export const initialState = {
                     statusId: 4,
                     assign: [1],
                     tags: [1],
+                    settings: {
+                        focusedId: 1,
+                        nextId: 2 + 1,
+                    },
                 },
                 {
                     id: 5,
@@ -297,6 +313,10 @@ export const initialState = {
                     statusId: 5,
                     assign: [1],
                     tags: [1],
+                    settings: {
+                        focusedId: 1,
+                        nextId: 2 + 1,
+                    },
                 },
                 {
                     id: 6,
@@ -321,6 +341,10 @@ export const initialState = {
                     statusId: 1,
                     assign: [1],
                     tags: [1],
+                    settings: {
+                        focusedId: 1,
+                        nextId: 2 + 1,
+                    },
                 },
             ],
         },
@@ -456,6 +480,10 @@ export const initialState = {
                     statusId: 1,
                     assign: [1],
                     tags: [1],
+                    settings: {
+                        focusedId: 1,
+                        nextId: 2 + 1,
+                    },
                 },
                 {
                     id: 2,
@@ -480,6 +508,10 @@ export const initialState = {
                     statusId: [1],
                     assign: [1],
                     tags: [1],
+                    settings: {
+                        focusedId: 1,
+                        nextId: 2 + 1,
+                    },
                 },
                 {
                     id: 3,
@@ -504,6 +536,10 @@ export const initialState = {
                     statusId: [1],
                     assign: [1],
                     tags: [1],
+                    settings: {
+                        focusedId: 1,
+                        nextId: 2 + 1,
+                    },
                 },
                 {
                     id: 4,
@@ -528,6 +564,10 @@ export const initialState = {
                     statusId: [1],
                     assign: [1],
                     tags: [1],
+                    settings: {
+                        focusedId: 1,
+                        nextId: 2 + 1,
+                    },
                 },
                 {
                     id: 5,
@@ -552,6 +592,10 @@ export const initialState = {
                     statusId: [1],
                     assign: [1],
                     tags: [1],
+                    settings: {
+                        focusedId: 1,
+                        nextId: 2 + 1,
+                    },
                 },
                 {
                     id: 6,
@@ -576,6 +620,10 @@ export const initialState = {
                     statusId: [1],
                     assign: [1],
                     tags: [1],
+                    settings: {
+                        focusedId: 1,
+                        nextId: 2 + 1,
+                    },
                 },
             ],
         },

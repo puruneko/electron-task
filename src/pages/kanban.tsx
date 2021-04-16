@@ -42,8 +42,11 @@ const StatusTaskTerm = styled.div`
     background-color: lightgray;
 `;
 const TaskModalWrapper = styled.div`
-    width: 80vw;
-    height: 80vh;
+    position: absolute;
+    top: 5%;
+    left: 15%;
+    width: 70vw;
+    height: 90vh;
     background-color: white;
 `;
 
@@ -253,17 +256,7 @@ const Kanban: React.FC = () => {
                 );
             })}
             <Modal
-                isOpen={!!openTaskId}
                 open={!!openTaskId}
-                onRequestClose={() => {
-                    dispatch({
-                        type: 'setComponentState',
-                        componentName: 'kanban',
-                        state: {
-                            openTaskId: 0,
-                        },
-                    });
-                }}
                 onClose={() => {
                     dispatch({
                         type: 'setComponentState',
@@ -273,7 +266,6 @@ const Kanban: React.FC = () => {
                         },
                     });
                 }}
-                hideBackdrop={true}
             >
                 <TaskModalWrapper>
                     <PageComponent projectId={project.id} pageId={openTaskId} headless={false} />
