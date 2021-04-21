@@ -1,5 +1,16 @@
 export type ID = number;
 
+export interface IProperty {
+    id: number;
+    readOnly: boolean;
+    name: string;
+    type: string;
+    values: Array<any>;
+    display: boolean;
+    width: number;
+    color: string;
+}
+
 export interface IProject {
     id: number;
     name: string;
@@ -7,8 +18,7 @@ export interface IProject {
         ganttScale: string;
         ganttCellDivideNumber: number;
     };
-    status: Array<any>;
-    tags: Array<any>;
+    properties: Array<IProperty>;
     pages: Array<IPage>;
 }
 

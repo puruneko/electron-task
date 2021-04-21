@@ -8,6 +8,34 @@ import { initialState } from './dummyData';
 
 let store;
 
+const getBrandnewTask = (
+    id,
+    type,
+    title = '',
+    documents = [],
+    period = null,
+    statusId = 1,
+    assign = null,
+    tags = [],
+    focusedId = 1,
+) => {
+    return {
+        id,
+        type,
+        title,
+        documents,
+        period: period || {
+            start: getTime(new Date()), //[[ms]]
+            end: getTime(new Date()), //[ms]
+        },
+        statusId,
+        assign,
+        tags,
+        settings: {
+            focusedId,
+        },
+    };
+};
 //export const reducer = (state = initialState, action) => {
 export const reducer = (state, action) => {
     switch (action.type) {
@@ -58,6 +86,40 @@ export const reducer = (state, action) => {
                             return {
                                 ...project,
                                 pages: setTasks(project),
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'setTask':
+            // projectId
+            // pageId
+            // page
+            logger.debug('reducer setPage', action);
+            const setTask = project => {
+                const pages = project.pages.filter(page => page.type == 'page');
+                const newTasks = project.pages
+                    .filter(page => page.type == 'task')
+                    .map(page => {
+                        if (page.id == action.pageId) {
+                            return action.page;
+                        } else {
+                            return page;
+                        }
+                    });
+                return [...pages, ...newTasks];
+            };
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                pages: setTask(project),
                             };
                         } else {
                             return { ...project };
@@ -116,6 +178,38 @@ export const reducer = (state, action) => {
                             return {
                                 ...project,
                                 pages: setPage(project),
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'insertTaskAbove':
+            // projectId
+            // taskId
+            logger.debug('reducer setPage', action);
+            const insertTaskAbove = project => {
+                const pages = project.pages.filter(page => page.type == 'page');
+                const newId = Math.max(...project.pages.map(page => page.id)) + 1;
+                const newTasks = [];
+                for (const task of project.pages.filter(page => page.type == 'task')) {
+                    if (task.id == action.taskId) {
+                        newTasks.push(getBrandnewTask(newId, 'task'));
+                    }
+                    newTasks.push(task);
+                }
+                return [...pages, ...newTasks];
+            };
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                pages: insertTaskAbove(project),
                             };
                         } else {
                             return { ...project };
@@ -544,6 +638,36 @@ export const reducer = (state, action) => {
                                         return page;
                                     }
                                 }),
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'editProperty':
+            // projectId
+            // propertyId
+            // property
+            logger.debug('reducer editProperty', action);
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                properties: project.properties.map((property) => {
+                                    if (property.id == action.propertyId) {
+                                        return {
+                                            ...property,
+                                            ...action.property,
+                                        }
+                                    } else {
+                                        return property;
+                                    }
+                                })
                             };
                         } else {
                             return { ...project };

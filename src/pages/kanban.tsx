@@ -56,12 +56,13 @@ const Kanban: React.FC = () => {
     const params = useParams<any>();
     const queries = useQuery();
     const projectId = params.projectId;
-    const { project, tasks, openTaskId } = useSelector(
+    const { project, statuses, tasks, openTaskId } = useSelector(
         (props: IRootState) => ({
-            project: props.projects.filter(project => project.id == projectId)[0],
+            project: props.projects.filter((project) => project.id == projectId)[0],
+            statuses: props.projects.filter((project) => project.id == projectId)[0].properties[0].values,
             tasks: props.projects
-                .filter(project => project.id == projectId)[0]
-                .pages.filter(page => page.type == 'task'),
+                .filter((project) => project.id == projectId)[0]
+                .pages.filter((page) => page.type == 'task'),
             openTaskId: props.componentStates.kanban.openTaskId,
         }),
         shallowEqual,
@@ -71,11 +72,11 @@ const Kanban: React.FC = () => {
     const currentOverElem = useRef(null);
     console.log('Kanban project', project, openTaskId);
     // --------------------------------------------------------
-    const getContainerByTaskId = id => {
+    const getContainerByTaskId = (id) => {
         const container = document.querySelectorAll(`.kanbanTask[data-id="${id}"]`);
         return container[0];
     };
-    const onDragStart = event => {
+    const onDragStart = (event) => {
         const target = event.target;
         const taskElems = document.getElementsByClassName('kanbanTask');
         for (const task of taskElems) {
@@ -89,7 +90,7 @@ const Kanban: React.FC = () => {
             currentOverElem.current = target.dataset.id;
         }
     };
-    const onDragEnd = event => {
+    const onDragEnd = (event) => {
         console.log('onDragEnd', currentOverElem.current, selectedTaskElems.current, event.target);
         const taskElems = document.getElementsByClassName('kanbanTask');
         for (const task of taskElems) {
@@ -105,28 +106,22 @@ const Kanban: React.FC = () => {
         } else if (currentOverElem.current.dataset.id == -1) {
             // 最後尾にドロップした場合
             const statusTaskEnd = tasks
-                .filter(task => task.statusId == currentOverElem.current.dataset.statusid)
+                .filter((task) => task.statusId == currentOverElem.current.dataset.statusid)
                 .slice(-1)[0];
             // ステータスに要素が1つ以上存在する場合
             if (!!statusTaskEnd) {
                 for (const task of tasks) {
                     if (task.id == statusTaskEnd.id) {
-                        if (
-                            selectedTaskElems.current.filter(stask => stask.dataset.id == task.id)
-                                .length == 0
-                        ) {
+                        if (selectedTaskElems.current.filter((stask) => stask.dataset.id == task.id).length == 0) {
                             newTasks.push(task);
                         }
                         for (const stask of selectedTaskElems.current) {
                             newTasks.push({
-                                ...tasks.filter(task => task.id == stask.dataset.id)[0],
+                                ...tasks.filter((task) => task.id == stask.dataset.id)[0],
                                 statusId: task.statusId,
                             });
                         }
-                    } else if (
-                        selectedTaskElems.current.filter(stask => stask.dataset.id == task.id)
-                            .length != 0
-                    ) {
+                    } else if (selectedTaskElems.current.filter((stask) => stask.dataset.id == task.id).length != 0) {
                         continue;
                     } else {
                         newTasks.push(task);
@@ -136,9 +131,7 @@ const Kanban: React.FC = () => {
                 // ステータスに要素が0の場合
                 for (const task of tasks) {
                     // taskがselectedTaskElemsの中にヒットするか
-                    const stask = selectedTaskElems.current.filter(
-                        stask => task.id == stask.dataset.id,
-                    )[0];
+                    const stask = selectedTaskElems.current.filter((stask) => task.id == stask.dataset.id)[0];
                     console.log('stask', stask, !!stask);
                     // ヒットした場合
                     if (!!stask) {
@@ -156,15 +149,12 @@ const Kanban: React.FC = () => {
                 if (task.id == currentOverElem.current.dataset.id) {
                     for (const stask of selectedTaskElems.current) {
                         newTasks.push({
-                            ...tasks.filter(task => task.id == stask.dataset.id)[0],
+                            ...tasks.filter((task) => task.id == stask.dataset.id)[0],
                             statusId: task.statusId,
                         });
                     }
                     newTasks.push(task);
-                } else if (
-                    selectedTaskElems.current.filter(stask => stask.dataset.id == task.id).length !=
-                    0
-                ) {
+                } else if (selectedTaskElems.current.filter((stask) => stask.dataset.id == task.id).length != 0) {
                     continue;
                 } else {
                     newTasks.push(task);
@@ -179,7 +169,7 @@ const Kanban: React.FC = () => {
         selectedTaskElems.current = [];
         currentOverElem.current = null;
     };
-    const onDragOver = event => {
+    const onDragOver = (event) => {
         let elem;
         if (parseInt(event.target.dataset.id) != -1) {
             elem = getContainerByTaskId(event.target.dataset.id);
@@ -192,18 +182,16 @@ const Kanban: React.FC = () => {
         //
         currentOverElem.current = elem;
     };
-    const onDragLeave = event => {
+    const onDragLeave = (event) => {
         let elem;
         if (event.target.dataset.id != -1) {
             elem = getContainerByTaskId(event.target.dataset.id);
         } else {
-            elem = document.querySelector(
-                `.kanbanTask[data-statusid="${event.target.dataset.statusid}"]`,
-            );
+            elem = document.querySelector(`.kanbanTask[data-statusid="${event.target.dataset.statusid}"]`);
         }
         elem.style.backgroundColor = '';
     };
-    const onClickTask = event => {
+    const onClickTask = (event) => {
         dispatch({
             type: 'setComponentState',
             componentName: 'kanban',
@@ -215,7 +203,7 @@ const Kanban: React.FC = () => {
     // --------------------------------------------------------
     return (
         <KanbanContainer>
-            {project.status.map((status, index1) => {
+            {statuses.map((status, index1) => {
                 return (
                     <StatusContainer key={`statusContainer-${index1}`}>
                         <StatusHeader>
@@ -223,7 +211,7 @@ const Kanban: React.FC = () => {
                         </StatusHeader>
                         <StatusTasks>
                             {tasks
-                                .filter(task => task.statusId == status.id)
+                                .filter((task) => task.statusId == status.id)
                                 .map((task, index2) => {
                                     return (
                                         <TaskContainer

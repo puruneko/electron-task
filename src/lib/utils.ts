@@ -26,7 +26,12 @@ export const useQuery = (): { [key: string]: string } => {
     return pairs;
 };
 
-export const createDict = (keyArray: Array<any>, valueFunc) => {
-    console.log('createDict');
+export const createDict = (keyArray: Array<string | number>, valueFunc: (key: string | number)=>any): any => {
     return keyArray.reduce((aft, key) => ({ ...aft, [key]: valueFunc(key) }), {});
 };
+
+export const between = (target:number, start:number, end:number) => {
+    const s = start < end ? start : end;
+    const e = start < end ? end : start;
+    return s <= target && target <= e;
+}

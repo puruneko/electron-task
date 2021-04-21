@@ -83,7 +83,7 @@ const NavArea = () => {
         <Navs>
             <Header>
                 <button
-                    onClick={event => {
+                    onClick={(event) => {
                         setIsOpenNavbar(true);
                         event.preventDefault();
                     }}
@@ -93,7 +93,7 @@ const NavArea = () => {
             </Header>
             <Navbar>
                 <button
-                    onClick={event => {
+                    onClick={(event) => {
                         setIsOpenNavbar(false);
                         event.preventDefault();
                     }}
@@ -106,11 +106,7 @@ const NavArea = () => {
                             <div key={`navbar-project-${index}`}>
                                 {project.name}
                                 <div>
-                                    <Link
-                                        to={`/${project.id}/gantt?scale=${project.settings.ganttScale}`}
-                                    >
-                                        Gantt
-                                    </Link>
+                                    <Link to={`/${project.id}/gantt?scale=${project.settings.ganttScale}`}>Gantt</Link>
                                 </div>
                                 <div>
                                     <Link to={`/${project.id}/kanban`}>Kanban</Link>
@@ -118,13 +114,11 @@ const NavArea = () => {
                                 <div>
                                     Page
                                     {project.pages
-                                        .filter(page => page.type == 'page')
+                                        .filter((page) => page.type == 'page')
                                         .map((page, index2) => {
                                             return (
                                                 <div key={`navbar-page-${index}-${index2}`}>
-                                                    <Link to={`/${project.id}/page/${page.id}`}>
-                                                        {page.title}
-                                                    </Link>
+                                                    <Link to={`/${project.id}/page/${page.id}`}>{page.title}</Link>
                                                 </div>
                                             );
                                         })}
