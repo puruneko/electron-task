@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { IRootState } from '../type/store';
 
+const headerHeight = 50;
+
 const Common: React.FC = ({ children }) => {
     console.log('Common rerender');
     const dispatch = useDispatch();
@@ -23,14 +25,14 @@ const Common: React.FC = ({ children }) => {
         margin: 0;
         padding: 0;
         border: none;
-        width: 100%;
-        height: 100%;
+        width: 100vw;
+        height: 100vh;
     `;
     const Contents = styled.div`
         position: absolute;
-        top: 30px;
+        top: ${headerHeight}px;
         left: 0;
-        min-height: calc(100vh-100px);
+        height: 100%;
         width: 100%;
     `;
     const MemolizedContents = memo(
@@ -66,7 +68,7 @@ const NavArea = () => {
         top: 0;
         left: 0;
         width: 100%;
-        height: 30px;
+        height: ${headerHeight}px;
         background-color: lightgray;
     `;
     const Navbar = styled.div`
@@ -77,7 +79,7 @@ const NavArea = () => {
         width: 200px;
         height: 100%;
         background-color: rgba(143, 143, 143, 0.8);
-        z-index: 1;
+        z-index: 10;
     `;
     return (
         <Navs>

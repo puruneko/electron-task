@@ -13,33 +13,6 @@ import AlarmIcon from '@material-ui/icons/Alarm';
 import EditableLabel from '../components/editableLabel';
 import PageComponent from '../components/page';
 
-const Main = styled.div`
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-`;
-const SelectedArea = styled.div`
-    display: 'none';
-    position: 'fixed';
-    top: 0;
-    left: 0;
-    width: 0;
-    height: 0;
-    z-index: 100;
-`;
-const TaskModalWrapper = styled.div`
-    position: absolute;
-    top: 5%;
-    left: 15%;
-    width: 70vw;
-    height: 90vh;
-    max-width: 70vw;
-    max-height: 90vh;
-    background-color: white;
-`;
-
 const Gantt: React.FC = () => {
     const params = useParams<any>();
     const queries = useQuery();
@@ -100,6 +73,7 @@ const Gantt: React.FC = () => {
             container: {
                 leftMargin: 30,
                 width: 300,
+                zIndex: 5,
             },
         },
         calenderBody: {
@@ -118,12 +92,45 @@ const Gantt: React.FC = () => {
         },
     });
     console.log('c', c);
-    const GanttTaskContainer = styled.div`
+    const Main = styled.div`
         position: absolute;
         top: 0;
         left: 0;
+        width: 100%;
+        min-width: 100%;
+        height: calc(100% - ${c.ganttHeader.height}px);
+        min-height: calc(100% - ${c.ganttHeader.height}px);
+        overflow-y: auto;
+        overflow-x: auto;
+        display: flex;
+    `;
+    const SelectedArea = styled.div`
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 0;
+        z-index: 100;
+    `;
+    const TaskModalWrapper = styled.div`
+        position: absolute;
+        top: 5%;
+        left: 15%;
+        width: 70vw;
+        height: 90vh;
+        max-width: 70vw;
+        max-height: 90vh;
+        background-color: white;
+    `;
+    const GanttTaskContainer = styled.div`
+        position: sticky;
+        top: 0;
+        left: 0;
         min-width: ${c.task.container.width};
+        min-height: 100%;
         background-color: red;
+        z-index: ${c.task.container.zIndex};
     `;
     const GanttTaskHeader = styled.div`
         width: calc(100%-29px);
@@ -162,9 +169,10 @@ const Gantt: React.FC = () => {
         ${c.borderCss}
     `;
     const GanttCalenderContainer = styled.div`
-        margin-left: ${c.task.container.width};
-        width: 100vw;
-        overflow-y: scroll;
+        /*margin-left: ${c.task.container.width};*/
+        min-width: 100vw;
+        min-height: 100%;
+        z-index: 0;
     `;
     const GanttCalenderHeader = styled.div`
         background-color: blue;
