@@ -30,15 +30,9 @@ export type document = {
 export interface IPage {
     id: ID;
     type: string;
-    title: string;
     documents: Array<document>;
-    period: {
-        start: number; //[[ms]]
-        end: number; //[ms]
-    };
-    statusId: ID;
-    assign: Array<ID>;
     tags: Array<ID>;
+    properties: any;
     settings: {
         focusedId: ID;
     };

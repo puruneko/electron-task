@@ -8,56 +8,26 @@ import { floor, ceil, ceilfloor, topbottom, useQuery, createDict, between } from
 import { getTimedelta, getYYYYMMDD, getHHMMSS, getMMDD, getHH, getTime } from '../lib/time';
 import { IRootState } from '../type/store';
 import { Second, Period, Pos, CalenderPeriod, ITimebarDragInitial, ICalenderElement } from '../type/gantt';
-import { IconButton } from '@material-ui/core';
-import AlarmIcon from '@material-ui/icons/Alarm';
+import { Button, Checkbox, FormControlLabel, IconButton, Menu, MenuItem, Switch } from '@material-ui/core';
+import AddIcon from '@material-ui/icons/Add';
+import VisibilityIcon from '@material-ui/icons/Visibility';
+import FilterListIcon from '@material-ui/icons/FilterList';
 import EditableLabel from '../components/editableLabel';
 import PageComponent from '../components/page';
-
-const Main = styled.div`
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    min-width: 100%;
-    /*
-height: calc(100% - ${c.ganttHeader.height}px);
-min-height: calc(100% - ${c.ganttHeader.height}px);
-*/
-    height: calc(100% - 50px);
-    min-height: calc(100% - 50px);
-    overflow-y: scroll;
-    overflow-x: scroll;
-    display: flex;
-`;
-const SelectedArea = styled.div`
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 0;
-    height: 0;
-    z-index: 100;
-`;
-const TaskModalWrapper = styled.div`
-    position: absolute;
-    top: 5%;
-    left: 15%;
-    width: 70vw;
-    height: 90vh;
-    max-width: 70vw;
-    max-height: 90vh;
-    background-color: white;
-`;
+import Header from '../components/header';
+import { CheckBox } from '@material-ui/icons';
 
 const c = {
     color: {
+        header: 'gray',
+        body: 'lightgray',
         multiSelected: 'rgba(0, 181, 51, 0.5)',
         dragArea: 'rgba(0, 12, 181, 0.5)',
     },
     borderCss: `border-right: 1px solid black;
     border-bottom: 1px solid black;`,
     header: {
-        height: 50,
+        height: 64,
     },
     ganttHeader: {
         height: 50,
@@ -85,15 +55,56 @@ const c = {
     },
 };
 
+const GanttContainer = styled.div`
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+`;
+
+const Main = styled.div`
+    position: absolute;
+    top: ${c.header.height};
+    left: 0;
+    width: 100%;
+    min-width: 100%;
+    height: calc(100% - ${c.header.height}px);
+    min-height: calc(100% - ${c.header.height}px);
+    overflow-y: scroll;
+    overflow-x: scroll;
+    display: flex;
+`;
+const SelectedArea = styled.div`
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    z-index: 100;
+`;
+const TaskModalWrapper = styled.div`
+    position: absolute;
+    top: 5%;
+    left: 15%;
+    width: 70vw;
+    height: 90vh;
+    max-width: 70vw;
+    max-height: 90vh;
+    background-color: white;
+`;
+
 const Gantt: React.FC = () => {
     const locParams = useParams<any>();
     const queries = useQuery();
     const dispatch = useDispatch();
-    const { project, openTaskId, scrollTarget } = useSelector(
+    const { project, openTaskId, scrollTarget, headerStates } = useSelector(
         (props: IRootState) => ({
             project: props.projects.filter((project) => project.id == locParams.projectId)[0],
             openTaskId: props.componentStates.gantt.openTaskId,
             scrollTarget: props.componentStates.gantt.scrollTarget,
+            headerStates: props.componentStates.header,
         }),
         shallowEqual,
     );
@@ -132,7 +143,7 @@ const Gantt: React.FC = () => {
         const scrollOffset = event.target.scrollLeft;
         const targetDate = new Date(
             ((scrollOffset / c.cell.width) * ganttParams.cellXUnit) / ganttParams.cellDivideNumber +
-                getTime(ganttParams.calenderRange.start),
+                ganttParams.calenderRange.start.getTime(),
         );
         console.log('scrollOffset', scrollOffset, 'scroll', targetDate);
         dispatch({
@@ -145,13 +156,24 @@ const Gantt: React.FC = () => {
         isMainScroll.current = false;
     };
     // --------------------------------------------------------
+    // --------------------------------------------------------
     useEffect(() => {
         document.addEventListener('mouseup', (event) => {
             if (isMainScroll.current) {
                 onMainMouseUp(event);
             }
         });
-    });
+        if (headerStates.title != project.name) {
+            dispatch({
+                type: 'setComponentState',
+                componentName: 'header',
+                state: {
+                    title: project.name,
+                    //rightComponent: <RightComponent project={project} />,
+                },
+            });
+        }
+    }, [project]);
     useEffect(() => {
         //scroll量の調整
         if (scrollTarget) {
@@ -165,47 +187,115 @@ const Gantt: React.FC = () => {
     }, [scrollTarget]);
     // --------------------------------------------------------
     return (
-        <Main id="ganttMain" onScroll={onMainScroll}>
-            <SelectedArea id="selectedArea" />
-            <Modal
-                open={!!openTaskId}
-                onClose={() => {
-                    dispatch({
-                        type: 'setComponentState',
-                        componentName: 'gantt',
-                        state: {
-                            openTaskId: 0,
-                        },
-                    });
-                }}
-            >
-                <TaskModalWrapper>
-                    <PageComponent projectId={project.id} pageId={openTaskId} headless={false} />
-                </TaskModalWrapper>
-            </Modal>
-            <GanttTask locParams={locParams} ganttParams={ganttParams} />
-            <GanttCalender locParams={locParams} ganttParams={ganttParams} />
-        </Main>
+        <GanttContainer>
+            <Header
+                height={c.header.height}
+                rightComponent={<RightComponent />}
+                rightComponentProps={{ project: project }}
+            />
+            <Main id="ganttMain" onScroll={onMainScroll}>
+                <SelectedArea id="selectedArea" />
+                <Modal
+                    open={!!openTaskId}
+                    onClose={() => {
+                        dispatch({
+                            type: 'setComponentState',
+                            componentName: 'gantt',
+                            state: {
+                                openTaskId: 0,
+                            },
+                        });
+                    }}
+                >
+                    <TaskModalWrapper>
+                        <PageComponent projectId={project.id} pageId={openTaskId} headless={false} />
+                    </TaskModalWrapper>
+                </Modal>
+                <GanttTask locParams={locParams} ganttParams={ganttParams} />
+                <GanttCalender locParams={locParams} ganttParams={ganttParams} />
+            </Main>
+        </GanttContainer>
     );
 };
+const RightComponent: React.FC<any> = ({ project }) => {
+    const dispatch = useDispatch();
+    const [anchorProperty, setAnchorProperty] = useState(null);
+    const [anchorFilter, setAnchorFilter] = useState(null);
+    return (
+        <React.Fragment>
+            <Button
+                aria-controls="property-menu"
+                onClick={(event) => {
+                    setAnchorProperty(event.target);
+                }}
+            >
+                <VisibilityIcon />
+            </Button>
+            <Menu
+                id="property-menu"
+                anchorEl={anchorProperty}
+                open={!!anchorProperty}
+                onClose={() => {
+                    setAnchorProperty(null);
+                }}
+            >
+                {project.properties
+                    .filter((prop) => prop.id != 0)
+                    .map((prop, index) => {
+                        return (
+                            <MenuItem key={`rightComponent-propertyMenu-${index}`}>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={prop.display}
+                                            onChange={(event) => {
+                                                dispatch({
+                                                    type: 'editProperty',
+                                                    projectId: project.id,
+                                                    propertyId: prop.id,
+                                                    property: { display: event.target.checked },
+                                                });
+                                            }}
+                                            name={prop.name}
+                                        />
+                                    }
+                                    label={prop.name}
+                                />
+                            </MenuItem>
+                        );
+                    })}
+            </Menu>
+            <Button
+                aria-controls="filter-menu"
+                onClick={(event) => {
+                    setAnchorFilter(event.target);
+                }}
+            >
+                <FilterListIcon />
+            </Button>
+        </React.Fragment>
+    );
+};
+
 const GanttTaskContainer = styled.div`
     position: sticky;
     top: 0;
     left: 0;
     /*min-width: 100px; ${c.task.container.width};*/
     min-height: 100%;
-    background-color: red;
+    background-color: ${c.color.body};
     z-index: ${c.task.container.zIndex};
 `;
 const GanttTaskHeader = styled.div`
-    width: calc(100%-29px);
+    width: calc(100%-${c.task.container.leftMargin}px);
     height: ${c.ganttHeader.height};
-    background-color: blue;
+    background-color: ${c.color.header};
     display: flex;
-    padding-left: 29px;
+    padding-left: ${c.task.container.leftMargin};
 `;
 const GanttTaskHeaderItem = styled.div`
     position: relative;
+    overflow: hidden;
     ${c.borderCss}
 `;
 const GanttTaskHeaderItemSelector = styled.div`
@@ -231,6 +321,7 @@ const GanttTaskTags = styled.div`
     display: flex;
 `;
 const GanttTaskTag = styled.div`
+    overflow: hidden;
     ${c.borderCss}
 `;
 
@@ -286,15 +377,24 @@ const GanttTask = ({ locParams, ganttParams }) => {
     const onTaskHeaderMouseUp = (event) => {
         onTaskHeaderMoving.current = null;
     };
-    const setTitle = (id, value) => {
-        const task = project.pages.filter((page) => page.id == id)[0];
+    const setProperty = (pageId, propertyId, values) => {
+        const task = project.pages.filter((page) => page.id == pageId)[0];
         dispatch({
             type: 'setTask',
             projectId: project.id,
-            pageId: id,
+            pageId: pageId,
             page: {
                 ...task,
-                title: value,
+                properties: task.properties.map((prop) => {
+                    if (prop.id == propertyId) {
+                        return {
+                            id: propertyId,
+                            values: values,
+                        };
+                    } else {
+                        return { ...prop };
+                    }
+                }),
             },
         });
     };
@@ -324,26 +424,36 @@ const GanttTask = ({ locParams, ganttParams }) => {
     const showProperty = (task, propertySetting) => {
         const width = project.properties.filter((prop) => prop.id == propertySetting.id)[0].width;
         switch (propertySetting.type) {
-            case 'status':
-                if (!task.statusId) {
-                    return (
-                        <GanttTaskTag
-                            key={`property-${propertySetting.type}-${propertySetting.id}`}
-                            style={{ width }}
-                        />
-                    );
-                }
+            case 'title':
+                const title = task.properties.filter((p) => p.id == propertySetting.id)[0].values[0] || '';
                 return (
                     <GanttTaskTag key={`property-${propertySetting.type}-${propertySetting.id}`} style={{ width }}>
-                        {
-                            project.properties
-                                .filter((p) => p.id == 1)[0]
-                                .values.filter((v) => v.id == task.statusId)[0].name
-                        }
+                        <EditableLabel
+                            value={title}
+                            setValue={(v) => setProperty(task.id, propertySetting.id, [v])}
+                            onDoubleClick={() => {
+                                onClickTask(task.id);
+                            }}
+                        />
+                    </GanttTaskTag>
+                );
+            case 'status':
+                const statuses = project.properties.filter((p) => p.id == propertySetting.id)[0]?.values || [];
+                const selectedStatusIds = task.properties.filter((prop) => prop.id == propertySetting.id)[0].values;
+                return (
+                    <GanttTaskTag key={`property-${propertySetting.type}-${propertySetting.id}`} style={{ width }}>
+                        {selectedStatusIds.map((ss, index) => {
+                            return (
+                                <span key={`property-${propertySetting.type}-${propertySetting.id}-${index}`}>
+                                    {statuses.filter((s) => s.id == ss)[0].name}
+                                </span>
+                            );
+                        })}
                     </GanttTaskTag>
                 );
             case 'date':
-                if (!task.period) {
+                const dateValues = task.properties.filter((p) => p.id == propertySetting.id)[0]?.values;
+                if (!dateValues || !dateValues.length) {
                     return (
                         <GanttTaskTag
                             key={`property-${propertySetting.type}-${propertySetting.id}`}
@@ -351,55 +461,34 @@ const GanttTask = ({ locParams, ganttParams }) => {
                         />
                     );
                 }
+                const period = dateValues[0];
                 return (
                     <GanttTaskTag key={`property-${propertySetting.type}-${propertySetting.id}`} style={{ width }}>
-                        {`「${getMMDD(task.period.start)}:${getHH(task.period.start)}`}〜
-                        {`${getMMDD(task.period.end)}:${getHH(task.period.end)}」`}
+                        {`「${getMMDD(period.start)}:${getHH(period.start)}`}〜
+                        {`${getMMDD(period.end)}:${getHH(period.end)}」`}
                     </GanttTaskTag>
                 );
             case 'user':
-                if (!task.assign || !task.assign.length) {
-                    return (
-                        <GanttTaskTag
-                            key={`property-${propertySetting.type}-${propertySetting.id}`}
-                            style={{ width }}
-                        />
-                    );
-                }
+                const userValues = task.properties.filter((p) => p.id == propertySetting.id)[0]?.values || [];
+                const assign = userValues;
                 return (
                     <GanttTaskTag key={`property-${propertySetting.type}-${propertySetting.id}`} style={{ width }}>
                         {globalSettings.users
-                            .filter((user) => task.assign.indexOf(user.id) != -1)
+                            .filter((user) => assign.indexOf(user.id) != -1)
                             .map((user, index) => {
                                 return <span key={`property-value-user-${index}`}>{user.name}</span>;
                             })}
                     </GanttTaskTag>
                 );
             case 'label':
-                const labelValues = task.properties.filter((p) => p.id == propertySetting.id)[0]?.values;
-                if (!labelValues || !labelValues.length) {
-                    return (
-                        <GanttTaskTag
-                            key={`property-${propertySetting.type}-${propertySetting.id}`}
-                            style={{ width }}
-                        />
-                    );
-                }
+                const labelValues = task.properties.filter((p) => p.id == propertySetting.id)[0]?.values || [''];
                 return (
                     <GanttTaskTag key={`property-${propertySetting.type}-${propertySetting.id}`} style={{ width }}>
                         {labelValues[0]}
                     </GanttTaskTag>
                 );
             case 'tag':
-                const tagIds = task.properties.filter((p) => p.id == propertySetting.id)[0]?.values;
-                if (!tagIds || !tagIds.length) {
-                    return (
-                        <GanttTaskTag
-                            key={`property-${propertySetting.type}-${propertySetting.id}`}
-                            style={{ width }}
-                        />
-                    );
-                }
+                const tagIds = task.properties.filter((p) => p.id == propertySetting.id)[0]?.values || [];
                 const tagValues = project.properties.filter((p) => p.id == propertySetting.id)[0].values;
                 const tags = createDict(
                     tagValues.map((v) => v.id).filter((id) => tagIds.indexOf(id) != -1),
@@ -415,18 +504,10 @@ const GanttTask = ({ locParams, ganttParams }) => {
                     </GanttTaskTag>
                 );
             case 'check':
-                const checkValues = task.properties.filter((p) => p.id == propertySetting.id)[0]?.values;
-                if (!checkValues || !checkValues.length) {
-                    return (
-                        <GanttTaskTag
-                            key={`property-${propertySetting.type}-${propertySetting.id}`}
-                            style={{ width }}
-                        />
-                    );
-                }
+                const checkValues = task.properties.filter((p) => p.id == propertySetting.id)[0]?.values || [false];
                 return (
                     <GanttTaskTag key={`property-${propertySetting.type}-${propertySetting.id}`} style={{ width }}>
-                        {`${checkValues[0]}`}
+                        <Checkbox checked={checkValues[0]} />
                     </GanttTaskTag>
                 );
         }
@@ -435,15 +516,6 @@ const GanttTask = ({ locParams, ganttParams }) => {
     return (
         <GanttTaskContainer>
             <GanttTaskHeader>
-                <GanttTaskHeaderItem style={{ width: project.properties.filter((prop) => prop.id == 0)[0].width }}>
-                    title
-                    <GanttTaskHeaderItemSelector
-                        data-id={0}
-                        onMouseDown={onTaskHeaderMouseDown}
-                        onMouseMove={onTaskHeaderMouseMove}
-                        onMouseUp={onTaskHeaderMouseUp}
-                    />
-                </GanttTaskHeaderItem>
                 {project.properties
                     .filter((prop) => prop.display)
                     .map((prop, index) => {
@@ -470,17 +542,8 @@ const GanttTask = ({ locParams, ganttParams }) => {
                     return (
                         <GanttTaskRow key={`task-row-${index}`} data-id={task.id} className="ganttTaskRow">
                             <GanttTaskAdd>
-                                <AlarmIcon data-id={task.id} onClick={insertTasks} />
+                                <AddIcon data-id={task.id} onClick={insertTasks} />
                             </GanttTaskAdd>
-                            <GanttTaskTag style={{ width: project.properties.filter((prop) => prop.id == 0)[0].width }}>
-                                <EditableLabel
-                                    value={task.title}
-                                    setValue={(v) => setTitle(task.id, v)}
-                                    onDoubleClick={() => {
-                                        onClickTask(task.id);
-                                    }}
-                                />
-                            </GanttTaskTag>
                             <GanttTaskTags>
                                 {project.properties
                                     .filter((prop) => prop.display)
@@ -519,55 +582,7 @@ const GanttCalenderHeaderChildContainer = styled.div`
 const GanttCalenderBodyWrapper = styled.div`
     position: relative;
     width: 100%;
-    background-color: pink;
-`;
-const GanttCalenderBody = styled.div`
-    position: relative;
-    width: 100%;
-`;
-const GanttCalenderRow = styled.div`
-    position: relative;
-    display: flex;
-    width: 100%;
-`;
-const GanttCalenderCell = styled.div`
-    position: relative;
-    width: ${c.cell.width};
-    height: ${c.cell.height};
-    flex: 0 0 ${c.cell.width};
-    flex-shrink: 0;
-    display: flex;
-    justify-content: start;
-    align-items: center;
-    float: 'left';
-    user-select: none;
-`;
-const GanttCalenderTimebarWrap = styled.div`
-    position: absolute;
-    left: ${c.cell.width * c.timebar.marginXCoef};
-    height: ${c.cell.height * c.timebar.yShrinkCoef};
-    border-radius: 7px;
-    background-color: gray;
-    z-index: 1;
-    user-select: none;
-`;
-const GanttCalenderTimebar = styled.div`
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: ${c.cell.height * c.timebar.yShrinkCoef};
-    border-radius: 7px;
-    background-color: transparent;
-    overflow: hidden;
-    display: flex;
-    justify-content: space-between;
-`;
-const GanttCalenderTimebarSide = styled.div`
-    height: 100%;
-    width: ${c.cell.width * c.timebar.sideWidthCoef};
-    border-radius: 7px;
-    background-color: transparent;
-    cursor: col-resize;
+    background-color: ${c.color.body};
 `;
 
 const GanttCalender = ({ locParams, ganttParams }) => {
@@ -600,13 +615,61 @@ const GanttCalender = ({ locParams, ganttParams }) => {
     };
     // --------------------------------------------------------
     const GanttCalenderHeader = styled.div`
-        background-color: blue;
+        background-color: ${c.color.header};
         width: ${ganttParams.calenderRangeDiff * c.cell.width * ganttParams.cellDivideNumber + c.task.container.width};
         height: ${c.ganttHeader.height};
     `;
     const GanttCalenderHeaderChild = styled.div`
         width: ${c.cell.width * ganttParams.cellDivideNumber};
         height: ${c.ganttHeader.height / 2};
+    `;
+    const GanttCalenderBody = styled.div`
+        position: relative;
+        width: 100%;
+    `;
+    const GanttCalenderRow = styled.div`
+        position: relative;
+        display: flex;
+        width: 100%;
+    `;
+    const GanttCalenderCell = styled.div`
+        position: relative;
+        width: ${c.cell.width};
+        height: ${c.cell.height};
+        flex: 0 0 ${c.cell.width};
+        flex-shrink: 0;
+        display: flex;
+        justify-content: start;
+        align-items: center;
+        float: 'left';
+        user-select: none;
+    `;
+    const GanttCalenderTimebarWrap = styled.div`
+        position: absolute;
+        left: ${c.cell.width * c.timebar.marginXCoef};
+        height: ${c.cell.height * c.timebar.yShrinkCoef};
+        border-radius: 7px;
+        background-color: gray;
+        z-index: 1;
+        user-select: none;
+    `;
+    const GanttCalenderTimebar = styled.div`
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: ${c.cell.height * c.timebar.yShrinkCoef};
+        border-radius: 7px;
+        background-color: transparent;
+        overflow: hidden;
+        display: flex;
+        justify-content: space-between;
+    `;
+    const GanttCalenderTimebarSide = styled.div`
+        height: 100%;
+        width: ${c.cell.width * c.timebar.sideWidthCoef};
+        border-radius: 7px;
+        background-color: transparent;
+        cursor: col-resize;
     `;
     // --------------------------------------------------------
     const createParentGanttLabel = () => {
@@ -760,8 +823,8 @@ const GanttCalender = ({ locParams, ganttParams }) => {
             // protectedCellCountの計算
             const tasksProtectedCellCount = selectedCElem.current.map((timebar) => {
                 const task = tasks.filter((t) => t.id == timebar.dataset.id)[0];
-                const diff =
-                    (getTime(new Date(task.period.end)) - getTime(new Date(task.period.start))) / ganttParams.cellXUnit;
+                const period = task.properties.filter((p) => p.id == 3)[0].values[0];
+                const diff = (getTime(new Date(period.end)) - getTime(new Date(period.start))) / ganttParams.cellXUnit;
                 return diff - Math.trunc(diff) < 1.0 / ganttParams.cellDivideNumber ? 1 : 0;
             });
             const protectedCellCount = tasksProtectedCellCount.indexOf(1) != -1 ? 1 : 0;
@@ -1059,8 +1122,9 @@ const GanttCalender = ({ locParams, ganttParams }) => {
             const dateModifiedTasks = tasks.map((task, index) => {
                 if (selectedTimebarIds.indexOf(task.id) != -1) {
                     // 期間の編集
-                    const start = task.period.start;
-                    const end = task.period.end;
+                    const period = task.properties.filter((p) => p.id == 3)[0].values[0];
+                    const start = period.start;
+                    const end = period.end;
                     let newStart: number;
                     let newEnd: number;
                     if (tdi.targetType == 'whole') {
@@ -1077,10 +1141,21 @@ const GanttCalender = ({ locParams, ganttParams }) => {
                     //
                     return {
                         ...task,
-                        period: {
-                            start: newStart,
-                            end: newEnd,
-                        },
+                        properties: task.properties.map((prop) => {
+                            if (prop.id == 3) {
+                                return {
+                                    id: 3,
+                                    values: [
+                                        {
+                                            start: newStart,
+                                            end: newEnd,
+                                        },
+                                    ],
+                                };
+                            } else {
+                                return { ...prop };
+                            }
+                        }),
                     };
                 } else {
                     return { ...task };
@@ -1315,18 +1390,20 @@ const GanttCalender = ({ locParams, ganttParams }) => {
                         test
                     </div>
                     {tasks.map((task, y) => {
-                        const width = getTimeberWidth(task.period.start, task.period.end) - c.cell.width * 0.02;
-                        const tps = new Date(task.period.start);
+                        const period = task.properties.filter((p) => p.id == 3)[0].values[0];
+                        const width = !!period ? getTimeberWidth(period.start, period.end) - c.cell.width * 0.02 : 0;
+                        const tps = !!period ? new Date(period.start) : null;
                         return (
                             <GanttCalenderRow key={`calender-row-${y}`}>
                                 {[...Array(ganttParams.calenderRangeDiff * ganttParams.cellDivideNumber).keys()].map(
                                     (x) => {
                                         const s = new Date(ganttParams.calenderRange.start);
                                         s.setHours(s.getHours() + x * (24 / ganttParams.cellDivideNumber));
-                                        const year = s.getFullYear() == tps.getFullYear();
-                                        const month = s.getMonth() + 1 == tps.getMonth() + 1;
-                                        const date = s.getDate() == tps.getDate();
-                                        const hour = ceilfloor(s.getHours() / 24) == ceilfloor(tps.getHours() / 24);
+                                        const year = width && s.getFullYear() == tps.getFullYear();
+                                        const month = width && s.getMonth() + 1 == tps.getMonth() + 1;
+                                        const date = width && s.getDate() == tps.getDate();
+                                        const hour =
+                                            width && ceilfloor(s.getHours() / 24) == ceilfloor(tps.getHours() / 24);
                                         return (
                                             <GanttCalenderCell
                                                 key={`calender-cell-${y}-${x}`}
@@ -1335,7 +1412,7 @@ const GanttCalender = ({ locParams, ganttParams }) => {
                                                 data-y={y}
                                                 data-target="cell"
                                             >
-                                                {year && month && date && hour ? (
+                                                {width && year && month && date && hour ? (
                                                     <GanttCalenderTimebarWrap
                                                         className="ganttCalenderTimebarGroup"
                                                         data-id={task.id}

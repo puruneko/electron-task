@@ -8,7 +8,7 @@ import { initialState } from './dummyData';
 
 let store;
 
-const getBrandnewTask = (
+const getBrandnewPage = (
     id,
     type,
     title = '',
@@ -195,7 +195,7 @@ export const reducer = (state, action) => {
                 const newTasks = [];
                 for (const task of project.pages.filter(page => page.type == 'task')) {
                     if (task.id == action.taskId) {
-                        newTasks.push(getBrandnewTask(newId, 'task'));
+                        newTasks.push(getBrandnewPage(newId, 'task'));
                     }
                     newTasks.push(task);
                 }

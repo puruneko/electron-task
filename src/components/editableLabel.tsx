@@ -30,7 +30,15 @@ const EditableLabel: React.FC<Props> = ({ value, setValue, onDoubleClick }) => {
             onChange={onChange}
             onBlur={onBlur}
             onKeyDown={onKeyDown}
-            style={{ backgroundColor: 'inherit', border: 'none', width: '100%', height: '100%', fontSize: 'inherit' }}
+            style={{
+                margin: 0,
+                padding: 0,
+                border: 'none',
+                backgroundColor: 'inherit',
+                width: '100%',
+                height: '100%',
+                fontSize: 'inherit',
+            }}
         />
     );
 };

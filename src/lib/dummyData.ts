@@ -4,7 +4,13 @@ const now = new Date();
 
 export const initialState = {
     componentStates: {
-        gantt: {},
+        header: {
+            title: '',
+            rightComponent: null,
+        },
+        gantt: {
+            scrollTarget: null,
+        },
         kanban: {},
         page: {},
     },
@@ -78,10 +84,10 @@ export const initialState = {
             },
             properties: [
                 // id:不変
-                // readOnly:読み取り専用。内部の値が編集できない。
-
+                // readOnly:読み取り専用。内部の値(propertyの設定値)が編集できない。
                 // name:代表名
                 // type:プロパティの種類
+                //        title: 
                 //        status: kanbanステータス。value:指定可能なステータス{id,name,statusType,color}。id:1のみ指定可能
                 //        date: 日付型。value:null。id:2のみtaskのperiodがデータとして使用される
                 //        user: ユーザ。value:null。id:3のみ指定可能。
@@ -92,11 +98,17 @@ export const initialState = {
                 // display:表示の有無
                 // color: テーマカラー
                 {
-                    id: 0,
+                    id: 1,
+                    readOnly: false,
+                    name: 'title',
+                    type: 'title',
+                    values: null,
+                    display: true,
                     width: 100,
+                    color: '',
                 },
                 {
-                    id: 1,
+                    id: 2,
                     readOnly: true,
                     name: 'status',
                     type: 'status',
@@ -137,7 +149,7 @@ export const initialState = {
                     color: 'blue',
                 },
                 {
-                    id: 2,
+                    id: 3,
                     readOnly: true,
                     name: 'date',
                     type: 'date',
@@ -147,7 +159,7 @@ export const initialState = {
                     color: 'blue',
                 },
                 {
-                    id: 3,
+                    id: 4,
                     readOnly: true,
                     name: 'assign',
                     type: 'user',
@@ -157,7 +169,7 @@ export const initialState = {
                     color: 'blue',
                 },
                 {
-                    id: 4,
+                    id: 10,
                     readOnly: false,
                     name: 'prop1',
                     type: 'label',
@@ -167,7 +179,7 @@ export const initialState = {
                     color: 'red',
                 },
                 {
-                    id: 5,
+                    id: 11,
                     readOnly: false,
                     name: 'prop2',
                     type: 'tag',
@@ -193,7 +205,7 @@ export const initialState = {
                     color: 'blue',
                 },
                 {
-                    id: 6,
+                    id: 12,
                     readOnly: false,
                     name: 'prop3',
                     type: 'check',
@@ -261,7 +273,6 @@ export const initialState = {
                 {
                     id: 1,
                     type: 'task',
-                    title: 'sample1',
                     documents: [
                         {
                             id: 1,
@@ -274,23 +285,36 @@ export const initialState = {
                                 '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
-                    period: {
-                        start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                        end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
-                    },
-                    statusId: 1,
-                    assign: [2],
                     properties: [
                         {
+                            id: 1,
+                            values: ['sample1']
+                        },
+                        {
+                            id: 2,
+                            values: [1]
+                        },
+                        {
+                            id: 3,
+                            values: [{
+                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                            }]
+                        },
+                        {
                             id: 4,
+                            values: [2]
+                        },
+                        {
+                            id: 10,
                             values: ['LABEL']
                         },
                         {
-                            id: 5,
+                            id: 11,
                             values: [1, 2],
                         },
                         {
-                            id: 6,
+                            id: 12,
                             values: [true]
                         },
                     ],
@@ -301,7 +325,6 @@ export const initialState = {
                 {
                     id: 2,
                     type: 'task',
-                    title: 'sample2',
                     documents: [
                         {
                             id: 1,
@@ -314,13 +337,39 @@ export const initialState = {
                                 '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
-                    period: {
-                        start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                        end: getTime(new Date(2021, now.getMonth(), now.getDate(), 18, 30)),
-                    },
-                    statusId: 2,
-                    assign: [2],
-                    properties: [1],
+                    properties: [
+                        {
+                            id: 1,
+                            values: ['sample2']
+                        },
+                        {
+                            id: 2,
+                            values: [1]
+                        },
+                        {
+                            id: 3,
+                            values: [{
+                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                            }]
+                        },
+                        {
+                            id: 4,
+                            values: [2]
+                        },
+                        {
+                            id: 10,
+                            values: ['LABEL']
+                        },
+                        {
+                            id: 11,
+                            values: [1, 2],
+                        },
+                        {
+                            id: 12,
+                            values: [true]
+                        },
+                    ],
                     settings: {
                         focusedId: 1,
                     },
@@ -328,7 +377,6 @@ export const initialState = {
                 {
                     id: 3,
                     type: 'task',
-                    title: 'sample3',
                     documents: [
                         {
                             id: 1,
@@ -341,21 +389,43 @@ export const initialState = {
                                 '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
-                    period: {
-                        start: getTime(new Date(2021, now.getMonth(), now.getDate() + 1, 11, 50)),
-                        end: getTime(new Date(2021, now.getMonth(), now.getDate() + 1, 12, 30)),
-                    },
-                    statusId: 3,
-                    assign: [2],
-                    properties: [1],
-                    settings: {
-                        focusedId: 1,
-                    },
+                    properties: [
+                        {
+                            id: 1,
+                            values: ['sample3']
+                        },
+                        {
+                            id: 2,
+                            values: [1]
+                        },
+                        {
+                            id: 3,
+                            values: [{
+                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                            }]
+                        },
+                        {
+                            id: 4,
+                            values: [2]
+                        },
+                        {
+                            id: 10,
+                            values: ['LABEL']
+                        },
+                        {
+                            id: 11,
+                            values: [1, 2],
+                        },
+                        {
+                            id: 12,
+                            values: [true]
+                        },
+                    ],
                 },
                 {
                     id: 4,
                     type: 'task',
-                    title: 'sample4',
                     documents: [
                         {
                             id: 1,
@@ -368,13 +438,39 @@ export const initialState = {
                                 '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
-                    period: {
-                        start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                        end: getTime(new Date(2021, now.getMonth(), now.getDate() + 5, 12, 30)),
-                    },
-                    statusId: 4,
-                    assign: [2],
-                    properties: [1],
+                    properties: [
+                        {
+                            id: 1,
+                            values: ['sample4']
+                        },
+                        {
+                            id: 2,
+                            values: [1]
+                        },
+                        {
+                            id: 3,
+                            values: [{
+                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                            }]
+                        },
+                        {
+                            id: 4,
+                            values: [2]
+                        },
+                        {
+                            id: 10,
+                            values: ['LABEL']
+                        },
+                        {
+                            id: 11,
+                            values: [1, 2],
+                        },
+                        {
+                            id: 12,
+                            values: [true]
+                        },
+                    ],
                     settings: {
                         focusedId: 1,
                     },
@@ -382,7 +478,6 @@ export const initialState = {
                 {
                     id: 5,
                     type: 'task',
-                    title: 'sample5',
                     documents: [
                         {
                             id: 1,
@@ -395,13 +490,39 @@ export const initialState = {
                                 '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
-                    period: {
-                        start: getTime(new Date(2021, now.getMonth(), now.getDate() + 3, 11, 50)),
-                        end: getTime(new Date(2021, now.getMonth(), now.getDate() + 3, 13, 30)),
-                    },
-                    statusId: 5,
-                    assign: [2],
-                    properties: [1],
+                    properties: [
+                        {
+                            id: 1,
+                            values: ['sample5']
+                        },
+                        {
+                            id: 2,
+                            values: [1]
+                        },
+                        {
+                            id: 3,
+                            values: [{
+                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                            }]
+                        },
+                        {
+                            id: 4,
+                            values: [2]
+                        },
+                        {
+                            id: 10,
+                            values: ['LABEL']
+                        },
+                        {
+                            id: 11,
+                            values: [1, 2],
+                        },
+                        {
+                            id: 12,
+                            values: [true]
+                        },
+                    ],
                     settings: {
                         focusedId: 1,
                     },
@@ -409,7 +530,6 @@ export const initialState = {
                 {
                     id: 6,
                     type: 'task',
-                    title: 'sample6',
                     documents: [
                         {
                             id: 1,
@@ -422,13 +542,39 @@ export const initialState = {
                                 '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
-                    period: {
-                        start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                        end: getTime(new Date(2021, now.getMonth(), now.getDate(), 18, 30)),
-                    },
-                    statusId: 1,
-                    assign: [2],
-                    properties: [1],
+                    properties: [
+                        {
+                            id: 1,
+                            values: ['sample6']
+                        },
+                        {
+                            id: 2,
+                            values: [1]
+                        },
+                        {
+                            id: 3,
+                            values: [{
+                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                            }]
+                        },
+                        {
+                            id: 4,
+                            values: [2]
+                        },
+                        {
+                            id: 10,
+                            values: ['LABEL']
+                        },
+                        {
+                            id: 11,
+                            values: [1, 2],
+                        },
+                        {
+                            id: 12,
+                            values: [true]
+                        },
+                    ],
                     settings: {
                         focusedId: 1,
                     },
