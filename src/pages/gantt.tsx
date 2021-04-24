@@ -8,14 +8,30 @@ import { floor, ceil, ceilfloor, topbottom, useQuery, createDict, between } from
 import { getTimedelta, getYYYYMMDD, getHHMMSS, getMMDD, getHH, getTime } from '../lib/time';
 import { IRootState } from '../type/store';
 import { Second, Period, Pos, CalenderPeriod, ITimebarDragInitial, ICalenderElement } from '../type/gantt';
-import { Button, Checkbox, FormControlLabel, IconButton, Menu, MenuItem, Switch } from '@material-ui/core';
+import {
+    Avatar,
+    Button,
+    Checkbox,
+    FormControlLabel,
+    IconButton,
+    List,
+    ListItem,
+    ListItemAvatar,
+    ListItemText,
+    Menu,
+    MenuItem,
+    requirePropFactory,
+    Select,
+    Switch,
+    TextField,
+} from '@material-ui/core';
 import AddIcon from '@material-ui/icons/Add';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import FilterListIcon from '@material-ui/icons/FilterList';
 import EditableLabel from '../components/editableLabel';
 import PageComponent from '../components/page';
 import Header from '../components/header';
-import { CheckBox } from '@material-ui/icons';
+import { CheckBox, ChevronLeft, ChevronRight, DragHandle } from '@material-ui/icons';
 
 const c = {
     color: {
@@ -95,19 +111,52 @@ const TaskModalWrapper = styled.div`
     background-color: white;
 `;
 
+const filterTasks = (tasksRaw, filters, globalOperator) => {
+    let tasks = tasksRaw;
+    const globalOpFunc = {
+        'or': (a,b) => {return a || b},
+        'and': (a,b) => {return a && b},
+    }
+    const opFunc = {
+        'eq': (a,b) => { return a == b },
+        'gt': (a,b) => { return a < b },
+        'lt': (a,b) => { return a > b },
+    }
+    if (filters.filter(filter=>filter.apply).length > 0) {
+        tasks = tasksRaw.filter((task) => {
+            return filters.filter(filter=>filter.apply).reduce((filtersAll, filterParam) => {
+                return globalOpFunc[globalOperator](
+                    filtersAll,
+                    task.properties.filter(prop=>prop.id==filterParam.propertyId)[0].values.reduce((taskValuesAll, value) => {
+                        return taskValuesAll || opFunc[filterParam.operator](
+                            filterParam.propertyId == 3 ? filterParam.operator == 'lt' ? value.end : value.start : value,
+                            filterParam.propertyId == 3 ? getTime(new Date(filterParam.value)) : filterParam.value,
+                        )
+                    }, false)
+                )
+            }, globalOperator=='or' ? false : true)
+        })
+    }
+    return tasks
+}
+
 const Gantt: React.FC = () => {
     const locParams = useParams<any>();
     const queries = useQuery();
     const dispatch = useDispatch();
-    const { project, openTaskId, scrollTarget, headerStates } = useSelector(
+    const { project, openTaskId, scrollTarget, headerStates, tasks } = useSelector(
         (props: IRootState) => ({
             project: props.projects.filter((project) => project.id == locParams.projectId)[0],
             openTaskId: props.componentStates.gantt.openTaskId,
             scrollTarget: props.componentStates.gantt.scrollTarget,
             headerStates: props.componentStates.header,
+            tasks: filterTasks(props.projects.filter((project) => project.id == locParams.projectId)[0].pages.filter(page=>page.type=='task')
+            ,props.projects.filter((project) => project.id == locParams.projectId)[0].settings.ganttFilters,
+            props.projects.filter((project) => project.id == locParams.projectId)[0].settings.ganttFilterLigicalOperator),
         }),
         shallowEqual,
     );
+    console.log('GanttMain', tasks)
     // --------------------------------------------------------
     const ganttScale = project.settings.ganttScale;
     const cellXUnit = ((scale) => {
@@ -163,21 +212,11 @@ const Gantt: React.FC = () => {
                 onMainMouseUp(event);
             }
         });
-        if (headerStates.title != project.name) {
-            dispatch({
-                type: 'setComponentState',
-                componentName: 'header',
-                state: {
-                    title: project.name,
-                    //rightComponent: <RightComponent project={project} />,
-                },
-            });
-        }
     }, [project]);
     useEffect(() => {
         //scroll量の調整
         if (scrollTarget) {
-            const timeDiff = getTime(scrollTarget) - getTime(calenderRange.start);
+            const timeDiff = scrollTarget.getTime() - calenderRange.start.getTime();
             const cellDiff = (timeDiff / ganttParams.cellXUnit) * ganttParams.cellDivideNumber;
             const scrollOffset = cellDiff * c.cell.width;
             const mainElem = document.getElementById('ganttMain');
@@ -191,7 +230,7 @@ const Gantt: React.FC = () => {
             <Header
                 height={c.header.height}
                 rightComponent={<RightComponent />}
-                rightComponentProps={{ project: project }}
+                rightComponentProps={{ projectId: project.id }}
             />
             <Main id="ganttMain" onScroll={onMainScroll}>
                 <SelectedArea id="selectedArea" />
@@ -211,16 +250,30 @@ const Gantt: React.FC = () => {
                         <PageComponent projectId={project.id} pageId={openTaskId} headless={false} />
                     </TaskModalWrapper>
                 </Modal>
-                <GanttTask locParams={locParams} ganttParams={ganttParams} />
-                <GanttCalender locParams={locParams} ganttParams={ganttParams} />
+                <GanttTask locParams={locParams} ganttParams={ganttParams} tasks={tasks} />
+                <GanttCalender locParams={locParams} ganttParams={ganttParams} tasks={tasks} />
             </Main>
         </GanttContainer>
     );
 };
-const RightComponent: React.FC<any> = ({ project }) => {
+const RightComponent: React.FC<any> = ({ projectId }) => {
+    const { project } = useSelector(
+        (props: IRootState) => ({
+            project: props.projects.filter((project) => project.id == projectId)[0],
+        }),
+        shallowEqual,
+    );
+    console.log('RightComponent', project)
+    return (
+        <React.Fragment>
+            <PropertyVisibility project={project} />
+            <PropertyFilter project={project} />
+        </React.Fragment>
+    );
+};
+const PropertyVisibility: React.FC<{ project: any }> = ({ project }) => {
     const dispatch = useDispatch();
     const [anchorProperty, setAnchorProperty] = useState(null);
-    const [anchorFilter, setAnchorFilter] = useState(null);
     return (
         <React.Fragment>
             <Button
@@ -265,6 +318,21 @@ const RightComponent: React.FC<any> = ({ project }) => {
                         );
                     })}
             </Menu>
+        </React.Fragment>
+    );
+};
+const PropertyFilter: React.FC<{ project: any }> = ({ project }) => {
+    const dispatch = useDispatch();
+    const [anchorFilter, setAnchorFilter] = useState(null);
+    const onClickAdd = () => {
+        dispatch({
+            type: 'addGanttFilter', 
+            projectId: project.id,
+            filter: {},
+        })
+    }
+    return (
+        <React.Fragment>
             <Button
                 aria-controls="filter-menu"
                 onClick={(event) => {
@@ -273,7 +341,239 @@ const RightComponent: React.FC<any> = ({ project }) => {
             >
                 <FilterListIcon />
             </Button>
+            <Menu
+                id="filter-menu"
+                anchorEl={anchorFilter}
+                open={!!anchorFilter}
+                onClose={() => {
+                    setAnchorFilter(null);
+                }}
+            >
+                <MenuItem>
+                    <List>
+                        <ListItem>
+                            Filter
+                            <Select
+                            value={project.settings.ganttFilterLigicalOperator}
+                            onChange={(event) => {
+                                dispatch({
+                                    type: 'setGanttFilterLigicalOperator',
+                                    projectId: project.id,
+                                    operator: event.target.value
+                                })
+                            }}>
+                                <MenuItem value={'or'}>Or</MenuItem>
+                                <MenuItem value={'and'}>And</MenuItem>
+                            </Select>
+                        </ListItem>
+                        <ListItem>
+                        <table>
+                            <tbody>
+                        {project.settings.ganttFilters.map((filter, index) => {
+                            return (
+                                    <PropertyFilterRow key={`filter-${index}`} project={project} filter={filter} />
+                            );
+                        })}
+                        </tbody>
+                        </table>
+                        </ListItem>
+                        <ListItem
+                            button
+                            onClick={() => {
+                                onClickAdd()
+                            }}
+                        >
+                            <ListItemAvatar>
+                                <Avatar>
+                                    <AddIcon />
+                                </Avatar>
+                            </ListItemAvatar>
+                            <ListItemText primary="Add filter" />
+                        </ListItem>
+                    </List>
+                </MenuItem>
+            </Menu>
         </React.Fragment>
+    );
+};
+const PropertyFilterRow: React.FC<{ project: any; filter: any }> = ({ project, filter }) => {
+    console.log('FilterRow', filter)
+    const { users } = useSelector(
+        (props: IRootState) => ({
+            users: props.settings.users,
+        }),
+        shallowEqual,
+    );
+    const dispatch = useDispatch();
+    const properties = project.properties;
+    const onChangeFilter = (key, value) => {
+        dispatch({
+            type: 'setGanttFilter',
+            projectId: project.id,
+            filterId: filter.id,
+            filter: {
+                [key]: value,
+            },
+        });
+    };
+    const onApply = (event) => {
+        onChangeFilter('apply', event.target.checked);
+    };
+    const ops = (propId) => {
+        const property = properties.filter((prop) => prop.id == propId)[0];
+        switch (property.type) {
+            case 'title':
+                return ['eq'];
+            case 'status':
+                return ['eq'];
+            case 'date':
+                return ['eq', 'gt', 'lt'];
+            case 'user':
+                return ['eq'];
+            case 'label':
+                return ['eq'];
+            case 'tag':
+                return ['eq'];
+            case 'check':
+                return ['eq'];
+            default:
+                return ['eq'];
+        }
+    };
+    const valuesComponent = (propId) => {
+        const property = properties.filter((prop) => prop.id == propId)[0];
+        switch (property.type) {
+            case 'title':
+            case 'label':
+                return (
+                    <TextField
+                        value={filter.value}
+                        onChange={(event) => {
+                            onChangeFilter('value', event.target.value);
+                        }}
+                    />
+                );
+            case 'status':
+            case 'tag':
+                return (
+                    <Select
+                        value={filter.value}
+                        onChange={(event) => {
+                            onChangeFilter('value', event.target.value);
+                        }}
+                    >
+                        {property.values.map((v, index) => {
+                            return (
+                                <MenuItem key={index} value={v.id}>
+                                    {v.name}
+                                </MenuItem>
+                            );
+                        })}
+                    </Select>
+                );
+            case 'date':
+                return (
+                    <TextField
+                        id="datetime-local"
+                        type="datetime-local"
+                        value={filter.value}
+                        onChange={(event) => {
+                            onChangeFilter('value', event.target.value);
+                        }}
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                    />
+                );
+            case 'user':
+                return (
+                    <Select
+                        value={filter.value}
+                        onChange={(event) => {
+                            onChangeFilter('value', event.target.value);
+                        }}
+                    >
+                        {users.map((u, index) => {
+                            return (
+                                <MenuItem key={index} value={u.id}>
+                                    {u.name}
+                                </MenuItem>
+                            );
+                        })}
+                    </Select>
+                );
+            case 'check':
+                return (
+                    <Checkbox
+                        checked={Boolean(filter.value)}
+                        onChange={(event) => {
+                            onChangeFilter('value', event.target.value);
+                        }}
+                    />
+                );
+            default:
+                return undefined;
+        }
+    };
+    return (
+        <tr>
+            <td>
+            <Select
+                value={filter.propertyId}
+                onChange={(event) => {
+                    onChangeFilter('propertyId', Number(event.target.value));
+                }}
+            >
+                {properties.map((prop, index) => {
+                    return (
+                        <MenuItem key={`PropertyFilterRow-propsId-${index}`} value={prop.id}>
+                            {prop.name}
+                        </MenuItem>
+                    );
+                })}
+            </Select>
+            </td>
+            <td>
+            <Select
+                value={filter.operator}
+                onChange={(event) => {
+                    onChangeFilter('operator', event.target.value);
+                }}
+            >
+                {ops(filter.propertyId).map((op, index) => {
+                    switch (op) {
+                        case 'eq':
+                            return (
+                                <MenuItem key={`PropertyFilterRow-op-${index}`} value={op}>
+                                    <DragHandle />
+                                </MenuItem>
+                            );
+                        case 'gt':
+                            return (
+                                <MenuItem key={`PropertyFilterRow-op-${index}`} value={op}>
+                                    <ChevronLeft />
+                                </MenuItem>
+                            );
+                        case 'lt':
+                            return (
+                                <MenuItem key={`PropertyFilterRow-op-${index}`} value={op}>
+                                    <ChevronRight />
+                                </MenuItem>
+                            );
+                    }
+                })}
+            </Select>
+            </td>
+            <td>
+            {valuesComponent(filter.propertyId)}
+            </td>
+            <td>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <Checkbox checked={Boolean(filter.apply)} onChange={onApply} color="primary" size="small" style={{ padding: 0 }} />
+                <span style={{ fontSize: '11px' }}>apply</span>
+            </div>
+            </td>
+        </tr>
     );
 };
 
@@ -325,18 +625,16 @@ const GanttTaskTag = styled.div`
     ${c.borderCss}
 `;
 
-const GanttTask = ({ locParams, ganttParams }) => {
-    const { globalSettings, project, tasks } = useSelector(
+const GanttTask = ({ locParams, ganttParams, tasks }) => {
+    const { globalSettings, project } = useSelector(
         (props: IRootState) => ({
             globalSettings: props.settings,
             project: props.projects.filter((project) => project.id == locParams.projectId)[0],
-            tasks: props.projects
-                .filter((project) => project.id == locParams.projectId)[0]
-                .pages.filter((page) => page.type == 'task'),
         }),
         shallowEqual,
     );
     const dispatch = useDispatch();
+    console.log('GanttTask', tasks)
     // --------------------------------------------------------
     const onTaskHeaderMoving = useRef(null);
     // --------------------------------------------------------
@@ -425,9 +723,10 @@ const GanttTask = ({ locParams, ganttParams }) => {
         const width = project.properties.filter((prop) => prop.id == propertySetting.id)[0].width;
         switch (propertySetting.type) {
             case 'title':
+                console.log('make title', task)
                 const title = task.properties.filter((p) => p.id == propertySetting.id)[0].values[0] || '';
                 return (
-                    <GanttTaskTag key={`property-${propertySetting.type}-${propertySetting.id}`} style={{ width }}>
+                    <GanttTaskTag key={`property-${propertySetting.type}-${task.id}`} style={{ width }}>
                         <EditableLabel
                             value={title}
                             setValue={(v) => setProperty(task.id, propertySetting.id, [v])}
@@ -441,10 +740,10 @@ const GanttTask = ({ locParams, ganttParams }) => {
                 const statuses = project.properties.filter((p) => p.id == propertySetting.id)[0]?.values || [];
                 const selectedStatusIds = task.properties.filter((prop) => prop.id == propertySetting.id)[0].values;
                 return (
-                    <GanttTaskTag key={`property-${propertySetting.type}-${propertySetting.id}`} style={{ width }}>
+                    <GanttTaskTag key={`property-${propertySetting.type}-${task.id}`} style={{ width }}>
                         {selectedStatusIds.map((ss, index) => {
                             return (
-                                <span key={`property-${propertySetting.type}-${propertySetting.id}-${index}`}>
+                                <span key={`property-${propertySetting.type}-${task.id}-${index}`}>
                                     {statuses.filter((s) => s.id == ss)[0].name}
                                 </span>
                             );
@@ -456,14 +755,14 @@ const GanttTask = ({ locParams, ganttParams }) => {
                 if (!dateValues || !dateValues.length) {
                     return (
                         <GanttTaskTag
-                            key={`property-${propertySetting.type}-${propertySetting.id}`}
+                            key={`property-${propertySetting.type}-${task.id}`}
                             style={{ width }}
                         />
                     );
                 }
                 const period = dateValues[0];
                 return (
-                    <GanttTaskTag key={`property-${propertySetting.type}-${propertySetting.id}`} style={{ width }}>
+                    <GanttTaskTag key={`property-${propertySetting.type}-${task.id}`} style={{ width }}>
                         {`「${getMMDD(period.start)}:${getHH(period.start)}`}〜
                         {`${getMMDD(period.end)}:${getHH(period.end)}」`}
                     </GanttTaskTag>
@@ -472,7 +771,7 @@ const GanttTask = ({ locParams, ganttParams }) => {
                 const userValues = task.properties.filter((p) => p.id == propertySetting.id)[0]?.values || [];
                 const assign = userValues;
                 return (
-                    <GanttTaskTag key={`property-${propertySetting.type}-${propertySetting.id}`} style={{ width }}>
+                    <GanttTaskTag key={`property-${propertySetting.type}-${task.id}`} style={{ width }}>
                         {globalSettings.users
                             .filter((user) => assign.indexOf(user.id) != -1)
                             .map((user, index) => {
@@ -483,7 +782,7 @@ const GanttTask = ({ locParams, ganttParams }) => {
             case 'label':
                 const labelValues = task.properties.filter((p) => p.id == propertySetting.id)[0]?.values || [''];
                 return (
-                    <GanttTaskTag key={`property-${propertySetting.type}-${propertySetting.id}`} style={{ width }}>
+                    <GanttTaskTag key={`property-${propertySetting.type}-${task.id}`} style={{ width }}>
                         {labelValues[0]}
                     </GanttTaskTag>
                 );
@@ -497,7 +796,7 @@ const GanttTask = ({ locParams, ganttParams }) => {
                     },
                 );
                 return (
-                    <GanttTaskTag key={`property-${propertySetting.type}-${propertySetting.id}`} style={{ width }}>
+                    <GanttTaskTag key={`property-${propertySetting.type}-${task.id}`} style={{ width }}>
                         {Object.entries(tags).map(([id, name], index) => {
                             return <span key={`tag-${index}`}>{name}</span>;
                         })}
@@ -506,7 +805,7 @@ const GanttTask = ({ locParams, ganttParams }) => {
             case 'check':
                 const checkValues = task.properties.filter((p) => p.id == propertySetting.id)[0]?.values || [false];
                 return (
-                    <GanttTaskTag key={`property-${propertySetting.type}-${propertySetting.id}`} style={{ width }}>
+                    <GanttTaskTag key={`property-${propertySetting.type}-${task.id}`} style={{ width }}>
                         <Checkbox checked={checkValues[0]} />
                     </GanttTaskTag>
                 );
@@ -585,14 +884,11 @@ const GanttCalenderBodyWrapper = styled.div`
     background-color: ${c.color.body};
 `;
 
-const GanttCalender = ({ locParams, ganttParams }) => {
-    const { globalSettings, project, tasks } = useSelector(
+const GanttCalender = ({ locParams, ganttParams, tasks }) => {
+    const { globalSettings, project } = useSelector(
         (props: IRootState) => ({
             globalSettings: props.settings,
             project: props.projects.filter((project) => project.id == locParams.projectId)[0],
-            tasks: props.projects
-                .filter((project) => project.id == locParams.projectId)[0]
-                .pages.filter((page) => page.type == 'task'),
             openTaskId: props.componentStates.gantt.openTaskId,
             scrollTarget: props.componentStates.gantt.scrollTarget,
         }),
@@ -1337,8 +1633,6 @@ const GanttCalender = ({ locParams, ganttParams }) => {
         // スクロール量を保持
         const calenderContainer = document.getElementById('ganttCalenderContainer');
         calenderContainer.scrollTo(lastScroll.current.x, lastScroll.current.y);
-        //
-        console.log('tasks', tasks);
     }, [calenderBodyParam.current, tasks]);
     // --------------------------------------------------------
     return (

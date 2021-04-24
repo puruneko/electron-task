@@ -17,6 +17,8 @@ export interface IProject {
     settings: {
         ganttScale: string;
         ganttCellDivideNumber: number;
+        ganttFilterLigicalOperator: string;
+        ganttFilters: Array<any>;
     };
     properties: Array<IProperty>;
     pages: Array<IPage>;

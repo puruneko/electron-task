@@ -69,6 +69,127 @@ export const reducer = (state, action) => {
                 },
             );
         }
+        // --------------------------------------------------------------------------------------------------------------------project
+        case 'setGanttFilter':
+            // projectId
+            // filterId
+            // filter
+            logger.debug('reducer setGanttFilter', action);
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                settings: {
+                                    ...project.settings,
+                                    ganttFilters: project.settings.ganttFilters.map((filter) => {
+                                        if (filter.id == action.filterId) {
+                                            return {
+                                                ...filter,
+                                                ...action.filter,
+                                            }
+                                        } else {
+                                            return {...filter};
+                                        }
+                                    }
+                                )}
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'addGanttFilter':
+            // projectId
+            // filter
+            logger.debug('reducer addGanttFilter', action);
+            const filterId = Math.max(...state.projects.filter(proj=>proj.id == action.projectId)[0].settings.ganttFilters.map(filter=>Number(filter.id)))+1
+            const defaultFilter = {
+                id: filterId,
+                propertyId: 2,
+                operator: 'eq',
+                value: 1,
+                apply: true,
+            }
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                settings: {
+                                    ...project.settings,
+                                    ganttFilters: [
+                                        ...project.settings.ganttFilters,
+                                        {
+                                            ...defaultFilter,
+                                            ...action.filter
+                                        },
+                                    ]
+                                }
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'setGanttFilterLigicalOperator':
+            // projectId
+            // operator
+            logger.debug('reducer setGanttFilterLigicalOperator', action);
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                settings: {
+                                    ...project.settings,
+                                    ganttFilterLigicalOperator: action.operator,
+                                }
+                            }
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'editProperty':
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                properties: project.properties.map((property) => {
+                                    if (property.id == action.propertyId) {
+                                        return {
+                                            ...property,
+                                            ...action.property,
+                                        }
+                                    } else {
+                                        return {...property};
+                                    }
+                                })
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        // --------------------------------------------------------------------------------------------------------------------task
         case 'setTasks':
             // projectId
             // tasks
@@ -104,9 +225,9 @@ export const reducer = (state, action) => {
                     .filter(page => page.type == 'task')
                     .map(page => {
                         if (page.id == action.pageId) {
-                            return action.page;
+                            return {...action.page};
                         } else {
-                            return page;
+                            return {...page};
                         }
                     });
                 return [...pages, ...newTasks];
@@ -127,6 +248,7 @@ export const reducer = (state, action) => {
                     }),
                 },
             );
+        // --------------------------------------------------------------------------------------------------------------------page
         case 'setPages':
             // projectId
             // pages
@@ -162,9 +284,9 @@ export const reducer = (state, action) => {
                     .filter(page => page.type == 'page')
                     .map(page => {
                         if (page.id == action.pageId) {
-                            return action.page;
+                            return {...action.page};
                         } else {
-                            return page;
+                            return {...page};
                         }
                     });
                 return [...newPages, ...tasks];
@@ -235,7 +357,7 @@ export const reducer = (state, action) => {
                                         document: action.document,
                                     };
                                 } else {
-                                    return documentObj;
+                                    return {...documentObj};
                                 }
                             }),
                             settings: {
@@ -244,7 +366,7 @@ export const reducer = (state, action) => {
                             },
                         };
                     } else {
-                        return page;
+                        return {...page};
                     }
                 });
                 return newPages;
@@ -305,7 +427,7 @@ export const reducer = (state, action) => {
                                             ...insertDocumentAbove(page),
                                         };
                                     } else {
-                                        return page;
+                                        return {...page};
                                     }
                                 }),
                             };
@@ -355,7 +477,7 @@ export const reducer = (state, action) => {
                                             ...insertDocumentBelow(page),
                                         };
                                     } else {
-                                        return page;
+                                        return {...page};
                                     }
                                 }),
                             };
@@ -415,7 +537,7 @@ export const reducer = (state, action) => {
                                             ...deleteDocument(page),
                                         };
                                     } else {
-                                        return page;
+                                        return {...page};
                                     }
                                 }),
                             };
@@ -476,7 +598,7 @@ export const reducer = (state, action) => {
                                             ...moveDocumentUp(page),
                                         };
                                     } else {
-                                        return page;
+                                        return {...page};
                                     }
                                 }),
                             };
@@ -537,7 +659,7 @@ export const reducer = (state, action) => {
                                             ...moveDocumentDown(page),
                                         };
                                     } else {
-                                        return page;
+                                        return {...page};
                                     }
                                 }),
                             };
@@ -586,7 +708,7 @@ export const reducer = (state, action) => {
                                             ...moveDocumentFocusUp(page),
                                         };
                                     } else {
-                                        return page;
+                                        return {...page};
                                     }
                                 }),
                             };
@@ -635,7 +757,7 @@ export const reducer = (state, action) => {
                                             ...moveDocumentFocusDown(page),
                                         };
                                     } else {
-                                        return page;
+                                        return {...page};
                                     }
                                 }),
                             };
@@ -645,37 +767,8 @@ export const reducer = (state, action) => {
                     }),
                 },
             );
-        case 'editProperty':
-            // projectId
-            // propertyId
-            // property
-            logger.debug('reducer editProperty', action);
-            return Object.assign(
-                {},
-                {
-                    ...state,
-                    projects: state.projects.map(project => {
-                        if (project.id == action.projectId) {
-                            return {
-                                ...project,
-                                properties: project.properties.map((property) => {
-                                    if (property.id == action.propertyId) {
-                                        return {
-                                            ...property,
-                                            ...action.property,
-                                        }
-                                    } else {
-                                        return property;
-                                    }
-                                })
-                            };
-                        } else {
-                            return { ...project };
-                        }
-                    }),
-                },
-            );
         default:
+            logger.debug('reducer undefined', action);
             return {
                 ...state,
             };
