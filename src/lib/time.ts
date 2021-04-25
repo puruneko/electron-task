@@ -60,3 +60,14 @@ export const getHH = (d: Date | number): string => {
     const d_ = new Date(d);
     return `${d_.getHours()}`;
 };
+
+export const toISOLikeString = (date: Date | number | string) => {
+    if (!date) {
+        return '';
+    }
+    let d = date
+    if (typeof(d) == 'number' || typeof(d) == 'string') {
+        d = new Date(d)
+    }
+    return `${d.getFullYear()}-${('00'+(d.getMonth()+1)).slice(-2)}-${('00'+d.getDate()).slice(-2)}T${('00'+d.getHours()).slice(-2)}:${('00'+d.getMinutes()).slice(-2)}`
+}

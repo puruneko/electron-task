@@ -87,6 +87,14 @@ export const initialState = {
                         apply: true,
                     },
                 ],
+                ganttSorts: [
+                    {
+                        id: 1,
+                        propertyId: 2,
+                        direction: 'asc',
+                        apply: true,
+                    }
+                ],
             },
             properties: [
                 // id:不変

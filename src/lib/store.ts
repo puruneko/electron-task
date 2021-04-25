@@ -13,7 +13,7 @@ const getBrandnewPage = (
     type,
     title = '',
     documents = [],
-    period = null,
+    period = {start: null, end: null},
     statusId = 1,
     assign = null,
     tags = [],
@@ -22,15 +22,25 @@ const getBrandnewPage = (
     return {
         id,
         type,
-        title,
         documents,
-        period: period || {
-            start: getTime(new Date()), //[[ms]]
-            end: getTime(new Date()), //[ms]
-        },
-        statusId,
-        assign,
-        tags,
+        properties: [
+            {
+                id: 1,
+                values: [title]
+            },
+            {
+                id: 2,
+                values: [statusId]
+            },
+            {
+                id: 3,
+                values: [period]
+            },
+            {
+                id: 4,
+                values: [assign]
+            },
+        ],
         settings: {
             focusedId,
         },
@@ -163,7 +173,78 @@ export const reducer = (state, action) => {
                     }),
                 },
             );
+        case 'setGanttSort':
+            // projectId
+            // sortId
+            // sort
+            logger.debug('reducer setGanttSort', action);
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                settings: {
+                                    ...project.settings,
+                                    ganttSorts: project.settings.ganttSorts.map((sort) => {
+                                        if (sort.id == action.sortId) {
+                                            return {
+                                                ...sort,
+                                                ...action.sort,
+                                            }
+                                        } else {
+                                            return {...sort};
+                                        }
+                                    }
+                                )}
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'addGanttSort':
+            // projectId
+            // sort
+            logger.debug('reducer addGanttSort', action);
+            const sortId = Math.max(...state.projects.filter(proj=>proj.id == action.projectId)[0].settings.ganttSorts.map(sort=>Number(sort.id)))+1
+            const defaultSort = {
+                id: sortId,
+                propertyId: 2,
+                direction: 'asc',
+                apply: true,
+            }
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                settings: {
+                                    ...project.settings,
+                                    ganttSorts: [
+                                        ...project.settings.ganttSorts,
+                                        {
+                                            ...defaultSort,
+                                            ...action.sort,
+                                        },
+                                    ]
+                                }
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
         case 'editProperty':
+            // projectId
+            // propertyId
             return Object.assign(
                 {},
                 {
@@ -180,6 +261,45 @@ export const reducer = (state, action) => {
                                         }
                                     } else {
                                         return {...property};
+                                    }
+                                })
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'editPageProperty':
+            // projectId
+            // pageId
+            // propertyId
+            // property
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                pages: project.pages.map(page => {
+                                    if (page.id == action.pageId) {
+                                        return {
+                                            ...page,
+                                            properties: page.properties.map(prop=> {
+                                                if (prop.id == action.propertyId) {
+                                                    return {
+                                                        ...prop,
+                                                        ...action.property,
+                                                    }
+                                                } else {
+                                                    return { ...prop}
+                                                }
+                                            })
+                                        }
+                                    } else {
+                                        return {...page}
                                     }
                                 })
                             };
@@ -248,6 +368,61 @@ export const reducer = (state, action) => {
                     }),
                 },
             );
+        case 'insertTaskAbove':
+            // projectId
+            // taskId
+            logger.debug('reducer setPage', action);
+            const insertTaskAbove = project => {
+                const pages = project.pages.filter(page => page.type == 'page');
+                const newId = Math.max(...project.pages.map(page => page.id)) + 1;
+                const newTasks = [];
+                for (const task of project.pages.filter(page => page.type == 'task')) {
+                    if (task.id == action.taskId) {
+                        newTasks.push(getBrandnewPage(newId, 'task'));
+                    }
+                    newTasks.push(task);
+                }
+                return [...pages, ...newTasks];
+            };
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                pages: insertTaskAbove(project),
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'addTask':
+            // projectId
+            logger.debug('reducer addTask', action);
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            const pageId = Math.max(...project.pages.map(page=>page.id)) + 1;
+                            return {
+                                ...project,
+                                pages: [
+                                    ...project.pages,
+                                    getBrandnewPage(pageId, 'task'),
+                                ],
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
         // --------------------------------------------------------------------------------------------------------------------page
         case 'setPages':
             // projectId
@@ -300,38 +475,6 @@ export const reducer = (state, action) => {
                             return {
                                 ...project,
                                 pages: setPage(project),
-                            };
-                        } else {
-                            return { ...project };
-                        }
-                    }),
-                },
-            );
-        case 'insertTaskAbove':
-            // projectId
-            // taskId
-            logger.debug('reducer setPage', action);
-            const insertTaskAbove = project => {
-                const pages = project.pages.filter(page => page.type == 'page');
-                const newId = Math.max(...project.pages.map(page => page.id)) + 1;
-                const newTasks = [];
-                for (const task of project.pages.filter(page => page.type == 'task')) {
-                    if (task.id == action.taskId) {
-                        newTasks.push(getBrandnewPage(newId, 'task'));
-                    }
-                    newTasks.push(task);
-                }
-                return [...pages, ...newTasks];
-            };
-            return Object.assign(
-                {},
-                {
-                    ...state,
-                    projects: state.projects.map(project => {
-                        if (project.id == action.projectId) {
-                            return {
-                                ...project,
-                                pages: insertTaskAbove(project),
                             };
                         } else {
                             return { ...project };
