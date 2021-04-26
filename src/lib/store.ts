@@ -5,45 +5,43 @@ import { composeWithDevTools } from 'redux-devtools-extension';
 import { logger } from './logger';
 import { getTime } from './time';
 import { initialState } from './dummyData';
+import { createDict } from './utils';
 
 let store;
 
-const getBrandnewPage = (
+const getBrandnewPage = ({
+    project,
     id,
     type,
-    title = '',
     documents = [],
-    period = {start: null, end: null},
-    statusId = 1,
-    assign = null,
-    tags = [],
-    focusedId = 1,
-) => {
+    properties = [],
+    settings = {},
+}) => {
+    const mergedProperties = Object.values({
+        ...createDict(
+            project.properties.map(prop=>prop.id),
+            (id) => {return {
+                id: id,
+                values: []
+            }}
+        ),
+        ...createDict(
+            properties.map(prop=>prop.id),
+            (id) => {return {
+                id: id,
+                values: properties.filter(prop=>prop.id==id)[0].values
+            }}
+        )
+    })
     return {
         id,
         type,
-        documents,
-        properties: [
-            {
-                id: 1,
-                values: [title]
-            },
-            {
-                id: 2,
-                values: [statusId]
-            },
-            {
-                id: 3,
-                values: [period]
-            },
-            {
-                id: 4,
-                values: [assign]
-            },
-        ],
+        documents: documents,
+        properties: mergedProperties,
         settings: {
-            focusedId,
-        },
+            focusedId: 1,
+            ...settings
+        }
     };
 };
 //export const reducer = (state = initialState, action) => {
@@ -378,7 +376,7 @@ export const reducer = (state, action) => {
                 const newTasks = [];
                 for (const task of project.pages.filter(page => page.type == 'task')) {
                     if (task.id == action.taskId) {
-                        newTasks.push(getBrandnewPage(newId, 'task'));
+                        newTasks.push(getBrandnewPage({project: project, id: newId, type: 'task'}));
                     }
                     newTasks.push(task);
                 }
@@ -402,6 +400,7 @@ export const reducer = (state, action) => {
             );
         case 'addTask':
             // projectId
+            // task
             logger.debug('reducer addTask', action);
             return Object.assign(
                 {},
@@ -414,7 +413,7 @@ export const reducer = (state, action) => {
                                 ...project,
                                 pages: [
                                     ...project.pages,
-                                    getBrandnewPage(pageId, 'task'),
+                                    getBrandnewPage({project: project, id: pageId, type: 'task', ...action.task}),
                                 ],
                             };
                         } else {
@@ -475,6 +474,30 @@ export const reducer = (state, action) => {
                             return {
                                 ...project,
                                 pages: setPage(project),
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'addPage':
+            // projectId
+            // page
+            logger.debug('reducer addPage', action);
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map(project => {
+                        if (project.id == action.projectId) {
+                            const pageId = Math.max(...project.pages.map(page=>page.id)) + 1;
+                            return {
+                                ...project,
+                                pages: [
+                                    ...project.pages,
+                                    getBrandnewPage({project: project, id: pageId, type: 'page', ...action.page}),
+                                ],
                             };
                         } else {
                             return { ...project };

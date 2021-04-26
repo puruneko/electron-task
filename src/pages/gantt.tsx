@@ -122,8 +122,8 @@ const filterTasks = (tasksRaw, filters, globalOperator) => {
     }
     const opFunc = {
         'eq': (a,b) => { return a == b },
-        'gt': (a,b) => { return a < b },
-        'lt': (a,b) => { return a > b },
+        'ge': (a,b) => { return a <= b },
+        'le': (a,b) => { return a >= b },
     }
     if (filters.filter(filter=>filter.apply).length > 0) {
         tasks = tasksRaw.filter((task) => {
@@ -132,8 +132,8 @@ const filterTasks = (tasksRaw, filters, globalOperator) => {
                     filtersAll,
                     task.properties.filter(prop=>prop.id==filterParam.propertyId)[0].values.reduce((taskValuesAll, value) => {
                         return taskValuesAll || opFunc[filterParam.operator](
-                            filterParam.propertyId == 3 ? filterParam.operator == 'lt' ? value.end : value.start : value,
-                            filterParam.propertyId == 3 ? getTime(new Date(filterParam.value)) : filterParam.value,
+                            filterParam.propertyId == 3 ? (filterParam.operator == 'le' ? (value?.end ? value?.end : value?.start) : value?.start) : value,
+                            filterParam.propertyId == 3 ? filterParam.value?.start : filterParam.value,
                         )
                     }, false)
                 )
@@ -219,7 +219,7 @@ const Gantt: React.FC = () => {
         }),
         shallowEqual,
     );
-    const tasks = sortTasks(filterTasks(tasksRaw, filters, filterOperator), project, sorts)
+    const displayTasks = sortTasks(filterTasks(tasksRaw, filters, filterOperator), project, sorts)
     // --------------------------------------------------------
     const ganttScale = project.settings.ganttScale;
     const cellXUnit = ((scale) => {
@@ -235,7 +235,7 @@ const Gantt: React.FC = () => {
     now.setSeconds(0);
     now.setMilliseconds(0);
     const calenderRange: Period = {
-        start: new Date(getTime(now) - cellXUnit * 1), // 今の1cell前から
+        start: new Date(getTime(now) - cellXUnit * 5), // 今の5cell前から
         end: new Date(getTime(now) + cellXUnit * 30), // 30cell後まで
     };
     const calenderRangeDiff = getTimedelta(calenderRange.start, calenderRange.end).date;
@@ -313,8 +313,8 @@ const Gantt: React.FC = () => {
                         <PageComponent projectId={project.id} pageId={openTaskId} headless={false} />
                     </TaskModalWrapper>
                 </Modal>
-                <GanttTask locParams={locParams} ganttParams={ganttParams} tasks={tasks} />
-                <GanttCalender locParams={locParams} ganttParams={ganttParams} tasks={tasks} />
+                <GanttTask locParams={locParams} ganttParams={ganttParams} displayTasks={displayTasks} />
+                <GanttCalender locParams={locParams} ganttParams={ganttParams} displayTasks={displayTasks} />
             </Main>
         </GanttContainer>
     );
@@ -471,13 +471,12 @@ const PropertyFilterRow: React.FC<{ project: any; filter: any }> = ({ project, f
     const dispatch = useDispatch();
     const properties = project.properties;
     const onChangeFilter = (key, value) => {
+        const newFilter = key == 'propertyId' ? {[key]: value, value: null} : {[key]: value}
         dispatch({
             type: 'setGanttFilter',
             projectId: project.id,
             filterId: filter.id,
-            filter: {
-                [key]: value,
-            },
+            filter: newFilter,
         });
     };
     const onApply = (event) => {
@@ -491,7 +490,7 @@ const PropertyFilterRow: React.FC<{ project: any; filter: any }> = ({ project, f
             case 'status':
                 return ['eq'];
             case 'date':
-                return ['eq', 'gt', 'lt'];
+                return ['eq', 'ge', 'le'];
             case 'user':
                 return ['eq'];
             case 'label':
@@ -540,9 +539,9 @@ const PropertyFilterRow: React.FC<{ project: any; filter: any }> = ({ project, f
                     <TextField
                         id="datetime-local"
                         type="datetime-local"
-                        value={filter.value}
+                        value={toISOLikeString(filter.value?.start)}
                         onChange={(event) => {
-                            onChangeFilter('value', event.target.value);
+                            onChangeFilter('value', {start: getTime(new Date(event.target.value)), end: null});
                         }}
                         InputLabelProps={{
                             shrink: true,
@@ -612,13 +611,13 @@ const PropertyFilterRow: React.FC<{ project: any; filter: any }> = ({ project, f
                                     <DragHandle />
                                 </MenuItem>
                             );
-                        case 'gt':
+                        case 'ge':
                             return (
                                 <MenuItem key={`PropertyFilterRow-op-${index}`} value={op}>
                                     <ChevronLeft />
                                 </MenuItem>
                             );
-                        case 'lt':
+                        case 'le':
                             return (
                                 <MenuItem key={`PropertyFilterRow-op-${index}`} value={op}>
                                     <ChevronRight />
@@ -813,16 +812,17 @@ const GanttTaskTag = styled.div`
     ${c.borderCss}
 `;
 
-const GanttTask = ({ locParams, ganttParams, tasks }) => {
-    const { globalSettings, project } = useSelector(
+const GanttTask = ({ locParams, ganttParams, displayTasks }) => {
+    const { globalSettings, project, filters } = useSelector(
         (props: IRootState) => ({
             globalSettings: props.settings,
             project: props.projects.filter((project) => project.id == locParams.projectId)[0],
+            filters: props.projects.filter((project) => project.id == locParams.projectId)[0].settings.ganttFilters,
         }),
         shallowEqual,
     );
     const dispatch = useDispatch();
-    console.log('GanttTask', tasks)
+    console.log('GanttTask', displayTasks)
     // --------------------------------------------------------
     const onTaskHeaderMoving = useRef(null);
     // --------------------------------------------------------
@@ -839,6 +839,14 @@ const GanttTask = ({ locParams, ganttParams, tasks }) => {
         dispatch({
             type: 'addTask',
             projectId: project.id,
+            task: {
+                properties: filters.map(filter=>{
+                    return {
+                        id: filter.propertyId,
+                        values: [filter.value]
+                    }
+                })
+            }
         });
     }
     const onTaskHeaderMouseDown = (event) => {
@@ -942,13 +950,14 @@ const GanttTask = ({ locParams, ganttParams, tasks }) => {
                             multiple
                             value={selectedStatusObjList}
                             onChange={(event)=>{
+                                const values: Array<any> = [...event.target.value as Array<any>]
                                 dispatch({
                                     type: 'editPageProperty',
                                     projectId: project.id,
                                     pageId: task.id,
                                     propertyId: propertySetting.id,
                                     property: {
-                                        values: event.target.value.map(v=>v.id),
+                                        values: values.map(v=>v.id),
                                     }
                                 })}
                             }
@@ -1044,13 +1053,15 @@ const GanttTask = ({ locParams, ganttParams, tasks }) => {
                             id="demo-mutiple-name"
                             multiple
                             value={taskUserObjList}
-                            onChange={(event)=>{dispatch({
+                            onChange={(event)=>{
+                                const values: Array<any> = [...event.target.value as Array<any>]
+                                dispatch({
                                 type: 'editPageProperty',
                                 projectId: project.id,
                                 pageId: task.id,
                                 propertyId: propertySetting.id,
                                 property: {
-                                    values: event.target.value.map(v=>v.id),
+                                    values: values.map(v=>v.id),
                                 }
                             })}}
                             input={<Input />}
@@ -1097,13 +1108,14 @@ const GanttTask = ({ locParams, ganttParams, tasks }) => {
                             multiple
                             value={selectedTagObjs}
                             onChange={(event)=>{
+                                const values: Array<any> = [...event.target.value as Array<any>]
                                 dispatch({
                                     type: 'editPageProperty',
                                     projectId: project.id,
                                     pageId: task.id,
                                     propertyId: propertySetting.id,
                                     property: {
-                                        values: event.target.value.map(v=>v.id),
+                                        values: values.map(v=>v.id),
                                     }
                                 })}
                             }
@@ -1168,7 +1180,7 @@ const GanttTask = ({ locParams, ganttParams, tasks }) => {
                     })}
             </GanttTaskHeader>
             <GanttTaskList>
-                {tasks.map((task, index) => {
+                {displayTasks.map((task, index) => {
                     return (
                         <GanttTaskRow key={`task-row-${index}`} data-id={task.id} className="ganttTaskRow">
                             <GanttTaskAdd>
@@ -1221,13 +1233,11 @@ const GanttCalenderBodyWrapper = styled.div`
     background-color: ${c.color.body};
 `;
 
-const GanttCalender = ({ locParams, ganttParams, tasks }) => {
-    const { globalSettings, project } = useSelector(
+const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
+    const { project, rawTasks } = useSelector(
         (props: IRootState) => ({
-            globalSettings: props.settings,
             project: props.projects.filter((project) => project.id == locParams.projectId)[0],
-            openTaskId: props.componentStates.gantt.openTaskId,
-            scrollTarget: props.componentStates.gantt.scrollTarget,
+            rawTasks: props.projects.filter((project) => project.id == locParams.projectId)[0].pages.filter(page=>page.type=='task'),
         }),
         shallowEqual,
     );
@@ -1459,7 +1469,7 @@ const GanttCalender = ({ locParams, ganttParams, tasks }) => {
             };
             // protectedCellCountの計算
             const tasksProtectedCellCount = selectedCElem.current.map((timebar) => {
-                const task = tasks.filter((t) => t.id == timebar.dataset.id)[0];
+                const task = displayTasks.filter((t) => t.id == timebar.dataset.id)[0];
                 const period = task.properties.filter((p) => p.id == 3)[0].values[0];
                 const diff = (getTime(new Date(period.end)) - getTime(new Date(period.start))) / ganttParams.cellXUnit;
                 return diff - Math.trunc(diff) < 1.0 / ganttParams.cellDivideNumber ? 1 : 0;
@@ -1752,11 +1762,12 @@ const GanttCalender = ({ locParams, ganttParams, tasks }) => {
                 corDy,
                 cx,
                 dcx,
+                dcy,
                 dp,
                 tdi,
             });
             const modifiedIndex = [];
-            const dateModifiedTasks = tasks.map((task, index) => {
+            const dateModifiedTasks = rawTasks.map((task, index) => {
                 if (selectedTimebarIds.indexOf(task.id) != -1) {
                     // 期間の編集
                     const period = task.properties.filter((p) => p.id == 3)[0].values[0];
@@ -1800,7 +1811,8 @@ const GanttCalender = ({ locParams, ganttParams, tasks }) => {
             });
             // 順序入れ替え
             let newTasks;
-            if (tdi.targetType == 'whole' && tdi.pointed.cell.y != cy) {
+            if (tdi.targetType == 'whole' && dcy != 0) {
+                /*
                 let counter = -1;
                 let modifiedCounter = 0;
                 newTasks = dateModifiedTasks.map((task, index) => {
@@ -1818,6 +1830,22 @@ const GanttCalender = ({ locParams, ganttParams, tasks }) => {
                         return { ...dateModifiedTasks[counter] };
                     }
                 });
+                */
+                // 0 1 2 3 4
+                // 4 0 1 2 3 dcy:-4,mi:4
+                newTasks = []
+                let counter = 0;
+                const unmovedTasks = dateModifiedTasks.filter((t,i)=>modifiedIndex.indexOf(i) == -1)
+                const targetIndex = modifiedIndex.map(i => i + dcy)
+                console.log('sort param', {dateModifiedTasks, unmovedTasks, modifiedIndex, targetIndex})
+                for (let i = 0; i < dateModifiedTasks.length; i++) {
+                   if (targetIndex.indexOf(i) != -1) {
+                       newTasks.push(dateModifiedTasks[i-dcy]);
+                   } else {
+                       newTasks.push(unmovedTasks[counter]);
+                       counter++;
+                   }
+                }
             } else {
                 newTasks = [...dateModifiedTasks];
             }
@@ -1843,7 +1871,7 @@ const GanttCalender = ({ locParams, ganttParams, tasks }) => {
     // --------------------------------------------------------
     const onTimebarDoubleClick = (event) => {
         console.log('double clicked');
-        const task = tasks.filter((t) => t.id == event.target.dataset.id)[0];
+        const task = displayTasks.filter((t) => t.id == event.target.dataset.id)[0];
         dispatch({
             type: 'setComponentState',
             componentName: 'gantt',
@@ -1852,6 +1880,25 @@ const GanttCalender = ({ locParams, ganttParams, tasks }) => {
             },
         });
     };
+    const onCellClick = (event) => {
+        const id = Number(event.target.dataset.id)
+        const task = displayTasks.filter(task=>task.id == id)[0]
+        const period = task.properties.filter(prop=>prop.id==3)[0].values[0]
+        if (!period || !period.start) {
+            const posX = Number(event.target.dataset.x)
+            const start = ganttParams.calenderRange.start.getTime()// + posX / ganttParams.cellDivideNumber * ganttParams.cellXUnit
+            dispatch({
+                type: 'editPageProperty',
+                projectId: project.id,
+                pageId: task.id,
+                propertyId: 3,
+                property: {
+                    start: start,
+                    end: start + ganttParams.cellXUnit / ganttParams.cellDivideNumber
+                }
+            })
+        }
+    }
     // --------------------------------------------------------
     useEffect(() => {
         //eventListenerの登録
@@ -1974,7 +2021,7 @@ const GanttCalender = ({ locParams, ganttParams, tasks }) => {
         // スクロール量を保持
         const calenderContainer = document.getElementById('ganttCalenderContainer');
         calenderContainer.scrollTo(lastScroll.current.x, lastScroll.current.y);
-    }, [calenderBodyParam.current, tasks]);
+    }, [calenderBodyParam.current, displayTasks]);
     // --------------------------------------------------------
     return (
         <GanttCalenderContainer id="ganttCalenderContainer">
@@ -2024,7 +2071,7 @@ const GanttCalender = ({ locParams, ganttParams, tasks }) => {
                     >
                         test
                     </div>
-                    {tasks.map((task, y) => {
+                    {displayTasks.map((task, y) => {
                         const period = task.properties.filter((p) => p.id == 3)[0].values[0];
                         const width = !!period ? getTimeberWidth(period.start, period.end) - c.cell.width * 0.02 : 0;
                         const tps = !!period ? new Date(period.start !== null ? period.start : period.end) : null;
@@ -2043,9 +2090,11 @@ const GanttCalender = ({ locParams, ganttParams, tasks }) => {
                                             <GanttCalenderCell
                                                 key={`calender-cell-${y}-${x}`}
                                                 className="ganttCalenderCell"
+                                                data-id={task.id}
                                                 data-x={x}
                                                 data-y={y}
                                                 data-target="cell"
+                                                onClick={onCellClick}
                                             >
                                                 {width && year && month && date && hour ? (
                                                     <GanttCalenderTimebarWrap
