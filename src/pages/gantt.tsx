@@ -1812,27 +1812,6 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
             // 順序入れ替え
             let newTasks;
             if (tdi.targetType == 'whole' && dcy != 0) {
-                /*
-                let counter = -1;
-                let modifiedCounter = 0;
-                newTasks = dateModifiedTasks.map((task, index) => {
-                    if (modifiedIndex[modifiedCounter] + dcy == index) {
-                        const newone = {
-                            ...dateModifiedTasks[modifiedIndex[modifiedCounter]],
-                        };
-                        modifiedCounter++;
-                        return newone;
-                    } else {
-                        counter++;
-                        while (modifiedIndex.indexOf(counter) != -1) {
-                            counter++;
-                        }
-                        return { ...dateModifiedTasks[counter] };
-                    }
-                });
-                */
-                // 0 1 2 3 4
-                // 4 0 1 2 3 dcy:-4,mi:4
                 newTasks = []
                 let counter = 0;
                 const unmovedTasks = dateModifiedTasks.filter((t,i)=>modifiedIndex.indexOf(i) == -1)
@@ -1886,15 +1865,18 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
         const period = task.properties.filter(prop=>prop.id==3)[0].values[0]
         if (!period || !period.start) {
             const posX = Number(event.target.dataset.x)
-            const start = ganttParams.calenderRange.start.getTime()// + posX / ganttParams.cellDivideNumber * ganttParams.cellXUnit
+            const start = ganttParams.calenderRange.start.getTime() + posX / ganttParams.cellDivideNumber * ganttParams.cellXUnit
+            console.log('onCellClick', {id, task, period, posX, start})
             dispatch({
                 type: 'editPageProperty',
                 projectId: project.id,
                 pageId: task.id,
                 propertyId: 3,
                 property: {
-                    start: start,
-                    end: start + ganttParams.cellXUnit / ganttParams.cellDivideNumber
+                    values: [{
+                        start: start,
+                        end: start + ganttParams.cellXUnit / ganttParams.cellDivideNumber
+                    }],
                 }
             })
         }
