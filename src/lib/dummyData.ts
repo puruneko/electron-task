@@ -75,7 +75,7 @@ export const initialState = {
             id: 1,
             name: 'sampleProject',
             settings: {
-                ganttScale: 'date',
+                ganttScale: 'date', // mounth
                 ganttCellDivideNumber: 2,
                 ganttFilterLigicalOperator: 'or',
                 ganttFilters: [
