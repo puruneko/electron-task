@@ -9,30 +9,27 @@ import { createDict } from './utils';
 
 let store;
 
-const getBrandnewPage = ({
-    project,
-    id,
-    type,
-    documents = [],
-    properties = [],
-    settings = {},
-}) => {
+const getBrandnewPage = ({ project, id, type, documents = [], properties = [], settings = {} }) => {
     const mergedProperties = Object.values({
         ...createDict(
-            project.properties.map(prop=>prop.id),
-            (id) => {return {
-                id: id,
-                values: []
-            }}
+            project.properties.map((prop) => prop.id),
+            (id) => {
+                return {
+                    id: id,
+                    values: [],
+                };
+            },
         ),
         ...createDict(
-            properties.map(prop=>prop.id),
-            (id) => {return {
-                id: id,
-                values: properties.filter(prop=>prop.id==id)[0].values
-            }}
-        )
-    })
+            properties.map((prop) => prop.id),
+            (id) => {
+                return {
+                    id: id,
+                    values: properties.filter((prop) => prop.id == id)[0].values,
+                };
+            },
+        ),
+    });
     return {
         id,
         type,
@@ -40,8 +37,8 @@ const getBrandnewPage = ({
         properties: mergedProperties,
         settings: {
             focusedId: 1,
-            ...settings
-        }
+            ...settings,
+        },
     };
 };
 //export const reducer = (state = initialState, action) => {
@@ -87,7 +84,7 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
@@ -98,12 +95,12 @@ export const reducer = (state, action) => {
                                             return {
                                                 ...filter,
                                                 ...action.filter,
-                                            }
+                                            };
                                         } else {
-                                            return {...filter};
+                                            return { ...filter };
                                         }
-                                    }
-                                )}
+                                    }),
+                                },
                             };
                         } else {
                             return { ...project };
@@ -115,19 +112,24 @@ export const reducer = (state, action) => {
             // projectId
             // filter
             logger.debug('reducer addGanttFilter', action);
-            const filterId = Math.max(...state.projects.filter(proj=>proj.id == action.projectId)[0].settings.ganttFilters.map(filter=>Number(filter.id)))+1
+            const filterId =
+                Math.max(
+                    ...state.projects
+                        .filter((proj) => proj.id == action.projectId)[0]
+                        .settings.ganttFilters.map((filter) => Number(filter.id)),
+                ) + 1;
             const defaultFilter = {
                 id: filterId,
                 propertyId: 2,
                 operator: 'eq',
                 value: 1,
                 apply: true,
-            }
+            };
             return Object.assign(
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
@@ -137,10 +139,10 @@ export const reducer = (state, action) => {
                                         ...project.settings.ganttFilters,
                                         {
                                             ...defaultFilter,
-                                            ...action.filter
+                                            ...action.filter,
                                         },
-                                    ]
-                                }
+                                    ],
+                                },
                             };
                         } else {
                             return { ...project };
@@ -156,15 +158,15 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
                                 settings: {
                                     ...project.settings,
                                     ganttFilterLigicalOperator: action.operator,
-                                }
-                            }
+                                },
+                            };
                         } else {
                             return { ...project };
                         }
@@ -180,7 +182,7 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
@@ -191,12 +193,12 @@ export const reducer = (state, action) => {
                                             return {
                                                 ...sort,
                                                 ...action.sort,
-                                            }
+                                            };
                                         } else {
-                                            return {...sort};
+                                            return { ...sort };
                                         }
-                                    }
-                                )}
+                                    }),
+                                },
                             };
                         } else {
                             return { ...project };
@@ -208,18 +210,23 @@ export const reducer = (state, action) => {
             // projectId
             // sort
             logger.debug('reducer addGanttSort', action);
-            const sortId = Math.max(...state.projects.filter(proj=>proj.id == action.projectId)[0].settings.ganttSorts.map(sort=>Number(sort.id)))+1
+            const sortId =
+                Math.max(
+                    ...state.projects
+                        .filter((proj) => proj.id == action.projectId)[0]
+                        .settings.ganttSorts.map((sort) => Number(sort.id)),
+                ) + 1;
             const defaultSort = {
                 id: sortId,
                 propertyId: 2,
                 direction: 'asc',
                 apply: true,
-            }
+            };
             return Object.assign(
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
@@ -231,8 +238,8 @@ export const reducer = (state, action) => {
                                             ...defaultSort,
                                             ...action.sort,
                                         },
-                                    ]
-                                }
+                                    ],
+                                },
                             };
                         } else {
                             return { ...project };
@@ -247,7 +254,7 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
@@ -256,11 +263,11 @@ export const reducer = (state, action) => {
                                         return {
                                             ...property,
                                             ...action.property,
-                                        }
+                                        };
                                     } else {
-                                        return {...property};
+                                        return { ...property };
                                     }
-                                })
+                                }),
                             };
                         } else {
                             return { ...project };
@@ -277,29 +284,29 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
-                                pages: project.pages.map(page => {
+                                pages: project.pages.map((page) => {
                                     if (page.id == action.pageId) {
                                         return {
                                             ...page,
-                                            properties: page.properties.map(prop=> {
+                                            properties: page.properties.map((prop) => {
                                                 if (prop.id == action.propertyId) {
                                                     return {
                                                         ...prop,
                                                         ...action.property,
-                                                    }
+                                                    };
                                                 } else {
-                                                    return { ...prop}
+                                                    return { ...prop };
                                                 }
-                                            })
-                                        }
+                                            }),
+                                        };
                                     } else {
-                                        return {...page}
+                                        return { ...page };
                                     }
-                                })
+                                }),
                             };
                         } else {
                             return { ...project };
@@ -312,15 +319,15 @@ export const reducer = (state, action) => {
             // projectId
             // tasks
             logger.debug('reducer setTasks', action);
-            const setTasks = project => {
-                const pages = project.pages.filter(page => page.type == 'page');
+            const setTasks = (project) => {
+                const pages = project.pages.filter((page) => page.type == 'page');
                 return [...pages, ...action.tasks];
             };
             return Object.assign(
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
@@ -337,15 +344,15 @@ export const reducer = (state, action) => {
             // pageId
             // page
             logger.debug('reducer setPage', action);
-            const setTask = project => {
-                const pages = project.pages.filter(page => page.type == 'page');
+            const setTask = (project) => {
+                const pages = project.pages.filter((page) => page.type == 'page');
                 const newTasks = project.pages
-                    .filter(page => page.type == 'task')
-                    .map(page => {
+                    .filter((page) => page.type == 'task')
+                    .map((page) => {
                         if (page.id == action.pageId) {
-                            return {...action.page};
+                            return { ...action.page };
                         } else {
-                            return {...page};
+                            return { ...page };
                         }
                     });
                 return [...pages, ...newTasks];
@@ -354,7 +361,7 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
@@ -370,13 +377,13 @@ export const reducer = (state, action) => {
             // projectId
             // taskId
             logger.debug('reducer setPage', action);
-            const insertTaskAbove = project => {
-                const pages = project.pages.filter(page => page.type == 'page');
-                const newId = Math.max(...project.pages.map(page => page.id)) + 1;
+            const insertTaskAbove = (project) => {
+                const pages = project.pages.filter((page) => page.type == 'page');
+                const newId = Math.max(...project.pages.map((page) => page.id)) + 1;
                 const newTasks = [];
-                for (const task of project.pages.filter(page => page.type == 'task')) {
+                for (const task of project.pages.filter((page) => page.type == 'task')) {
                     if (task.id == action.taskId) {
-                        newTasks.push(getBrandnewPage({project: project, id: newId, type: 'task'}));
+                        newTasks.push(getBrandnewPage({ project: project, id: newId, type: 'task' }));
                     }
                     newTasks.push(task);
                 }
@@ -386,7 +393,7 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
@@ -406,14 +413,14 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
-                            const pageId = Math.max(...project.pages.map(page=>page.id)) + 1;
+                            const pageId = Math.max(...project.pages.map((page) => page.id)) + 1;
                             return {
                                 ...project,
                                 pages: [
                                     ...project.pages,
-                                    getBrandnewPage({project: project, id: pageId, type: 'task', ...action.task}),
+                                    getBrandnewPage({ project: project, id: pageId, type: 'task', ...action.task }),
                                 ],
                             };
                         } else {
@@ -427,15 +434,15 @@ export const reducer = (state, action) => {
             // projectId
             // pages
             logger.debug('reducer setPages', action);
-            const setPages = project => {
-                const tasks = project.pages.filter(page => page.type == 'task');
+            const setPages = (project) => {
+                const tasks = project.pages.filter((page) => page.type == 'task');
                 return [...action.pages, ...tasks];
             };
             return Object.assign(
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
@@ -452,15 +459,15 @@ export const reducer = (state, action) => {
             // pageId
             // page
             logger.debug('reducer setPage', action);
-            const setPage = project => {
-                const tasks = project.pages.filter(page => page.type == 'task');
+            const setPage = (project) => {
+                const tasks = project.pages.filter((page) => page.type == 'task');
                 const newPages = project.pages
-                    .filter(page => page.type == 'page')
-                    .map(page => {
+                    .filter((page) => page.type == 'page')
+                    .map((page) => {
                         if (page.id == action.pageId) {
-                            return {...action.page};
+                            return { ...action.page };
                         } else {
-                            return {...page};
+                            return { ...page };
                         }
                     });
                 return [...newPages, ...tasks];
@@ -469,7 +476,7 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
@@ -489,14 +496,14 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
-                            const pageId = Math.max(...project.pages.map(page=>page.id)) + 1;
+                            const pageId = Math.max(...project.pages.map((page) => page.id)) + 1;
                             return {
                                 ...project,
                                 pages: [
                                     ...project.pages,
-                                    getBrandnewPage({project: project, id: pageId, type: 'page', ...action.page}),
+                                    getBrandnewPage({ project: project, id: pageId, type: 'page', ...action.page }),
                                 ],
                             };
                         } else {
@@ -511,19 +518,19 @@ export const reducer = (state, action) => {
             // documentId
             // document
             logger.debug('reducer setDocument', action);
-            const setDocument = project => {
-                const newPages = project.pages.map(page => {
+            const setDocument = (project) => {
+                const newPages = project.pages.map((page) => {
                     if (page.id == action.pageId) {
                         return {
                             ...page,
-                            documents: page.documents.map(documentObj => {
+                            documents: page.documents.map((documentObj) => {
                                 if (documentObj.id == action.documentId) {
                                     return {
                                         ...documentObj,
                                         document: action.document,
                                     };
                                 } else {
-                                    return {...documentObj};
+                                    return { ...documentObj };
                                 }
                             }),
                             settings: {
@@ -532,7 +539,7 @@ export const reducer = (state, action) => {
                             },
                         };
                     } else {
-                        return {...page};
+                        return { ...page };
                     }
                 });
                 return newPages;
@@ -541,7 +548,7 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
@@ -559,9 +566,9 @@ export const reducer = (state, action) => {
             // documentId
             // document?
             logger.debug('reducer insertDocumentAbove', action);
-            const insertDocumentAbove = page => {
+            const insertDocumentAbove = (page) => {
                 const newDocuments = [];
-                const newId = Math.max(...page.documents.map(document => document.id)) + 1;
+                const newId = Math.max(...page.documents.map((document) => document.id)) + 1;
                 for (const documentObj of page.documents) {
                     if (documentObj.id == action.documentId) {
                         newDocuments.push({
@@ -582,18 +589,18 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
-                                pages: project.pages.map(page => {
+                                pages: project.pages.map((page) => {
                                     if (page.id == action.pageId) {
                                         return {
                                             ...page,
                                             ...insertDocumentAbove(page),
                                         };
                                     } else {
-                                        return {...page};
+                                        return { ...page };
                                     }
                                 }),
                             };
@@ -609,9 +616,9 @@ export const reducer = (state, action) => {
             // documentId
             // document?
             logger.debug('reducer insertDocumentBelow', action);
-            const insertDocumentBelow = page => {
+            const insertDocumentBelow = (page) => {
                 const newDocuments = [];
-                const newId = Math.max(...page.documents.map(document => document.id)) + 1;
+                const newId = Math.max(...page.documents.map((document) => document.id)) + 1;
                 for (const documentObj of page.documents) {
                     newDocuments.push(documentObj);
                     if (documentObj.id == action.documentId) {
@@ -632,18 +639,18 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
-                                pages: project.pages.map(page => {
+                                pages: project.pages.map((page) => {
                                     if (page.id == action.pageId) {
                                         return {
                                             ...page,
                                             ...insertDocumentBelow(page),
                                         };
                                     } else {
-                                        return {...page};
+                                        return { ...page };
                                     }
                                 }),
                             };
@@ -658,7 +665,7 @@ export const reducer = (state, action) => {
             // pageId
             // documentId
             logger.debug('reducer deleteDocument', action);
-            const deleteDocument = page => {
+            const deleteDocument = (page) => {
                 const newDocuments = [];
                 let nextFocusedId;
                 for (const documentObj of page.documents) {
@@ -692,18 +699,18 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
-                                pages: project.pages.map(page => {
+                                pages: project.pages.map((page) => {
                                     if (page.id == action.pageId) {
                                         return {
                                             ...page,
                                             ...deleteDocument(page),
                                         };
                                     } else {
-                                        return {...page};
+                                        return { ...page };
                                     }
                                 }),
                             };
@@ -718,11 +725,9 @@ export const reducer = (state, action) => {
             // pageId
             // documentId
             logger.debug('reducer moveDocumentUp', action);
-            const moveDocumentUp = page => {
+            const moveDocumentUp = (page) => {
                 const newDocuments = [];
-                const targetIndex = page.documents
-                    .map(documentObj => documentObj.id)
-                    .indexOf(action.documentId);
+                const targetIndex = page.documents.map((documentObj) => documentObj.id).indexOf(action.documentId);
                 if (targetIndex == 0 || targetIndex == -1) {
                     return {
                         documents: page.documents,
@@ -753,18 +758,18 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
-                                pages: project.pages.map(page => {
+                                pages: project.pages.map((page) => {
                                     if (page.id == action.pageId) {
                                         return {
                                             ...page,
                                             ...moveDocumentUp(page),
                                         };
                                     } else {
-                                        return {...page};
+                                        return { ...page };
                                     }
                                 }),
                             };
@@ -779,11 +784,9 @@ export const reducer = (state, action) => {
             // pageId
             // documentId
             logger.debug('reducer moveDocumentDown', action);
-            const moveDocumentDown = page => {
+            const moveDocumentDown = (page) => {
                 const newDocuments = [];
-                const targetIndex = page.documents
-                    .map(documentObj => documentObj.id)
-                    .indexOf(action.documentId);
+                const targetIndex = page.documents.map((documentObj) => documentObj.id).indexOf(action.documentId);
                 if (targetIndex == page.documents.length - 1 || targetIndex == -1) {
                     return {
                         documents: page.documents,
@@ -814,18 +817,18 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
-                                pages: project.pages.map(page => {
+                                pages: project.pages.map((page) => {
                                     if (page.id == action.pageId) {
                                         return {
                                             ...page,
                                             ...moveDocumentDown(page),
                                         };
                                     } else {
-                                        return {...page};
+                                        return { ...page };
                                     }
                                 }),
                             };
@@ -840,10 +843,8 @@ export const reducer = (state, action) => {
             // pageId
             // documentId
             logger.debug('reducer moveDocumentFocusUp', action);
-            const moveDocumentFocusUp = page => {
-                const targetIndex = page.documents
-                    .map(documentObj => documentObj.id)
-                    .indexOf(action.documentId);
+            const moveDocumentFocusUp = (page) => {
+                const targetIndex = page.documents.map((documentObj) => documentObj.id).indexOf(action.documentId);
                 if (targetIndex == 0 || targetIndex == -1) {
                     return {
                         settings: {
@@ -863,18 +864,18 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
-                                pages: project.pages.map(page => {
+                                pages: project.pages.map((page) => {
                                     if (page.id == action.pageId) {
                                         return {
                                             ...page,
                                             ...moveDocumentFocusUp(page),
                                         };
                                     } else {
-                                        return {...page};
+                                        return { ...page };
                                     }
                                 }),
                             };
@@ -889,10 +890,8 @@ export const reducer = (state, action) => {
             // pageId
             // documentId
             logger.debug('reducer moveDocumentFocusDown', action);
-            const moveDocumentFocusDown = page => {
-                const targetIndex = page.documents
-                    .map(documentObj => documentObj.id)
-                    .indexOf(action.documentId);
+            const moveDocumentFocusDown = (page) => {
+                const targetIndex = page.documents.map((documentObj) => documentObj.id).indexOf(action.documentId);
                 if (targetIndex == page.documents.length - 1 || targetIndex == -1) {
                     return {
                         settings: {
@@ -912,18 +911,18 @@ export const reducer = (state, action) => {
                 {},
                 {
                     ...state,
-                    projects: state.projects.map(project => {
+                    projects: state.projects.map((project) => {
                         if (project.id == action.projectId) {
                             return {
                                 ...project,
-                                pages: project.pages.map(page => {
+                                pages: project.pages.map((page) => {
                                     if (page.id == action.pageId) {
                                         return {
                                             ...page,
                                             ...moveDocumentFocusDown(page),
                                         };
                                     } else {
-                                        return {...page};
+                                        return { ...page };
                                     }
                                 }),
                             };
@@ -946,7 +945,7 @@ const initStore = (preloadedState = initialState) => {
     //return createStore(reducer, preloadedState, composeWithDevTools(applyMiddleware()));
 };
 
-export const initializeStore = preloadedState => {
+export const initializeStore = (preloadedState) => {
     let _store = store ?? initStore(preloadedState);
 
     // After navigating to a page with an initial Redux state, merge that state
@@ -968,7 +967,7 @@ export const initializeStore = preloadedState => {
     return _store;
 };
 
-export const useStore = initialState => {
+export const useStore = (initialState) => {
     logger.debug('useStore');
     //const store = useMemo(() => initializeStore(initialState), [initialState]);
     const store = initializeStore(initializeStore);

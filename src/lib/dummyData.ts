@@ -93,7 +93,7 @@ export const initialState = {
                         propertyId: 2,
                         direction: 'asc',
                         apply: true,
-                    }
+                    },
                 ],
             },
             properties: [
@@ -101,7 +101,7 @@ export const initialState = {
                 // readOnly:読み取り専用。内部の値(propertyの設定値)が編集できない。
                 // name:代表名
                 // type:プロパティの種類
-                //        title: 
+                //        title:
                 //        status: kanbanステータス。value:指定可能なステータス{id,name,statusType,color}。id:1のみ指定可能
                 //        date: 日付型。value:null。id:2のみtaskのperiodがデータとして使用される
                 //        user: ユーザ。value:null。id:3のみ指定可能。
@@ -236,38 +236,38 @@ export const initialState = {
                     documents: [
                         {
                             id: 1,
-                            document:
-                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                            document: '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
                         },
                         {
                             id: 2,
-                            document:
-                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                            document: '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
                     properties: [
                         {
                             id: 1,
-                            values: ['sample page 1']
+                            values: ['sample page 1'],
                         },
                         {
                             id: 2,
-                            values: [1]
+                            values: [1],
                         },
                         {
                             id: 3,
-                            values: [{
-                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
-                            }]
+                            values: [
+                                {
+                                    start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                    end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                                },
+                            ],
                         },
                         {
                             id: 4,
-                            values: [2]
+                            values: [2],
                         },
                         {
                             id: 10,
-                            values: ['LABEL']
+                            values: ['LABEL'],
                         },
                         {
                             id: 11,
@@ -275,7 +275,7 @@ export const initialState = {
                         },
                         {
                             id: 12,
-                            values: [true]
+                            values: [true],
                         },
                     ],
                     settings: {
@@ -288,38 +288,38 @@ export const initialState = {
                     documents: [
                         {
                             id: 1,
-                            document:
-                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                            document: '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
                         },
                         {
                             id: 2,
-                            document:
-                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                            document: '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
                     properties: [
                         {
                             id: 1,
-                            values: ['sample page 2']
+                            values: ['sample page 2'],
                         },
                         {
                             id: 2,
-                            values: [1]
+                            values: [1],
                         },
                         {
                             id: 3,
-                            values: [{
-                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
-                            }]
+                            values: [
+                                {
+                                    start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                    end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                                },
+                            ],
                         },
                         {
                             id: 4,
-                            values: [2]
+                            values: [2],
                         },
                         {
                             id: 10,
-                            values: ['LABEL']
+                            values: ['LABEL'],
                         },
                         {
                             id: 11,
@@ -327,7 +327,7 @@ export const initialState = {
                         },
                         {
                             id: 12,
-                            values: [true]
+                            values: [true],
                         },
                     ],
                     settings: {
@@ -340,38 +340,38 @@ export const initialState = {
                     documents: [
                         {
                             id: 1,
-                            document:
-                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                            document: '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
                         },
                         {
                             id: 2,
-                            document:
-                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                            document: '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
                     properties: [
                         {
                             id: 1,
-                            values: ['sample1']
+                            values: ['sample1'],
                         },
                         {
                             id: 2,
-                            values: [2]
+                            values: [2],
                         },
                         {
                             id: 3,
-                            values: [{
-                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
-                            }]
+                            values: [
+                                {
+                                    start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                    end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                                },
+                            ],
                         },
                         {
                             id: 4,
-                            values: [2]
+                            values: [2],
                         },
                         {
                             id: 10,
-                            values: ['LABEL']
+                            values: ['LABEL'],
                         },
                         {
                             id: 11,
@@ -379,7 +379,7 @@ export const initialState = {
                         },
                         {
                             id: 12,
-                            values: [true]
+                            values: [true],
                         },
                     ],
                     settings: {
@@ -392,38 +392,38 @@ export const initialState = {
                     documents: [
                         {
                             id: 1,
-                            document:
-                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                            document: '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
                         },
                         {
                             id: 2,
-                            document:
-                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                            document: '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
                     properties: [
                         {
                             id: 1,
-                            values: ['sample2']
+                            values: ['sample2'],
                         },
                         {
                             id: 2,
-                            values: [1]
+                            values: [1],
                         },
                         {
                             id: 3,
-                            values: [{
-                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
-                            }]
+                            values: [
+                                {
+                                    start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                    end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                                },
+                            ],
                         },
                         {
                             id: 4,
-                            values: [2]
+                            values: [2],
                         },
                         {
                             id: 10,
-                            values: ['LABEL']
+                            values: ['LABEL'],
                         },
                         {
                             id: 11,
@@ -431,7 +431,7 @@ export const initialState = {
                         },
                         {
                             id: 12,
-                            values: [true]
+                            values: [true],
                         },
                     ],
                     settings: {
@@ -444,38 +444,38 @@ export const initialState = {
                     documents: [
                         {
                             id: 1,
-                            document:
-                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                            document: '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
                         },
                         {
                             id: 2,
-                            document:
-                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                            document: '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
                     properties: [
                         {
                             id: 1,
-                            values: ['sample3']
+                            values: ['sample3'],
                         },
                         {
                             id: 2,
-                            values: [1]
+                            values: [1],
                         },
                         {
                             id: 3,
-                            values: [{
-                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
-                            }]
+                            values: [
+                                {
+                                    start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                    end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                                },
+                            ],
                         },
                         {
                             id: 4,
-                            values: [2]
+                            values: [2],
                         },
                         {
                             id: 10,
-                            values: ['LABEL']
+                            values: ['LABEL'],
                         },
                         {
                             id: 11,
@@ -483,7 +483,7 @@ export const initialState = {
                         },
                         {
                             id: 12,
-                            values: [true]
+                            values: [true],
                         },
                     ],
                 },
@@ -493,38 +493,38 @@ export const initialState = {
                     documents: [
                         {
                             id: 1,
-                            document:
-                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                            document: '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
                         },
                         {
                             id: 2,
-                            document:
-                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                            document: '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
                     properties: [
                         {
                             id: 1,
-                            values: ['sample4']
+                            values: ['sample4'],
                         },
                         {
                             id: 2,
-                            values: [1]
+                            values: [1],
                         },
                         {
                             id: 3,
-                            values: [{
-                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
-                            }]
+                            values: [
+                                {
+                                    start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                    end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                                },
+                            ],
                         },
                         {
                             id: 4,
-                            values: [2]
+                            values: [2],
                         },
                         {
                             id: 10,
-                            values: ['LABEL']
+                            values: ['LABEL'],
                         },
                         {
                             id: 11,
@@ -532,7 +532,7 @@ export const initialState = {
                         },
                         {
                             id: 12,
-                            values: [true]
+                            values: [true],
                         },
                     ],
                     settings: {
@@ -545,38 +545,38 @@ export const initialState = {
                     documents: [
                         {
                             id: 1,
-                            document:
-                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                            document: '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
                         },
                         {
                             id: 2,
-                            document:
-                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                            document: '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
                     properties: [
                         {
                             id: 1,
-                            values: ['sample5']
+                            values: ['sample5'],
                         },
                         {
                             id: 2,
-                            values: [1]
+                            values: [1],
                         },
                         {
                             id: 3,
-                            values: [{
-                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
-                            }]
+                            values: [
+                                {
+                                    start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                    end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                                },
+                            ],
                         },
                         {
                             id: 4,
-                            values: [2]
+                            values: [2],
                         },
                         {
                             id: 10,
-                            values: ['LABEL']
+                            values: ['LABEL'],
                         },
                         {
                             id: 11,
@@ -584,7 +584,7 @@ export const initialState = {
                         },
                         {
                             id: 12,
-                            values: [true]
+                            values: [true],
                         },
                     ],
                     settings: {
@@ -597,38 +597,38 @@ export const initialState = {
                     documents: [
                         {
                             id: 1,
-                            document:
-                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                            document: '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
                         },
                         {
                             id: 2,
-                            document:
-                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                            document: '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
                     properties: [
                         {
                             id: 1,
-                            values: ['sample6']
+                            values: ['sample6'],
                         },
                         {
                             id: 2,
-                            values: [1]
+                            values: [1],
                         },
                         {
                             id: 3,
-                            values: [{
-                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
-                            }]
+                            values: [
+                                {
+                                    start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                    end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                                },
+                            ],
                         },
                         {
                             id: 4,
-                            values: [2]
+                            values: [2],
                         },
                         {
                             id: 10,
-                            values: ['LABEL']
+                            values: ['LABEL'],
                         },
                         {
                             id: 11,
@@ -636,7 +636,7 @@ export const initialState = {
                         },
                         {
                             id: 12,
-                            values: [true]
+                            values: [true],
                         },
                     ],
                     settings: {
@@ -657,7 +657,7 @@ export const initialState = {
                 // readOnly:読み取り専用。内部の値(propertyの設定値)が編集できない。
                 // name:代表名
                 // type:プロパティの種類
-                //        title: 
+                //        title:
                 //        status: kanbanステータス。value:指定可能なステータス{id,name,statusType,color}。id:1のみ指定可能
                 //        date: 日付型。value:null。id:2のみtaskのperiodがデータとして使用される
                 //        user: ユーザ。value:null。id:3のみ指定可能。
@@ -792,38 +792,38 @@ export const initialState = {
                     documents: [
                         {
                             id: 1,
-                            document:
-                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                            document: '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
                         },
                         {
                             id: 2,
-                            document:
-                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                            document: '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
                     properties: [
                         {
                             id: 1,
-                            values: ['sample page 1']
+                            values: ['sample page 1'],
                         },
                         {
                             id: 2,
-                            values: [1]
+                            values: [1],
                         },
                         {
                             id: 3,
-                            values: [{
-                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
-                            }]
+                            values: [
+                                {
+                                    start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                    end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                                },
+                            ],
                         },
                         {
                             id: 4,
-                            values: [2]
+                            values: [2],
                         },
                         {
                             id: 10,
-                            values: ['LABEL']
+                            values: ['LABEL'],
                         },
                         {
                             id: 11,
@@ -831,7 +831,7 @@ export const initialState = {
                         },
                         {
                             id: 12,
-                            values: [true]
+                            values: [true],
                         },
                     ],
                     settings: {
@@ -844,38 +844,38 @@ export const initialState = {
                     documents: [
                         {
                             id: 1,
-                            document:
-                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                            document: '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
                         },
                         {
                             id: 2,
-                            document:
-                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                            document: '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
                     properties: [
                         {
                             id: 1,
-                            values: ['sample page 2']
+                            values: ['sample page 2'],
                         },
                         {
                             id: 2,
-                            values: [1]
+                            values: [1],
                         },
                         {
                             id: 3,
-                            values: [{
-                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
-                            }]
+                            values: [
+                                {
+                                    start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                    end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                                },
+                            ],
                         },
                         {
                             id: 4,
-                            values: [2]
+                            values: [2],
                         },
                         {
                             id: 10,
-                            values: ['LABEL']
+                            values: ['LABEL'],
                         },
                         {
                             id: 11,
@@ -883,7 +883,7 @@ export const initialState = {
                         },
                         {
                             id: 12,
-                            values: [true]
+                            values: [true],
                         },
                     ],
                     settings: {
@@ -896,38 +896,38 @@ export const initialState = {
                     documents: [
                         {
                             id: 1,
-                            document:
-                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                            document: '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
                         },
                         {
                             id: 2,
-                            document:
-                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                            document: '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
                     properties: [
                         {
                             id: 1,
-                            values: ['sample1']
+                            values: ['sample1'],
                         },
                         {
                             id: 2,
-                            values: [1]
+                            values: [1],
                         },
                         {
                             id: 3,
-                            values: [{
-                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
-                            }]
+                            values: [
+                                {
+                                    start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                    end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                                },
+                            ],
                         },
                         {
                             id: 4,
-                            values: [2]
+                            values: [2],
                         },
                         {
                             id: 10,
-                            values: ['LABEL']
+                            values: ['LABEL'],
                         },
                         {
                             id: 11,
@@ -935,7 +935,7 @@ export const initialState = {
                         },
                         {
                             id: 12,
-                            values: [true]
+                            values: [true],
                         },
                     ],
                     settings: {
@@ -948,38 +948,38 @@ export const initialState = {
                     documents: [
                         {
                             id: 1,
-                            document:
-                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                            document: '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
                         },
                         {
                             id: 2,
-                            document:
-                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                            document: '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
                     properties: [
                         {
                             id: 1,
-                            values: ['sample2']
+                            values: ['sample2'],
                         },
                         {
                             id: 2,
-                            values: [1]
+                            values: [1],
                         },
                         {
                             id: 3,
-                            values: [{
-                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
-                            }]
+                            values: [
+                                {
+                                    start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                    end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                                },
+                            ],
                         },
                         {
                             id: 4,
-                            values: [2]
+                            values: [2],
                         },
                         {
                             id: 10,
-                            values: ['LABEL']
+                            values: ['LABEL'],
                         },
                         {
                             id: 11,
@@ -987,7 +987,7 @@ export const initialState = {
                         },
                         {
                             id: 12,
-                            values: [true]
+                            values: [true],
                         },
                     ],
                     settings: {
@@ -1000,38 +1000,38 @@ export const initialState = {
                     documents: [
                         {
                             id: 1,
-                            document:
-                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                            document: '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
                         },
                         {
                             id: 2,
-                            document:
-                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                            document: '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
                     properties: [
                         {
                             id: 1,
-                            values: ['sample3']
+                            values: ['sample3'],
                         },
                         {
                             id: 2,
-                            values: [1]
+                            values: [1],
                         },
                         {
                             id: 3,
-                            values: [{
-                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
-                            }]
+                            values: [
+                                {
+                                    start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                    end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                                },
+                            ],
                         },
                         {
                             id: 4,
-                            values: [2]
+                            values: [2],
                         },
                         {
                             id: 10,
-                            values: ['LABEL']
+                            values: ['LABEL'],
                         },
                         {
                             id: 11,
@@ -1039,7 +1039,7 @@ export const initialState = {
                         },
                         {
                             id: 12,
-                            values: [true]
+                            values: [true],
                         },
                     ],
                 },
@@ -1049,38 +1049,38 @@ export const initialState = {
                     documents: [
                         {
                             id: 1,
-                            document:
-                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                            document: '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
                         },
                         {
                             id: 2,
-                            document:
-                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                            document: '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
                     properties: [
                         {
                             id: 1,
-                            values: ['sample4']
+                            values: ['sample4'],
                         },
                         {
                             id: 2,
-                            values: [1]
+                            values: [1],
                         },
                         {
                             id: 3,
-                            values: [{
-                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
-                            }]
+                            values: [
+                                {
+                                    start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                    end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                                },
+                            ],
                         },
                         {
                             id: 4,
-                            values: [2]
+                            values: [2],
                         },
                         {
                             id: 10,
-                            values: ['LABEL']
+                            values: ['LABEL'],
                         },
                         {
                             id: 11,
@@ -1088,7 +1088,7 @@ export const initialState = {
                         },
                         {
                             id: 12,
-                            values: [true]
+                            values: [true],
                         },
                     ],
                     settings: {
@@ -1101,38 +1101,38 @@ export const initialState = {
                     documents: [
                         {
                             id: 1,
-                            document:
-                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                            document: '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
                         },
                         {
                             id: 2,
-                            document:
-                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                            document: '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
                     properties: [
                         {
                             id: 1,
-                            values: ['sample5']
+                            values: ['sample5'],
                         },
                         {
                             id: 2,
-                            values: [1]
+                            values: [1],
                         },
                         {
                             id: 3,
-                            values: [{
-                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
-                            }]
+                            values: [
+                                {
+                                    start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                    end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                                },
+                            ],
                         },
                         {
                             id: 4,
-                            values: [2]
+                            values: [2],
                         },
                         {
                             id: 10,
-                            values: ['LABEL']
+                            values: ['LABEL'],
                         },
                         {
                             id: 11,
@@ -1140,7 +1140,7 @@ export const initialState = {
                         },
                         {
                             id: 12,
-                            values: [true]
+                            values: [true],
                         },
                     ],
                     settings: {
@@ -1153,38 +1153,38 @@ export const initialState = {
                     documents: [
                         {
                             id: 1,
-                            document:
-                                '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
+                            document: '## test\n\n- list1\n- list2\n\n1. numbered list1\n1. numbered list2',
                         },
                         {
                             id: 2,
-                            document:
-                                '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
+                            document: '## test\n\n- list3\n- list4\n\n1. numbered list3\n1. numbered list4',
                         },
                     ],
                     properties: [
                         {
                             id: 1,
-                            values: ['sample6']
+                            values: ['sample6'],
                         },
                         {
                             id: 2,
-                            values: [1]
+                            values: [1],
                         },
                         {
                             id: 3,
-                            values: [{
-                                start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
-                                end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
-                            }]
+                            values: [
+                                {
+                                    start: getTime(new Date(2021, now.getMonth(), now.getDate(), 11, 50)),
+                                    end: getTime(new Date(2021, now.getMonth(), now.getDate(), 12, 30)),
+                                },
+                            ],
                         },
                         {
                             id: 4,
-                            values: [2]
+                            values: [2],
                         },
                         {
                             id: 10,
-                            values: ['LABEL']
+                            values: ['LABEL'],
                         },
                         {
                             id: 11,
@@ -1192,7 +1192,7 @@ export const initialState = {
                         },
                         {
                             id: 12,
-                            values: [true]
+                            values: [true],
                         },
                     ],
                     settings: {

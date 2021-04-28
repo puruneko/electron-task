@@ -39,11 +39,6 @@ const Header = styled.div`
     width: 100%;
     height: 50px;
 `;
-const Documents = styled.div`
-    margin: 20x;
-    padding: 20px;
-    width: 90%;
-`;
 
 const PageComponent: React.FC<Props> = ({ projectId, pageId, headless = true }) => {
     const params = useParams<any>();
@@ -55,14 +50,20 @@ const PageComponent: React.FC<Props> = ({ projectId, pageId, headless = true }) 
     const dispatch = useDispatch();
     const { project, page } = useSelector(
         (props: IRootState) => ({
-            project: props.projects.filter(project => project.id == pageProperty.projectId)[0],
+            project: props.projects.filter((project) => project.id == pageProperty.projectId)[0],
             page: props.projects
-                .filter(project => project.id == pageProperty.projectId)[0]
-                .pages.filter(page => page.id == pageProperty.pageId)[0],
+                .filter((project) => project.id == pageProperty.projectId)[0]
+                .pages.filter((page) => page.id == pageProperty.pageId)[0],
         }),
         shallowEqual,
     );
     console.log('PageComponent', 'params', params, 'queries', queries, 'page', page);
+    // --------------------------------------------------------
+    const Documents = styled.div`
+        margin: 20x;
+        padding: 20px;
+        width: 90%;
+    `;
     // --------------------------------------------------------
     useEffect(() => {
         console.log('focusedId', page.settings.focusedId);
@@ -70,7 +71,7 @@ const PageComponent: React.FC<Props> = ({ projectId, pageId, headless = true }) 
         if (elem) {
             elem.focus();
         }
-    }, []);
+    }, [page.settings.focusedId]);
     // --------------------------------------------------------
     return (
         <PageComponentContainer>
@@ -79,7 +80,7 @@ const PageComponent: React.FC<Props> = ({ projectId, pageId, headless = true }) 
                     display: headless ? 'none' : 'block',
                 }}
             >
-                <h1>{page.title}</h1>
+                <h1>{page.properties.filter((prop) => prop.id == 1)[0].values[0]}</h1>
             </Header>
             <Documents>
                 {page.documents.map((documentObj, index) => {
@@ -117,20 +118,20 @@ const DocumentCell = ({ pageProperty, docId }) => {
     const { documentObj } = useSelector(
         (props: IRootState) => ({
             documentObj: props.projects
-                .filter(project => project.id == pageProperty.projectId)[0]
-                .pages.filter(page => page.id == pageProperty.pageId)[0]
-                .documents.filter(documentObj => documentObj.id == docId)[0],
+                .filter((project) => project.id == pageProperty.projectId)[0]
+                .pages.filter((page) => page.id == pageProperty.pageId)[0]
+                .documents.filter((documentObj) => documentObj.id == docId)[0],
         }),
         shallowEqual,
     );
     const dispatch = useDispatch();
     const [cellEditorMode, setCellEditorMode] = useState<number | boolean>(docId);
-    const focus = useState(false);
+    const [focus, setFocus] = useState(false);
     const keyStack = useRef('');
     // --------------------------------------------------------
     const onClick = () => {
         // 疑似フォーカスの移動
-        focus[1](true);
+        setFocus(true);
     };
     const onDoubleClick = () => {
         // エディタ表示
@@ -156,7 +157,7 @@ const DocumentCell = ({ pageProperty, docId }) => {
             return false;
         }
     };
-    const onKeyDown = event => {
+    const onKeyDown = (event) => {
         const elem = document.getElementById(`documentCell-${docId}`);
         if (elem === elem.ownerDocument.activeElement) {
             // コマンド実行
@@ -224,19 +225,19 @@ const DocumentCell = ({ pageProperty, docId }) => {
             event.preventDefault();
         }
     };
-    const onFocus = event => {
+    const onFocus = (event) => {
         console.log('onFocus', docId);
-        focus[1](true);
+        setFocus(true);
     };
-    const onBlur = event => {
+    const onBlur = (event) => {
         console.log('onBlur', docId);
-        focus[1](false);
+        setFocus(false);
     };
     // --------------------------------------------------------
     // --------------------------------------------------------
     useEffect(() => {
         console.log('focus?', focus, cellEditorMode);
-        if (focus[0] && cellEditorMode === docId) {
+        if (focus && cellEditorMode === docId) {
             console.log('focus!', cellEditorMode);
             const elem = document.getElementById(`documentCell-${docId}`);
             elem.focus();
@@ -276,9 +277,9 @@ const DocumentEditor = ({ pageProperty, docId, cellEditorMode, setCellEditorMode
     const { documentObj } = useSelector(
         (props: IRootState) => ({
             documentObj: props.projects
-                .filter(project => project.id == pageProperty.projectId)[0]
-                .pages.filter(page => page.id == pageProperty.pageId)[0]
-                .documents.filter(documentObj => documentObj.id == docId)[0],
+                .filter((project) => project.id == pageProperty.projectId)[0]
+                .pages.filter((page) => page.id == pageProperty.pageId)[0]
+                .documents.filter((documentObj) => documentObj.id == docId)[0],
         }),
         shallowEqual,
     );
@@ -291,14 +292,14 @@ const DocumentEditor = ({ pageProperty, docId, cellEditorMode, setCellEditorMode
     const ctrlDown = useRef(false);
     const dispatch = useDispatch();
     // --------------------------------------------------------
-    const onEditorChange = event => {
+    const onEditorChange = (event) => {
         const newText = event.target.value;
         setText(newText);
         setRows((newText.match(/\n/g) || []).length + 1);
         /*textRef.current[docId] = newText;*/
         event.stopPropagation();
     };
-    const onEditorKeyDown = event => {
+    const onEditorKeyDown = (event) => {
         if (event.key == 'Control') {
             ctrlDown.current = true;
         } else if (event.key == 'Enter' && ctrlDown.current) {
@@ -334,7 +335,7 @@ const DocumentEditor = ({ pageProperty, docId, cellEditorMode, setCellEditorMode
         }
         event.stopPropagation();
     };
-    const onEditorKeyUp = event => {
+    const onEditorKeyUp = (event) => {
         ctrlDown.current = false;
         event.stopPropagation();
     };
@@ -363,13 +364,13 @@ const DocumentEditor = ({ pageProperty, docId, cellEditorMode, setCellEditorMode
                 width: '100%',
                 tabSize: 4,
             }}
-            onChange={event => {
+            onChange={(event) => {
                 onEditorChange(event);
             }}
-            onKeyDownCapture={event => {
+            onKeyDownCapture={(event) => {
                 onEditorKeyDown(event);
             }}
-            onKeyUpCapture={event => {
+            onKeyUpCapture={(event) => {
                 onEditorKeyUp(event);
             }}
         />
