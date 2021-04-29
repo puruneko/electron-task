@@ -25,6 +25,11 @@ export const initialState = {
                 name: 'visitor',
             },
         ],
+        scale: [
+            //'year',
+            'month',
+            'date',
+        ],
         statusType: [
             {
                 id: 0,

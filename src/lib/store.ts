@@ -75,6 +75,29 @@ export const reducer = (state, action) => {
             );
         }
         // --------------------------------------------------------------------------------------------------------------------project
+        case 'setGanttScale':
+            // projectId
+            // scale
+            logger.debug('reducer setGanttScale', action);
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map((project) => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                settings: {
+                                    ...project.settings,
+                                    ganttScale: action.scale,
+                                },
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
         case 'setGanttFilter':
             // projectId
             // filterId
