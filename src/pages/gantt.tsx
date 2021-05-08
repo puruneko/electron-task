@@ -1444,12 +1444,6 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
     const getElementByPosition = (row: number | string, type = 'wrap'): HTMLElement => {
         return document.querySelector(`.ganttCalenderTimebarGroup[data-type='${type}'][data-row='${Number(row)}']`);
     };
-    const getElementById = (id: number | string, type = 'wrap'): HTMLElement => {
-        return document.querySelector(`.ganttCalenderTimebarGroup[data-type='${type}'][data-id='${Number(id)}']`);
-    };
-    const width2cWidth = (width: number): number => {
-        return floor(width / c.cell.width);
-    };
     const getCalenderElementSnapshot = (elem: HTMLElement) => {
         // スクロールが0の状態のときのパラメータ
         const scroll = getScroll();
@@ -1457,7 +1451,7 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
         const pos = { x: rect.left + scroll.x, y: rect.top + scroll.y };
         const size = { width: elem.offsetWidth, height: elem.offsetHeight };
         const cSize = {
-            width: width2cWidth(size.width),
+            width: floor(size.width / c.cell.width),
             height: 1,
         };
         const cell = {
@@ -1486,81 +1480,6 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
             y: calenderContainer.scrollTop,
         };
     };
-    /*
-    const getNewTasks = (dr, dp) => {
-        const tdi = timebarDragInitial.current;
-        const modifiedIndex = [];
-        const dateModifiedTasks = rawTasks.map((task, index) => {
-            const selectedTimebarIds = selectedCElem.current.map((timebar) => Number(timebar.dataset.id));
-            if (selectedTimebarIds.indexOf(task.id) != -1) {
-                // 期間の編集
-                const period = task.properties.filter((p) => p.id == 2)[0].values[0];
-                const start = period.start !== null ? period.start : new Date(period.end).getTime();
-                const end = period.end !== null ? period.end : new Date(period.start).getTime();
-                let newStart: number;
-                let newEnd: number;
-                if (tdi.type == 'whole') {
-                    newStart = start + dp;
-                    newEnd = end + dp;
-                } else if (tdi.type == 'left') {
-                    newStart = start + dp;
-                    newEnd = end;
-                } else if (tdi.type == 'right') {
-                    newStart = start;
-                    newEnd = end + dp;
-                }
-                modifiedIndex.push(index);
-                //
-                return {
-                    ...task,
-                    properties: task.properties.map((prop) => {
-                        if (prop.id == 2) {
-                            return {
-                                ...prop,
-                                values: [
-                                    {
-                                        start: newStart,
-                                        end: newEnd,
-                                    },
-                                ],
-                            };
-                        } else {
-                            return { ...prop };
-                        }
-                    }),
-                };
-            } else {
-                return { ...task };
-            }
-        });
-        // 順序入れ替え
-        let newTasks;
-        if (tdi.type == 'whole' && dr != 0) {
-            newTasks = [];
-            let counter = 0;
-            const taskIds = rawTasks.map((task) => task.id);
-            const exchangedId = Number(
-                (document.querySelector(`[data-target="row"][data-row="${tdi.pointed.row + dr}"]`) as HTMLElement)
-                    .dataset.id,
-            );
-            const diy = taskIds.indexOf(exchangedId) - taskIds.indexOf(tdi.id);
-            const unmovedTasks = dateModifiedTasks.filter((t, i) => modifiedIndex.indexOf(i) == -1);
-            const targetIndex = modifiedIndex.map((i) => i + diy);
-            console.log('sort param', { taskIds, exchangedId, diy, unmovedTasks, targetIndex });
-            for (let i = 0; i < dateModifiedTasks.length; i++) {
-                if (targetIndex.indexOf(i) != -1) {
-                    newTasks.push(dateModifiedTasks[i - diy]);
-                } else {
-                    newTasks.push(unmovedTasks[counter]);
-                    counter++;
-                }
-            }
-        } else {
-            newTasks = [...dateModifiedTasks];
-        }
-        return newTasks;
-    };
-    */
     const onTimebarDragStart = (event) => {
         const target: HTMLElement = event.target as HTMLElement;
         // timberをクリックしたか判定
@@ -1572,12 +1491,7 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
             const selectedCElem = getCalenderElementSnapshot(pointedTimebar);
             // selectedCElemの調整
             if (selectedCElems.current.length == 0) {
-                const wrap = getElementByPosition(pointedTimebar.dataset.row);
                 selectedCElems.current = [selectedCElem];
-                console.log('onTimebarDragStart', {
-                    selectedCElem: selectedCElems.current,
-                    timebarDragInitial: timebarDragInitial.current,
-                });
             }
             // ドラッグ初期値の計算
             const offset = {
@@ -1625,7 +1539,7 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
             };
             const dcell = {
                 x: judgeCell.x - tdi.selected.cell.x,
-                y: judgeCell.y - tdi.pointed.cell.y,
+                y: tdi.selected.type == 'whole' ? judgeCell.y - tdi.pointed.cell.y : 0,
             };
             const modifiedTasks = []; // 編集されたタスク
             const modifiedIds = []; //編集されたタスクの挿入先のID
@@ -1637,8 +1551,14 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
                 if (selectedIds.indexOf(task.id) != -1) {
                     const period = task.properties.filter((prop) => prop.id == 2)[0].values[0];
                     const newPeriod = {
-                        start: period.start + (dcell.x * ganttParams.cellXUnit) / ganttParams.ganttCellDivideNumber,
-                        end: period.end + (dcell.x * ganttParams.cellXUnit) / ganttParams.ganttCellDivideNumber,
+                        start:
+                            tdi.selected.type == 'right'
+                                ? period.start
+                                : period.start + (dcell.x * ganttParams.cellXUnit) / ganttParams.ganttCellDivideNumber,
+                        end:
+                            tdi.selected.type == 'left'
+                                ? period.end
+                                : period.end + (dcell.x * ganttParams.cellXUnit) / ganttParams.ganttCellDivideNumber,
                     };
                     modifiedIds.push(displayTasks[i + dcell.y].id);
                     modifiedTasks.push({
@@ -1657,9 +1577,9 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
                 }
             }
             console.log({ selectedIds, modifiedTasks, modifiedIds, unselectedTasks });
+            const newTasks = [];
             let index = 0; // 選択されていない要素の現在の配列番号を記憶する
             let modifiedIndex = 0; // 選択されている要素の現在の配列番号を記憶する
-            const newTasks = [];
             for (let i = 0; i < rawTasks.length; i++) {
                 if (modifiedIds.indexOf(rawTasks[i].id) != -1) {
                     newTasks.push(modifiedTasks[modifiedIndex]);
