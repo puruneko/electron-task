@@ -12,7 +12,7 @@ const createWindow = (): void => {
         height: 1000,
         webPreferences: {
             nodeIntegration: false,
-            nodeIntegrationInWorker: false,
+            nodeIntegrationInWorker: true,
             contextIsolation: true,
             preload: `${__dirname}/preload.js`,
         },

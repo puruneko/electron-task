@@ -1493,6 +1493,8 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
             if (selectedCElems.current.length == 0) {
                 selectedCElems.current = [selectedCElem];
             }
+            // イメージの生成
+            //event.dataTransfar.setDragImage();
             // ドラッグ初期値の計算
             const offset = {
                 x: x - selectedCElem.pos.x,
@@ -1519,8 +1521,8 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
     const onTimebarDrag = (event) => {
         event.preventDefault();
         event.stopPropagation();
-        console.log('onTimebarDrag');
         if (isDragging()) {
+            console.log('onTimebarDrag');
             //
         }
     };
@@ -1541,6 +1543,7 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
                 x: judgeCell.x - tdi.selected.cell.x,
                 y: tdi.selected.type == 'whole' ? judgeCell.y - tdi.pointed.cell.y : 0,
             };
+            // 期間の変更
             const modifiedTasks = []; // 編集されたタスク
             const modifiedIds = []; //編集されたタスクの挿入先のID
             const selectedIds = selectedCElems.current.map((elem) => elem.id); //選択されている要素のID
@@ -1576,7 +1579,7 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
                     });
                 }
             }
-            console.log({ selectedIds, modifiedTasks, modifiedIds, unselectedTasks });
+            // タスクの入れ替え
             const newTasks = [];
             let index = 0; // 選択されていない要素の現在の配列番号を記憶する
             let modifiedIndex = 0; // 選択されている要素の現在の配列番号を記憶する
@@ -1648,109 +1651,32 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
         }
     };
     // --------------------------------------------------------
-    useEffect(() => {
-        /*
-        //eventListenerの登録
-        document.addEventListener('keydown', (event) => {
-            console.log('key', event.key);
-            if (event.key == 'Control') {
-                keydown.current = event.key;
-            }
-        });
-        document.addEventListener('keyup', () => {
-            keydown.current = null;
-        });
-        document.addEventListener('mousedown', (event) => {
-            const target: HTMLElement = event.target as HTMLElement;
-            console.log('document.mousedown', target, target.className, mousedownStart.current, target.tagName);
-            // cellのクリック
-            if (target.tagName == 'DIV' && target.className?.match('ganttCalenderCell')) {
-                // 範囲内のtimebarを元に戻す
-                releaseSelectedCElem();
-                // マウス移動の起点を作成
-                if (mousedownStart.current.x == -1 && mousedownStart.current.y == -1) {
-                    mousedownStart.current = {
-                        x: event.clientX,
-                        y: event.clientY,
-                    };
-                } else {
-                    mousedownStart.current = { x: -1, y: -1 };
-                    const selectedAreaElem = document.getElementById('selectedArea');
-                    selectedAreaElem.style.display = 'none';
-                    selectedAreaElem.style.position = 'fixed';
-                    selectedAreaElem.style.top = `0`;
-                    selectedAreaElem.style.left = `0`;
-                    selectedAreaElem.style.width = `0`;
-                    selectedAreaElem.style.height = `0`;
-                    selectedAreaElem.style.backgroundColor = '';
-                    selectedAreaElem.style.opacity = '';
-                }
-            }
-            // Ctrl + timebarのクリック
-            if (
-                target.tagName == 'DIV' &&
-                target.className.match('ganttCalenderTimebarGroup') &&
-                keydown.current == 'Control'
-            ) {
-                const x = target.dataset.x;
-                const y = target.dataset.y;
-                const wrapElem = getElementByPosition(x, y);
-                wrapElem.style.backgroundColor = c.color.multiSelected;
-                selectedCElem.current.push(getCalenderElementSnapshot(wrapElem));
-            }
-        });
-        document.addEventListener('mousemove', (event) => {
-            // マウス起点が作られていたら、移動したぶんだけ長方形を描画
-            if (mousedownStart.current.x >= 0 && mousedownStart.current.y >= 0) {
-                // 長方形描画
-                const x = event.clientX;
-                const y = event.clientY;
-                const sx = mousedownStart.current.x;
-                const sy = mousedownStart.current.y;
-                const dx = x - sx;
-                const dy = y - sy;
-                const left = dx > 0 ? sx : x;
-                const top = dy > 0 ? sy : y;
-                const width = Math.abs(dx);
-                const height = Math.abs(dy);
-                const selectedAreaElem = document.getElementById('selectedArea');
-                selectedAreaElem.style.display = 'block';
-                selectedAreaElem.style.position = 'fixed';
-                selectedAreaElem.style.top = `${top}px`;
-                selectedAreaElem.style.left = `${left}px`;
-                selectedAreaElem.style.width = `${width}px`;
-                selectedAreaElem.style.height = `${height}px`;
-                selectedAreaElem.style.backgroundColor = c.color.dragArea;
-                // 範囲内のtimebarを反転
-                const timebars = getElementsByClassName('ganttCalenderTimebarGroup').filter(
-                    (e) => e.dataset.target == 'wrap',
-                );
-                const selected = [];
-                for (const timebar of timebars) {
-                    const rect = timebar.getBoundingClientRect();
-                    const w = timebar.offsetWidth;
-                    const h = timebar.offsetHeight;
-                    // 領域内の場合
-                    if (
-                        (between(rect.left, x, sx) || between(rect.left + w, x, sx)) &&
-                        (between(rect.top, y, sy) || between(rect.top + h, y, sy))
-                    ) {
-                        timebar.style.backgroundColor = c.color.multiSelected;
-                        selected.push(getCalenderElementSnapshot(timebar));
-                        // 領域外の場合
-                    } else {
-                        timebar.style.backgroundColor = '';
-                    }
-                }
-                console.log('document.mousemove', timebars, selected);
-                selectedCElem.current = selected;
-            }
-        });
-        document.addEventListener('mouseup', (event) => {
-            // 範囲選択終了
-            if (mousedownStart.current.x >= 0 && mousedownStart.current.y >= 0) {
-                console.log('document.mouseup');
-                // 範囲選択長方形の描画終了
+    const onKeyDown = useCallback((event) => {
+        console.log('key', event.key);
+        if (event.key == 'Control') {
+            keydown.current = event.key;
+        }
+    }, []);
+    const onKeyUp = useCallback((event) => {
+        keydown.current = null;
+    }, []);
+    const onMouseDown = useCallback((event) => {
+        const target: HTMLElement = event.target as HTMLElement;
+        console.log('document.mousedown', target, target.className, mousedownStart.current, target.tagName);
+        // cellのクリック
+        if (target.tagName == 'DIV' && target.className?.match('ganttCalenderRow')) {
+            const scroll = getScroll();
+            const x = event.clientX + scroll.x;
+            const y = event.clientY + scroll.y;
+            // 範囲内のtimebarを元に戻す
+            releaseSelectedCElem();
+            // マウス移動の起点を作成
+            if (mousedownStart.current.x == -1 && mousedownStart.current.y == -1) {
+                mousedownStart.current = {
+                    x,
+                    y,
+                };
+            } else {
                 mousedownStart.current = { x: -1, y: -1 };
                 const selectedAreaElem = document.getElementById('selectedArea');
                 selectedAreaElem.style.display = 'none';
@@ -1760,9 +1686,98 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
                 selectedAreaElem.style.width = `0`;
                 selectedAreaElem.style.height = `0`;
                 selectedAreaElem.style.backgroundColor = '';
+                selectedAreaElem.style.opacity = '';
             }
-        });
-        */
+        }
+        // Ctrl + timebarのクリック
+        if (
+            target.tagName == 'DIV' &&
+            target.className.match('ganttCalenderTimebarGroup') &&
+            keydown.current == 'Control'
+        ) {
+            const wrapElem = getElementByPosition(target.dataset.y);
+            wrapElem.style.backgroundColor = c.color.multiSelected;
+            selectedCElems.current.push(getCalenderElementSnapshot(wrapElem));
+        }
+    }, []);
+    const onMouseMove = useCallback((event) => {
+        // マウス起点が作られていたら、移動したぶんだけ長方形を描画
+        if (mousedownStart.current.x >= 0 && mousedownStart.current.y >= 0) {
+            // 長方形描画
+            const scroll = getScroll();
+            const x = event.clientX + scroll.x;
+            const y = event.clientY + scroll.y;
+            const sx = mousedownStart.current.x;
+            const sy = mousedownStart.current.y;
+            const dx = x - sx;
+            const dy = y - sy;
+            const left = dx > 0 ? sx : x;
+            const top = dy > 0 ? sy : y;
+            const width = Math.abs(dx);
+            const height = Math.abs(dy);
+            const selectedAreaElem = document.getElementById('selectedArea');
+            selectedAreaElem.style.display = 'block';
+            selectedAreaElem.style.position = 'fixed';
+            selectedAreaElem.style.top = `${top}px`;
+            selectedAreaElem.style.left = `${left}px`;
+            selectedAreaElem.style.width = `${width}px`;
+            selectedAreaElem.style.height = `${height}px`;
+            selectedAreaElem.style.backgroundColor = c.color.dragArea;
+            // 範囲内のtimebarを反転
+            const timebars = getElementsByClassName('ganttCalenderTimebarGroup').filter(
+                (e) => e.dataset.type == 'wrap',
+            );
+            const selected = [];
+            for (const timebar of timebars) {
+                const rect = timebar.getBoundingClientRect();
+                const w = timebar.offsetWidth;
+                const h = timebar.offsetHeight;
+                // 領域内の場合
+                if (
+                    (between(rect.left, x, sx) || between(rect.left + w, x, sx)) &&
+                    (between(rect.top, y, sy) || between(rect.top + h, y, sy))
+                ) {
+                    timebar.style.backgroundColor = c.color.multiSelected;
+                    selected.push(getCalenderElementSnapshot(timebar));
+                    // 領域外の場合
+                } else {
+                    timebar.style.backgroundColor = '';
+                }
+            }
+            console.log('document.mousemove', timebars, selected);
+            selectedCElems.current = selected;
+        }
+    }, []);
+    const onMouseUp = useCallback((event) => {
+        // 範囲選択終了
+        if (mousedownStart.current.x >= 0 && mousedownStart.current.y >= 0) {
+            console.log('document.mouseup');
+            // 範囲選択長方形の描画終了
+            mousedownStart.current = { x: -1, y: -1 };
+            const selectedAreaElem = document.getElementById('selectedArea');
+            selectedAreaElem.style.display = 'none';
+            selectedAreaElem.style.position = 'fixed';
+            selectedAreaElem.style.top = `0`;
+            selectedAreaElem.style.left = `0`;
+            selectedAreaElem.style.width = `0`;
+            selectedAreaElem.style.height = `0`;
+            selectedAreaElem.style.backgroundColor = '';
+        }
+    }, []);
+    useEffect(() => {
+        //eventListenerの登録
+        document.addEventListener('keydown', onKeyDown, false);
+        document.addEventListener('keyup', onKeyUp, false);
+        document.addEventListener('mousedown', onMouseDown, false);
+        document.addEventListener('mousemove', onMouseMove, false);
+        document.addEventListener('mouseup', onMouseUp, false);
+        return () => {
+            document.removeEventListener('keydown', onKeyDown, false);
+            document.removeEventListener('keyup', onKeyUp, false);
+            document.removeEventListener('mousedown', onMouseDown, false);
+            document.removeEventListener('mousemove', onMouseMove, false);
+            document.removeEventListener('mouseup', onMouseUp, false);
+        };
     }, []);
     useEffect(() => {
         // calenderBodyParamを更新
@@ -1869,6 +1884,7 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
         align-items: center;
         width: 100%;
         height: ${c.cell.height};
+        user-select: none;
     `;
     const GanttCalenderCell = styled.div`
         position: relative;
