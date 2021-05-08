@@ -33,7 +33,16 @@ import FilterListIcon from '@material-ui/icons/FilterList';
 import EditableLabel from '../components/editableLabel';
 import PageComponent from '../components/page';
 import Header from '../components/header';
-import { ArrowDownward, ArrowUpward, CheckBox, ChevronLeft, ChevronRight, DragHandle, Sort } from '@material-ui/icons';
+import {
+    ArrowDownward,
+    ArrowUpward,
+    CellWifi,
+    CheckBox,
+    ChevronLeft,
+    ChevronRight,
+    DragHandle,
+    Sort,
+} from '@material-ui/icons';
 import { KeyboardDatePicker } from '@material-ui/pickers';
 
 const c = {
@@ -580,7 +589,7 @@ const PropertyFilterRow: React.FC<{ project: any; filter: any }> = ({ project, f
     const dispatch = useDispatch();
     const properties = project.properties;
     const onChangeFilter = (key, value) => {
-        const newFilter = key == 'propertyId' ? { [key]: value, value: null } : { [key]: value };
+        const newFilter = key == 'propertyId' ? { [key]: value, value: '' } : { [key]: value };
         dispatch({
             type: 'setGanttFilter',
             projectId: project.id,
@@ -679,7 +688,7 @@ const PropertyFilterRow: React.FC<{ project: any; filter: any }> = ({ project, f
                     <Checkbox
                         checked={Boolean(filter.value)}
                         onChange={(event) => {
-                            onChangeFilter('value', event.target.value);
+                            onChangeFilter('value', event.target.checked);
                         }}
                     />
                 );
@@ -1071,7 +1080,6 @@ const GanttTask = ({ locParams, ganttParams, displayTasks }) => {
         const width = project.properties.filter((prop) => prop.id == propertySetting.id)[0].width;
         switch (propertySetting.type) {
             case 'title':
-                console.log('make title', task);
                 const title = task.properties.filter((p) => p.id == propertySetting.id)[0].values[0] || '';
                 return (
                     <GanttTaskTag key={`property-${propertySetting.type}-${task.id}`} style={{ width }}>
@@ -1260,7 +1268,6 @@ const GanttTask = ({ locParams, ganttParams, displayTasks }) => {
                 const tagObjs = project.properties.filter((p) => p.id == propertySetting.id)[0].values;
                 const selectedTagIds = task.properties.filter((p) => p.id == propertySetting.id)[0]?.values || [];
                 const selectedTagObjs = tagObjs.filter((tagObj) => selectedTagIds.indexOf(tagObj.id) != -1);
-                console.log('tag', tagObjs, selectedTagIds, selectedTagObjs);
                 return (
                     <GanttTaskTag key={`property-${propertySetting.type}-${task.id}`} style={{ width }}>
                         <Select
@@ -1418,7 +1425,7 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
     const timebarDragInitial = useRef(null);
     const lastScroll = useRef<Pos>({ x: 0, y: 0 });
     const mousedownStart = useRef<Pos>({ x: -1, y: -1 });
-    const selectedCElem = useRef([]);
+    const selectedCElems = useRef([]);
     const keydown = useRef(null);
     const setTasks = (newTasks) => {
         dispatch({
@@ -1443,7 +1450,7 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
     const width2cWidth = (width: number): number => {
         return floor(width / c.cell.width);
     };
-    const getCalenderElementSnapshot = (elem: HTMLElement): ICalenderElement => {
+    const getCalenderElementSnapshot = (elem: HTMLElement) => {
         // スクロールが0の状態のときのパラメータ
         const scroll = getScroll();
         const rect = elem.getBoundingClientRect();
@@ -1453,11 +1460,17 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
             width: width2cWidth(size.width),
             height: 1,
         };
+        const cell = {
+            x: floor(pos.x / c.cell.width),
+            y: floor(pos.y / c.cell.height),
+        };
         return {
+            id: Number(elem.dataset.id) || undefined,
             type: elem.dataset.type || undefined,
             pos,
             size,
             cSize,
+            cell,
             row: Number(elem.dataset.row),
             dataset: elem.dataset,
             ref: elem as HTMLElement,
@@ -1556,28 +1569,35 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
             const x = event.clientX + scroll.x;
             const y = event.clientY + scroll.y;
             const pointedTimebar = target;
-            if (selectedCElem.current.length == 0) {
+            const selectedCElem = getCalenderElementSnapshot(pointedTimebar);
+            // selectedCElemの調整
+            if (selectedCElems.current.length == 0) {
                 const wrap = getElementByPosition(pointedTimebar.dataset.row);
-                selectedCElem.current = [
-                    {
-                        id: Number(pointedTimebar.dataset.id),
-                        ref: wrap,
-                    },
-                ];
+                selectedCElems.current = [selectedCElem];
                 console.log('onTimebarDragStart', {
-                    selectedCElem: selectedCElem.current,
+                    selectedCElem: selectedCElems.current,
                     timebarDragInitial: timebarDragInitial.current,
                 });
             }
+            // ドラッグ初期値の計算
+            const offset = {
+                x: x - selectedCElem.pos.x,
+                y: y - selectedCElem.pos.y,
+            };
             timebarDragInitial.current = {
+                selected: {
+                    ...selectedCElem,
+                    offset,
+                },
                 pointed: {
-                    row: Number(pointedTimebar.dataset.row),
-                    x: floor(x / c.cell.width),
-                    y: floor(y / c.cell.height),
+                    cell: {
+                        x: floor(x / c.cell.width),
+                        y: floor(y / c.cell.height),
+                    },
                 },
             };
             console.log('onTimebarDragStart', {
-                selectedCElem: selectedCElem.current,
+                selectedCElem: selectedCElems.current,
                 timebarDragInitial: timebarDragInitial.current,
             });
         }
@@ -1595,30 +1615,32 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
         console.log('DRAGEND', target.className);
         if (isDragging()) {
             const tdi = timebarDragInitial.current;
-            const cbp = calenderBodyParam.current;
             // 期間更新
             const scroll = getScroll();
             const x = event.clientX + scroll.x;
             const y = event.clientY + scroll.y;
-            const cx = floor(x / c.cell.width);
-            const cy = floor(y / c.cell.height);
-            const dcx = cx - tdi.pointed.x;
-            const dcy = cy - tdi.pointed.y;
+            const judgeCell = {
+                x: floor((x - tdi.selected.offset.x) / c.cell.width),
+                y: floor(y / c.cell.height),
+            };
+            const dcell = {
+                x: judgeCell.x - tdi.selected.cell.x,
+                y: judgeCell.y - tdi.pointed.cell.y,
+            };
             const modifiedTasks = []; // 編集されたタスク
             const modifiedIds = []; //編集されたタスクの挿入先のID
-            const selectedIds = selectedCElem.current.map((elem) => elem.id); //選択されている要素のID
+            const selectedIds = selectedCElems.current.map((elem) => elem.id); //選択されている要素のID
             const unselectedTasks = rawTasks.filter((task) => selectedIds.indexOf(task.id) == -1);
-            console.log({ dcy });
             for (let i = 0; i < displayTasks.length; i++) {
                 const task = displayTasks[i];
                 // 選択されていない要素
                 if (selectedIds.indexOf(task.id) != -1) {
                     const period = task.properties.filter((prop) => prop.id == 2)[0].values[0];
                     const newPeriod = {
-                        start: period.start + (dcx * ganttParams.cellXUnit) / ganttParams.ganttCellDivideNumber,
-                        end: period.end + (dcx * ganttParams.cellXUnit) / ganttParams.ganttCellDivideNumber,
+                        start: period.start + (dcell.x * ganttParams.cellXUnit) / ganttParams.ganttCellDivideNumber,
+                        end: period.end + (dcell.x * ganttParams.cellXUnit) / ganttParams.ganttCellDivideNumber,
                     };
-                    modifiedIds.push(displayTasks[i + dcy].id);
+                    modifiedIds.push(displayTasks[i + dcell.y].id);
                     modifiedTasks.push({
                         ...task,
                         properties: task.properties.map((prop) => {
@@ -1658,12 +1680,12 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
     };
     const releaseSelectedCElem = (dataReset = true) => {
         console.log('release', dataReset);
-        for (const timebar of selectedCElem.current) {
+        for (const timebar of selectedCElems.current) {
             timebar.ref.style.backgroundColor = '';
         }
-        selectedCElem.current = null;
+        selectedCElems.current = null;
         if (dataReset) {
-            selectedCElem.current = [];
+            selectedCElems.current = [];
         }
     };
     // --------------------------------------------------------
@@ -1683,16 +1705,17 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
         const task = displayTasks.filter((task) => task.id == id)[0];
         const period = task.properties.filter((prop) => prop.id == 2)[0].values[0];
         if (!period || !period.start) {
-            const posX = Number(event.target.dataset.x);
+            const x = event.clientX;
+            const cx = floor((x - calenderBodyParam.current.pos.x) / c.cell.width);
             const start =
                 ganttParams.calenderRange.start.getTime() +
-                (posX / ganttParams.ganttCellDivideNumber) * ganttParams.cellXUnit;
-            console.log('onCellClick', { id, task, period, posX, start });
+                (cx / ganttParams.ganttCellDivideNumber) * ganttParams.cellXUnit;
+            console.log('onCellClick', { id, task, period, cx, start });
             dispatch({
                 type: 'editPageProperty',
                 projectId: project.id,
                 pageId: task.id,
-                propertyId: 3,
+                propertyId: 2,
                 property: {
                     values: [
                         {
@@ -1923,6 +1946,7 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
     const GanttCalenderRow = styled.div`
         position: relative;
         display: flex;
+        align-items: center;
         width: 100%;
         height: ${c.cell.height};
     `;
@@ -2031,8 +2055,8 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
                                 data-id={task.id}
                                 data-row={y}
                                 data-target="row"
+                                onClick={onCellClick}
                             >
-                                <div style={{ width: '100%', height: '0', borderTop: '0.1px solid gray' }} />
                                 {cond ? (
                                     <GanttCalenderTimebarWrap
                                         className="ganttCalenderTimebarGroup"
@@ -2085,6 +2109,22 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
                                 ) : (
                                     <></>
                                 )}
+                                {[...Array(ganttParams.calenderRangeDiff).keys()].map((i) => {
+                                    return (
+                                        <div
+                                            key={`border-${y}-${i}`}
+                                            data-id={task.id}
+                                            data-row={y}
+                                            style={{
+                                                width: c.cell.width - 1,
+                                                height: c.cell.height,
+                                                backgroundColor: 'transparent',
+                                                borderBottom: '1px solid gray',
+                                                borderRight: '1px solid gray',
+                                            }}
+                                        />
+                                    );
+                                })}
                             </GanttCalenderRow>
                         );
                     })}

@@ -16,7 +16,7 @@ const getBrandnewPage = ({ project, id, type, documents = [], properties = [], s
             (id) => {
                 return {
                     id: id,
-                    values: [],
+                    values: id != 2 ? [] : [{ start: undefined, end: undefined }],
                 };
             },
         ),
