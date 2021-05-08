@@ -245,15 +245,6 @@ const TaskModalWrapper = styled.div`
     max-height: 90vh;
     background-color: white;
 `;
-const GanttHeader = styled.div`
-    position: sticky;
-    left: 0;
-    top: 0;
-    display: flex;
-    background-color: ${c.color.header};
-    height: ${c.ganttHeader.height};
-    z-index: 1;
-`;
 const Main = styled.div`
     /*
     position: absolute;
@@ -484,6 +475,14 @@ const Gantt: React.FC = () => {
             }, 0) +
         c.task.container.leftMargin +
         10;
+    const GanttHeader = styled.div`
+        display: flex;
+        background-color: ${c.color.header};
+        height: ${c.ganttHeader.height};
+        z-index: 1;
+        position: sticky;
+        top: 0;
+    `;
     const GanttTaskHeader = styled.div`
         height: ${c.ganttHeader.height};
         background-color: ${c.color.header};
@@ -491,6 +490,7 @@ const Gantt: React.FC = () => {
         padding-left: ${c.task.container.leftMargin};
         position: sticky;
         left: 0;
+        top: 0;
         z-index: 1;
     `;
     const GanttTaskHeaderItem = styled.div`
@@ -512,6 +512,8 @@ const Gantt: React.FC = () => {
         width: ${ganttParams.calenderRangeDiff * (c.cell.width * ganttParams.ganttCellDivideNumber)};
         height: ${c.ganttHeader.height};
         position: sticky;
+        left: ${calenderHeaderMargin};
+        top: 0;
         z-index: 0;
     `;
     const GanttCalenderHeaderParentContainer = styled.div`
