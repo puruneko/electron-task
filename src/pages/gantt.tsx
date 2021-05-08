@@ -150,14 +150,14 @@ const filterTasks = (tasksRaw, filters, globalOperator) => {
                                     return (
                                         taskValuesAll ||
                                         opFunc[filterParam.operator](
-                                            filterParam.propertyId == 3
+                                            filterParam.propertyId == 2
                                                 ? filterParam.operator == 'le'
                                                     ? value?.end
                                                         ? value?.end
                                                         : value?.start
                                                     : value?.start
                                                 : value,
-                                            filterParam.propertyId == 3 ? filterParam.value?.start : filterParam.value,
+                                            filterParam.propertyId == 2 ? filterParam.value?.start : filterParam.value,
                                         )
                                     );
                                 }, false),
@@ -288,7 +288,7 @@ const Gantt: React.FC = () => {
     now.setSeconds(0);
     now.setMilliseconds(0);
     const [scrollTargetDate, setScrollTargetDate] = useState(now);
-    const [cellOffset, setCellOffset] = useState({ start: 5, end: 30 });
+    const [cellOffset, setCellOffset] = useState({ start: 10, end: 5 });
     const calenderRangeNow = useRef({
         start: new Date(getTime(now) - cellXUnit.current * cellOffset.start), // 今の5cell前から
         end: new Date(getTime(now) + cellXUnit.current * cellOffset.end), // 30cell後まで
@@ -316,21 +316,9 @@ const Gantt: React.FC = () => {
     console.log('ganttParams', ganttParams);
     // --------------------------------------------------------
     const isMainScroll = useRef<NodeJS.Timeout>(null);
+    const previousScroll = useRef({ left: 0, top: 0 });
     const onMainScroll = (event) => {
-        console.log('onMainScroll');
-        const right = document.getElementById('ganttMain').getBoundingClientRect().right;
-        console.log(
-            'target.scrollLeft',
-            event.target.scrollLeft,
-            'right',
-            right,
-            'test',
-            document.getElementsByClassName('test')[0].getBoundingClientRect(),
-            document.getElementsByClassName('test')[0].getClientRects(),
-            'window.pageXOffset',
-            window.pageXOffset,
-        );
-        if (event.target.scrollLeft == 0) {
+        if (previousScroll.current.left != event.target.scrollLeft && event.target.scrollLeft == 0) {
             setCellOffset({
                 ...cellOffset,
                 start: cellOffset.start + 10,
@@ -341,6 +329,11 @@ const Gantt: React.FC = () => {
                 end: cellOffset.end + 10,
             });
         }
+        previousScroll.current = {
+            left: event.target.scrollLeft,
+            top: event.target.scrollTop,
+        };
+        /*
         clearTimeout(isMainScroll.current);
         isMainScroll.current = setTimeout(() => {
             const scrollWidth = event.target.scrollLeft;
@@ -349,34 +342,11 @@ const Gantt: React.FC = () => {
             const targetDate = new Date(calenderRangeNow.current.start.getTime() + timeDiff);
             console.log('onMainMouseUp', { scrollWidth, targetDate, cellXUnit: cellXUnit.current });
             setScrollTargetDate(targetDate);
-        }, 66);
-    };
-    const onMainMouseUp = (event) => {
-        /*
-        if (isMainScroll.current) {
-            const scrollWidth = event.target.scrollLeft;
-            const cellDiff = scrollWidth / c.cell.width;
-            const timeDiff = (cellDiff / ganttCellDivideNumber) * cellXUnit.current;
-            const targetDate = new Date(calenderRangeNow.current.start.getTime() + timeDiff);
-            console.log('onMainMouseUp', { scrollWidth, targetDate, cellXUnit: cellXUnit.current });
-            setScrollTargetDate(targetDate);
-            isMainScroll.current = false;
-        }
+        }, 1000);
         */
     };
-
-    useEffect(() => {
-        console.log(isMainScroll.current);
-    }, [isMainScroll.current]);
     // --------------------------------------------------------
     // --------------------------------------------------------
-    useEffect(() => {
-        document.addEventListener('mouseup', (event) => {
-            if (isMainScroll.current) {
-                onMainMouseUp(event);
-            }
-        });
-    }, []);
     useEffect(() => {
         setScrollTargetDate(new Date());
         const newCalenderRange = {
@@ -395,6 +365,7 @@ const Gantt: React.FC = () => {
     useEffect(() => {
         setCalenderRangeNow(calenderRangeNow.current);
     }, [calenderRangeNow]);
+
     useEffect(() => {
         //scroll量の調整
         if (scrollTargetDate) {
@@ -403,9 +374,18 @@ const Gantt: React.FC = () => {
             const scrollOffset = cellDiff * c.cell.width;
             const mainElem = document.getElementById('ganttMain');
             console.log('scrollOffset', scrollOffset);
-            mainElem.scrollTo(scrollOffset, 0);
+            mainElem.scrollTo({
+                left: scrollOffset,
+            });
         }
-    }, [scrollTargetDate]);
+        // cellOffsetの調整
+        if (document.getElementById('ganttCalenderContainer').clientWidth < window.innerWidth) {
+            setCellOffset({
+                start: cellOffset.start + 5,
+                end: cellOffset.end + 5,
+            });
+        }
+    }, []);
     // --------------------------------------------------------
     // --------------------------------------------------------
     return (
@@ -417,24 +397,24 @@ const Gantt: React.FC = () => {
                     rightComponentProps={{ projectId: project.id }}
                 />
             </div>
+            <SelectedArea id="selectedArea" />
+            <Modal
+                open={!!openTaskId}
+                onClose={() => {
+                    dispatch({
+                        type: 'setComponentState',
+                        componentName: 'gantt',
+                        state: {
+                            openTaskId: 0,
+                        },
+                    });
+                }}
+            >
+                <TaskModalWrapper>
+                    <PageComponent projectId={project.id} pageId={openTaskId} headless={false} />
+                </TaskModalWrapper>
+            </Modal>
             <Main id="ganttMain" onScroll={onMainScroll}>
-                <SelectedArea id="selectedArea" />
-                <Modal
-                    open={!!openTaskId}
-                    onClose={() => {
-                        dispatch({
-                            type: 'setComponentState',
-                            componentName: 'gantt',
-                            state: {
-                                openTaskId: 0,
-                            },
-                        });
-                    }}
-                >
-                    <TaskModalWrapper>
-                        <PageComponent projectId={project.id} pageId={openTaskId} headless={false} />
-                    </TaskModalWrapper>
-                </Modal>
                 <GanttTask locParams={locParams} ganttParams={ganttParams} displayTasks={displayTasks} />
                 <GanttCalender locParams={locParams} ganttParams={ganttParams} displayTasks={displayTasks} />
             </Main>
@@ -1435,10 +1415,10 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
     const dispatch = useDispatch();
     // --------------------------------------------------------
     const calenderBodyParam = useRef<ICalenderElement>(null);
-    const timebarDragInitial = useRef<ITimebarDragInitial>(null);
+    const timebarDragInitial = useRef(null);
     const lastScroll = useRef<Pos>({ x: 0, y: 0 });
     const mousedownStart = useRef<Pos>({ x: -1, y: -1 });
-    const selectedCElem = useRef<Array<ICalenderElement>>([]);
+    const selectedCElem = useRef([]);
     const keydown = useRef(null);
     const setTasks = (newTasks) => {
         dispatch({
@@ -1448,100 +1428,20 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
         });
     };
     // --------------------------------------------------------
-    const GanttCalenderHeader = styled.div`
-        background-color: ${c.color.header};
-        width: ${ganttParams.calenderRangeDiff * (c.cell.width * ganttParams.ganttCellDivideNumber)};
-        height: ${c.ganttHeader.height};
-    `;
-    const GanttCalenderHeaderChild = styled.div`
-        width: ${c.cell.width * ganttParams.ganttCellDivideNumber};
-        height: ${c.ganttHeader.height / 2};
-    `;
-    const GanttCalenderBody = styled.div`
-        position: relative;
-        width: 100%;
-    `;
-    const GanttCalenderRow = styled.div`
-        position: relative;
-        display: flex;
-        width: 100%;
-    `;
-    const GanttCalenderCell = styled.div`
-        position: relative;
-        width: ${c.cell.width};
-        height: ${c.cell.height};
-        flex: 0 0 ${c.cell.width};
-        flex-shrink: 0;
-        display: flex;
-        justify-content: start;
-        align-items: center;
-        float: 'left';
-        user-select: none;
-    `;
-    const GanttCalenderCellDot = styled.div`
-        width: 1px;
-        height: 100%;
-        background-image: linear-gradient(0deg, rgba(0, 0, 0) 50%, rgba(255, 255, 255, 0) 50% 100%);
-        background-size: 100% 10px;
-    `;
-    const GanttCalenderCellDotSub = styled.div`
-        width: 1px;
-        height: 100%;
-        background-image: linear-gradient(0deg, rgba(0, 0, 0) 10%, rgba(255, 255, 255, 0) 10% 100%);
-        background-size: 100% 10px;
-    `;
-    const GanttCalenderTimebarWrap = styled.div`
-        position: absolute;
-        left: ${c.cell.width * c.timebar.marginXCoef};
-        height: ${c.cell.height * c.timebar.yShrinkCoef};
-        border-radius: 7px;
-        background-color: gray;
-        z-index: 1;
-        user-select: none;
-    `;
-    const GanttCalenderTimebar = styled.div`
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: ${c.cell.height * c.timebar.yShrinkCoef};
-        border-radius: 7px;
-        background-color: transparent;
-        overflow: hidden;
-        display: flex;
-        justify-content: space-between;
-    `;
-    const GanttCalenderTimebarSide = styled.div`
-        height: 100%;
-        width: ${c.cell.width * c.timebar.sideWidthCoef};
-        border-radius: 7px;
-        background-color: transparent;
-        cursor: col-resize;
-    `;
-    // --------------------------------------------------------
     const getElementsByClassName = (className: string): Array<HTMLElement> => {
         const elements = [...document.getElementsByClassName(className)].map((elem) => {
             return elem as HTMLElement;
         });
         return elements;
     };
-    const getElementByPosition = (x: number | string, y: number | string, targetType = 'wrap'): HTMLElement => {
-        const elems = document.querySelectorAll(`[data-target='${targetType}']`);
-        if (!elems || !elems.length) {
-            return null;
-        }
-        const elem = [...elems].filter(
-            (e: HTMLElement) => Number(e.dataset.y) == Number(`${y}`) && Number(e.dataset.x) == Number(`${x}`),
-        )[0];
-        if (!elem) {
-            return null;
-        }
-        return elem as HTMLElement;
+    const getElementByPosition = (row: number | string, type = 'wrap'): HTMLElement => {
+        return document.querySelector(`.ganttCalenderTimebarGroup[data-type='${type}'][data-row='${Number(row)}']`);
     };
-    const width2cellNum = (width: number): number => {
+    const getElementById = (id: number | string, type = 'wrap'): HTMLElement => {
+        return document.querySelector(`.ganttCalenderTimebarGroup[data-type='${type}'][data-id='${Number(id)}']`);
+    };
+    const width2cWidth = (width: number): number => {
         return floor(width / c.cell.width);
-    };
-    const height2cellNum = (height: number): number => {
-        return floor(height / c.cell.height);
     };
     const getCalenderElementSnapshot = (elem: HTMLElement): ICalenderElement => {
         // スクロールが0の状態のときのパラメータ
@@ -1549,17 +1449,16 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
         const rect = elem.getBoundingClientRect();
         const pos = { x: rect.left + scroll.x, y: rect.top + scroll.y };
         const size = { width: elem.offsetWidth, height: elem.offsetHeight };
-        const cell =
-            calenderBodyParam.current !== null
-                ? {
-                      x: width2cellNum(pos.x - calenderBodyParam.current.pos.x),
-                      y: height2cellNum(rect.top - calenderBodyParam.current.pos.y),
-                  }
-                : { x: -1, y: -1 };
+        const cSize = {
+            width: width2cWidth(size.width),
+            height: 1,
+        };
         return {
+            type: elem.dataset.type || undefined,
             pos,
             size,
-            cell,
+            cSize,
+            row: Number(elem.dataset.row),
             dataset: elem.dataset,
             ref: elem as HTMLElement,
         };
@@ -1574,274 +1473,121 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
             y: calenderContainer.scrollTop,
         };
     };
+    /*
+    const getNewTasks = (dr, dp) => {
+        const tdi = timebarDragInitial.current;
+        const modifiedIndex = [];
+        const dateModifiedTasks = rawTasks.map((task, index) => {
+            const selectedTimebarIds = selectedCElem.current.map((timebar) => Number(timebar.dataset.id));
+            if (selectedTimebarIds.indexOf(task.id) != -1) {
+                // 期間の編集
+                const period = task.properties.filter((p) => p.id == 2)[0].values[0];
+                const start = period.start !== null ? period.start : new Date(period.end).getTime();
+                const end = period.end !== null ? period.end : new Date(period.start).getTime();
+                let newStart: number;
+                let newEnd: number;
+                if (tdi.type == 'whole') {
+                    newStart = start + dp;
+                    newEnd = end + dp;
+                } else if (tdi.type == 'left') {
+                    newStart = start + dp;
+                    newEnd = end;
+                } else if (tdi.type == 'right') {
+                    newStart = start;
+                    newEnd = end + dp;
+                }
+                modifiedIndex.push(index);
+                //
+                return {
+                    ...task,
+                    properties: task.properties.map((prop) => {
+                        if (prop.id == 2) {
+                            return {
+                                ...prop,
+                                values: [
+                                    {
+                                        start: newStart,
+                                        end: newEnd,
+                                    },
+                                ],
+                            };
+                        } else {
+                            return { ...prop };
+                        }
+                    }),
+                };
+            } else {
+                return { ...task };
+            }
+        });
+        // 順序入れ替え
+        let newTasks;
+        if (tdi.type == 'whole' && dr != 0) {
+            newTasks = [];
+            let counter = 0;
+            const taskIds = rawTasks.map((task) => task.id);
+            const exchangedId = Number(
+                (document.querySelector(`[data-target="row"][data-row="${tdi.pointed.row + dr}"]`) as HTMLElement)
+                    .dataset.id,
+            );
+            const diy = taskIds.indexOf(exchangedId) - taskIds.indexOf(tdi.id);
+            const unmovedTasks = dateModifiedTasks.filter((t, i) => modifiedIndex.indexOf(i) == -1);
+            const targetIndex = modifiedIndex.map((i) => i + diy);
+            console.log('sort param', { taskIds, exchangedId, diy, unmovedTasks, targetIndex });
+            for (let i = 0; i < dateModifiedTasks.length; i++) {
+                if (targetIndex.indexOf(i) != -1) {
+                    newTasks.push(dateModifiedTasks[i - diy]);
+                } else {
+                    newTasks.push(unmovedTasks[counter]);
+                    counter++;
+                }
+            }
+        } else {
+            newTasks = [...dateModifiedTasks];
+        }
+        return newTasks;
+    };
+    */
     const onTimebarDragStart = (event) => {
         const target: HTMLElement = event.target as HTMLElement;
         // timberをクリックしたか判定
         if (target.className.match('ganttCalenderTimebarGroup')) {
-            console.log('DRAGSTART', 'scrollLeft', target.scrollLeft);
-            event.dataTransfer.setDragImage(new Image(), 0, 0);
-            // 代表要素
+            const scroll = getScroll();
+            const x = event.clientX + scroll.x;
+            const y = event.clientY + scroll.y;
             const pointedTimebar = target;
             if (selectedCElem.current.length == 0) {
-                const wrap = getElementByPosition(pointedTimebar.dataset.x, pointedTimebar.dataset.y);
-                selectedCElem.current = [getCalenderElementSnapshot(wrap)];
+                const wrap = getElementByPosition(pointedTimebar.dataset.row);
+                selectedCElem.current = [
+                    {
+                        id: Number(pointedTimebar.dataset.id),
+                        ref: wrap,
+                    },
+                ];
+                console.log('onTimebarDragStart', {
+                    selectedCElem: selectedCElem.current,
+                    timebarDragInitial: timebarDragInitial.current,
+                });
             }
-            // ----各パラメータを計算
-            const id = Number(pointedTimebar.dataset.id);
-            const targetType = pointedTimebar.dataset.target as TargetType;
-            const scroll = getScroll();
-            const pointedMousePos = {
-                x: event.clientX + scroll.x,
-                y: event.clientY + scroll.y,
-            };
-            const pointed = getCalenderElementSnapshot(pointedTimebar);
-            // 最大最小を計算
-            const allPos = {
-                x: Math.min(
-                    ...selectedCElem.current.map((timebar) => {
-                        return timebar.pos.x;
-                    }),
-                ),
-                y: Math.min(
-                    ...selectedCElem.current.map((timebar) => {
-                        return timebar.pos.y;
-                    }),
-                ),
-            };
-            const allSize = {
-                width:
-                    Math.max(
-                        ...selectedCElem.current.map((timebar) => {
-                            return timebar.pos.x + timebar.size.width;
-                        }),
-                    ) - allPos.x,
-                height:
-                    Math.max(
-                        ...selectedCElem.current.map((timebar) => {
-                            return timebar.pos.y + timebar.size.height;
-                        }),
-                    ) - allPos.y,
-            };
-            const allCell = {
-                x: width2cellNum(allPos.x - calenderBodyParam.current.pos.x),
-                y: height2cellNum(allPos.y - calenderBodyParam.current.pos.y),
-            };
-            // width最小
-            const min = selectedCElem.current.sort((a, b) => {
-                return a.size.width - b.size.width;
-            })[0];
-            // allのデータまとめ
-            const all = {
-                pos: allPos,
-                size: allSize,
-                cell: allCell,
-                dataset: null,
-                ref: null,
-            };
-            // protectedCellCountの計算
-            const tasksProtectedCellCount = selectedCElem.current.map((timebar) => {
-                const task = displayTasks.filter((t) => t.id == timebar.dataset.id)[0];
-                const period = task.properties.filter((p) => p.id == 3)[0].values[0];
-                const diff = (getTime(new Date(period.end)) - getTime(new Date(period.start))) / ganttParams.cellXUnit;
-                return diff - Math.trunc(diff) < 1.0 / ganttParams.ganttCellDivideNumber ? 1 : 0;
-            });
-            const protectedCellCount = tasksProtectedCellCount.indexOf(1) != -1 ? 1 : 0;
-            // パラメータセット
             timebarDragInitial.current = {
-                id,
-                targetType,
-                all,
-                min,
-                pointed,
-                pointedMousePos,
-                protectedCellCount,
+                pointed: {
+                    row: Number(pointedTimebar.dataset.row),
+                    x: floor(x / c.cell.width),
+                    y: floor(y / c.cell.height),
+                },
             };
-            console.log(
-                'DRAGSTART',
-                target.className,
-                'timebarDragInitial',
-                timebarDragInitial.current,
-                'selectedCElem',
-                selectedCElem.current,
-            );
-            // セル反転
-            if (targetType == 'whole') {
-                for (const timebar of selectedCElem.current) {
-                    const wrapElem = getElementByPosition(timebar.dataset.x, timebar.dataset.y);
-                    const cellWidth = width2cellNum(timebar.size.width + 1);
-                    const wrapCElem = getCalenderElementSnapshot(wrapElem);
-                    for (const index of [...Array(cellWidth).keys()]) {
-                        const cell = getElementByPosition(wrapCElem.cell.x + index, wrapCElem.cell.y, 'cell');
-                        cell.style.backgroundColor = 'rgba(179, 179, 179, 0.5)';
-                    }
-                }
-                console.log('DRAG whole');
-            } else if (targetType == 'left') {
-                for (const timebar of selectedCElem.current) {
-                    const wrapElem = getElementByPosition(timebar.dataset.x, timebar.dataset.y);
-                    const wrapCElem = getCalenderElementSnapshot(wrapElem);
-                    // スタイル適用
-                    const updatedCell = getElementByPosition(wrapCElem.cell.x, wrapCElem.cell.y, 'cell');
-                    updatedCell.style.backgroundColor = 'rgba(179, 179, 179, 0.5)';
-                }
-            } else if (targetType == 'right') {
-                for (const timebar of selectedCElem.current) {
-                    const wrapElem = getElementByPosition(timebar.dataset.x, timebar.dataset.y);
-                    const wrapCElem = getCalenderElementSnapshot(wrapElem);
-                    // スタイル適用
-                    const updatedCell = getElementByPosition(
-                        wrapCElem.cell.x + width2cellNum(wrapCElem.size.width),
-                        wrapCElem.cell.y,
-                        'cell',
-                    );
-                    updatedCell.style.backgroundColor = 'rgba(179, 179, 179, 0.5)';
-                }
-            }
+            console.log('onTimebarDragStart', {
+                selectedCElem: selectedCElem.current,
+                timebarDragInitial: timebarDragInitial.current,
+            });
         }
     };
     const onTimebarDrag = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        console.log('onTimebarDrag');
         if (isDragging()) {
-            const timebar = event.target;
-            const scroll = getScroll();
-            const tdi = timebarDragInitial.current;
-            const cbp = calenderBodyParam.current;
-            // timebarを半透明に
-            const timebars = getElementsByClassName('ganttCalenderTimebarGroup');
-            for (const tb of timebars) {
-                if (
-                    Number(tb.dataset.id) == timebar.dataset.id ||
-                    selectedCElem.current
-                        .map((timebar) => {
-                            return timebar.dataset.id;
-                        })
-                        .indexOf(Number(tb.dataset.id)) != -1
-                ) {
-                    continue;
-                }
-                tb.style.opacity = '0.5';
-            }
-            // ----移動
-            const x = event.clientX + scroll.x;
-            const y = event.clientY + scroll.y;
-            if (x == 0 && y == 0) {
-                // ジャンプ回避
-                return;
-            }
-            const dx = x - tdi.pointedMousePos.x;
-            const dy = y - tdi.pointedMousePos.y;
-            console.log('DRAG', '(dx,dy)', { dx, dy });
-            // 移動計算
-            const targetType = timebar.dataset.target;
-            if (targetType == 'whole') {
-                // 左上座標チェック
-                const updateX =
-                    tdi.all.pos.x + dx - c.cell.width * 0.01 > cbp.pos.x &&
-                    tdi.all.pos.x + tdi.all.size.width + dx + c.cell.width * 0.01 < cbp.pos.x + cbp.size.width;
-                const updateY =
-                    tdi.all.pos.y + dy - c.cell.height * 0.1 > cbp.pos.y &&
-                    tdi.all.pos.y + tdi.all.size.height + dy + c.cell.height * 0.01 < cbp.pos.y + cbp.size.height;
-                for (const timebar of selectedCElem.current) {
-                    const wrapElem = getElementByPosition(timebar.dataset.x, timebar.dataset.y);
-                    const wrapCElem = getCalenderElementSnapshot(wrapElem);
-                    const cellWidth = width2cellNum(timebar.size.width + 1);
-                    if (updateX) {
-                        // 移動
-                        const left = dx;
-                        wrapElem.style.left = `${left}px`;
-                    }
-                    if (updateY) {
-                        // 移動
-                        const top = dy;
-                        wrapElem.style.top = `${top}px`;
-                    }
-                    // セル反転
-                    const updatedWrapCElem = getCalenderElementSnapshot(wrapElem);
-                    if (wrapCElem.cell.x != updatedWrapCElem.cell.x || wrapCElem.cell.y != updatedWrapCElem.cell.y) {
-                        // 消す
-                        for (const index of [...Array(cellWidth).keys()]) {
-                            const cell = getElementByPosition(wrapCElem.cell.x + index, wrapCElem.cell.y, 'cell');
-                            cell.style.backgroundColor = '';
-                        }
-                        // 反転
-                        for (const index of [...Array(cellWidth).keys()]) {
-                            const cell = getElementByPosition(
-                                updatedWrapCElem.cell.x + index,
-                                updatedWrapCElem.cell.y,
-                                'cell',
-                            );
-                            cell.style.backgroundColor = 'rgba(179, 179, 179, 0.5)';
-                        }
-                    }
-                    console.log('wrap move', wrapElem.style.left, wrapElem.style.top);
-                }
-                console.log('DRAG whole');
-            } else if (targetType == 'left') {
-                const updateX =
-                    tdi.min.size.width - dx > c.cell.width * (0.9 + tdi.protectedCellCount) &&
-                    tdi.all.pos.x + dx > cbp.pos.x;
-                console.log('updateX', updateX);
-                for (const timebar of selectedCElem.current) {
-                    const wrapElem = getElementByPosition(timebar.dataset.x, timebar.dataset.y);
-                    const wrapCElem = getCalenderElementSnapshot(wrapElem);
-                    // 移動
-                    if (updateX) {
-                        const width = timebar.size.width - dx;
-                        const left = dx - (tdi.pointed.pos.x - tdi.pointedMousePos.x);
-                        wrapElem.style.left = `${left}px`;
-                        wrapElem.style.width = `${width}px`;
-                    }
-                    // スタイル適用
-                    const updatedWrapCElem = getCalenderElementSnapshot(wrapElem);
-                    if (wrapCElem.cell.x != updatedWrapCElem.cell.x || wrapCElem.cell.y != updatedWrapCElem.cell.y) {
-                        // スタイル戻し
-                        const cell = getElementByPosition(wrapCElem.cell.x, wrapCElem.cell.y, 'cell');
-                        cell.style.backgroundColor = '';
-                        // スタイル適用
-                        const updatedCell = getElementByPosition(
-                            updatedWrapCElem.cell.x,
-                            updatedWrapCElem.cell.y,
-                            'cell',
-                        );
-                        updatedCell.style.backgroundColor = 'rgba(179, 179, 179, 0.5)';
-                    }
-                }
-            } else if (targetType == 'right') {
-                const updateX =
-                    tdi.min.size.width + dx > c.cell.width * (0.9 + tdi.protectedCellCount) &&
-                    tdi.all.pos.x + tdi.all.size.width + dx < cbp.pos.x + cbp.size.width;
-                for (const timebar of selectedCElem.current) {
-                    const wrapElem = getElementByPosition(timebar.dataset.x, timebar.dataset.y);
-                    const wrapCElem = getCalenderElementSnapshot(wrapElem);
-                    // 移動
-                    if (updateX) {
-                        const width = timebar.size.width + dx;
-                        wrapElem.style.width = `${width}px`;
-                    }
-                    // スタイル適用
-                    const updatedWrapCElem = getCalenderElementSnapshot(wrapElem);
-                    if (
-                        wrapCElem.cell.x + width2cellNum(wrapCElem.size.width) !=
-                            updatedWrapCElem.cell.x + width2cellNum(updatedWrapCElem.size.width) ||
-                        wrapCElem.cell.y != updatedWrapCElem.cell.y
-                    ) {
-                        // スタイル戻し
-                        const cell = getElementByPosition(
-                            wrapCElem.cell.x + width2cellNum(wrapCElem.size.width),
-                            wrapCElem.cell.y,
-                            'cell',
-                        );
-                        cell.style.backgroundColor = '';
-                        // スタイル適用
-                        const updatedCell = getElementByPosition(
-                            updatedWrapCElem.cell.x + width2cellNum(updatedWrapCElem.size.width),
-                            updatedWrapCElem.cell.y,
-                            'cell',
-                        );
-                        updatedCell.style.backgroundColor = 'rgba(179, 179, 179, 0.5)';
-                        console.log('DRAG right', wrapCElem, updatedWrapCElem);
-                    }
-                }
-            }
+            //
         }
     };
     const onTimebarDragEnd = (event) => {
@@ -1854,164 +1600,58 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
             const scroll = getScroll();
             const x = event.clientX + scroll.x;
             const y = event.clientY + scroll.y;
-            const dx = x - tdi.pointedMousePos.x;
-            const dy = y - tdi.pointedMousePos.y;
-            let baseCellX;
-            let baseCellY;
-            let corDx;
-            if (tdi.targetType == 'whole') {
-                corDx = topbottom(tdi.all.pos.x - cbp.pos.x + dx, cbp.size.width - tdi.all.size.width, 0);
-                baseCellX = tdi.all.cell.x;
-                baseCellY = tdi.all.cell.y;
-            } else if (tdi.targetType == 'left') {
-                corDx = topbottom(
-                    tdi.all.pos.x - cbp.pos.x + dx,
-                    tdi.all.pos.x - cbp.pos.x + tdi.min.size.width - c.cell.width,
-                    0,
-                );
-                baseCellX = tdi.all.cell.x;
-                baseCellY = tdi.all.cell.y;
-            } else if (tdi.targetType == 'right') {
-                corDx = topbottom(
-                    tdi.all.pos.x + tdi.all.size.width - cbp.pos.x + dx,
-                    cbp.size.width - tdi.all.size.width,
-                    tdi.all.pos.x - cbp.pos.x + c.cell.width * 0.9,
-                );
-                baseCellX = tdi.all.cell.x + floor(tdi.all.size.width / c.cell.width);
-                baseCellY = tdi.all.cell.y;
-            }
-            const corDy = topbottom(tdi.all.pos.y - cbp.pos.y + dy, cbp.size.height - tdi.all.size.height, 0);
-            const cx = width2cellNum(corDx);
-            const cy = height2cellNum(corDy);
-            let dcx;
-            if (tdi.targetType == 'whole') {
-                dcx = topbottom(
-                    cx - baseCellX,
-                    width2cellNum(cbp.pos.x + cbp.size.width - (tdi.all.pos.x + tdi.all.size.width)),
-                    -tdi.all.cell.x,
-                );
-            } else if (tdi.targetType == 'left') {
-                dcx = topbottom(
-                    cx - baseCellX,
-                    width2cellNum(tdi.min.size.width) - tdi.protectedCellCount,
-                    -tdi.all.cell.x,
-                );
-                console.log(
-                    'DRAGEND left',
-                    tdi.targetType,
-                    'dcx default',
-                    cx - baseCellX,
-                    'topvalue',
-                    width2cellNum(tdi.min.size.width) - tdi.protectedCellCount,
-                    'bottomvalue',
-                    -tdi.all.cell.x,
-                );
-            } else if (tdi.targetType == 'right') {
-                dcx = topbottom(
-                    cx - baseCellX,
-                    width2cellNum(cbp.pos.x + cbp.size.width - (tdi.all.pos.x + tdi.all.size.width)),
-                    -width2cellNum(tdi.min.size.width) + tdi.protectedCellCount,
-                );
-                console.log(
-                    'DRAGEND right',
-                    tdi.targetType,
-                    'dcx default',
-                    cx - baseCellX,
-                    'topvalue',
-                    width2cellNum(cbp.pos.x + cbp.size.width - (tdi.all.pos.x + tdi.all.size.width)),
-                    'bottomvalue',
-                    -width2cellNum(tdi.min.size.width) + tdi.protectedCellCount,
-                );
-            }
-            const dcy = cy - baseCellY;
-            const dp = dcx * (ganttParams.cellXUnit / ganttParams.ganttCellDivideNumber); // [ms]
-            const selectedTimebarIds = selectedCElem.current.map((timebar) => Number(timebar.dataset.id as string));
-            console.log('DRAGEND', 'param', {
-                x,
-                dx,
-                corDx,
-                corDy,
-                cx,
-                dcx,
-                dcy,
-                dp,
-                dp_minutes: dp / 1000 / 60,
-                tdi,
-                cellXUnit: ganttParams.cellXUnit,
-            });
-            const modifiedIndex = [];
-            const dateModifiedTasks = rawTasks.map((task, index) => {
-                if (selectedTimebarIds.indexOf(task.id) != -1) {
-                    // 期間の編集
-                    const period = task.properties.filter((p) => p.id == 3)[0].values[0];
-                    const start = period.start !== null ? period.start : new Date(period.end).getTime();
-                    const end = period.end !== null ? period.end : new Date(period.start).getTime();
-                    let newStart: number;
-                    let newEnd: number;
-                    if (tdi.targetType == 'whole') {
-                        newStart = start + dp;
-                        newEnd = end + dp;
-                    } else if (tdi.targetType == 'left') {
-                        newStart = start + dp;
-                        newEnd = end;
-                    } else if (tdi.targetType == 'right') {
-                        newStart = start;
-                        newEnd = end + dp;
-                    }
-                    modifiedIndex.push(index);
-                    //
-                    return {
+            const cx = floor(x / c.cell.width);
+            const cy = floor(y / c.cell.height);
+            const dcx = cx - tdi.pointed.x;
+            const dcy = cy - tdi.pointed.y;
+            const modifiedTasks = []; // 編集されたタスク
+            const modifiedIds = []; //編集されたタスクの挿入先のID
+            const selectedIds = selectedCElem.current.map((elem) => elem.id); //選択されている要素のID
+            const unselectedTasks = rawTasks.filter((task) => selectedIds.indexOf(task.id) == -1);
+            console.log({ dcy });
+            for (let i = 0; i < displayTasks.length; i++) {
+                const task = displayTasks[i];
+                // 選択されていない要素
+                if (selectedIds.indexOf(task.id) != -1) {
+                    const period = task.properties.filter((prop) => prop.id == 2)[0].values[0];
+                    const newPeriod = {
+                        start: period.start + (dcx * ganttParams.cellXUnit) / ganttParams.ganttCellDivideNumber,
+                        end: period.end + (dcx * ganttParams.cellXUnit) / ganttParams.ganttCellDivideNumber,
+                    };
+                    modifiedIds.push(displayTasks[i + dcy].id);
+                    modifiedTasks.push({
                         ...task,
                         properties: task.properties.map((prop) => {
-                            if (prop.id == 3) {
+                            if (prop.id == 2) {
                                 return {
                                     ...prop,
-                                    values: [
-                                        {
-                                            start: newStart,
-                                            end: newEnd,
-                                        },
-                                    ],
+                                    values: [newPeriod],
                                 };
                             } else {
                                 return { ...prop };
                             }
                         }),
-                    };
-                } else {
-                    return { ...task };
+                    });
                 }
-            });
-            // 順序入れ替え
-            let newTasks;
-            if (tdi.targetType == 'whole' && dcy != 0) {
-                newTasks = [];
-                let counter = 0;
-                const taskIds = rawTasks.map((task) => task.id);
-                const exchangedId = Number(
-                    (document.querySelector(`[data-target="row"][data-y="${tdi.pointed.cell.y + dcy}"]`) as HTMLElement)
-                        .dataset.id,
-                );
-                const diy = taskIds.indexOf(exchangedId) - taskIds.indexOf(tdi.id);
-                const unmovedTasks = dateModifiedTasks.filter((t, i) => modifiedIndex.indexOf(i) == -1);
-                const targetIndex = modifiedIndex.map((i) => i + diy);
-                console.log('sort param', { taskIds, exchangedId, diy, unmovedTasks, targetIndex });
-                for (let i = 0; i < dateModifiedTasks.length; i++) {
-                    if (targetIndex.indexOf(i) != -1) {
-                        newTasks.push(dateModifiedTasks[i - diy]);
-                    } else {
-                        newTasks.push(unmovedTasks[counter]);
-                        counter++;
-                    }
-                }
-            } else {
-                newTasks = [...dateModifiedTasks];
             }
+            console.log({ selectedIds, modifiedTasks, modifiedIds, unselectedTasks });
+            let index = 0; // 選択されていない要素の現在の配列番号を記憶する
+            let modifiedIndex = 0; // 選択されている要素の現在の配列番号を記憶する
+            const newTasks = [];
+            for (let i = 0; i < rawTasks.length; i++) {
+                if (modifiedIds.indexOf(rawTasks[i].id) != -1) {
+                    newTasks.push(modifiedTasks[modifiedIndex]);
+                    modifiedIndex++;
+                } else {
+                    newTasks.push(unselectedTasks[index]);
+                    index++;
+                }
+            }
+            // タスク更新
+            setTasks(newTasks);
             // 初期化
             timebarDragInitial.current = null;
             releaseSelectedCElem();
-            // タスク更新
-            setTasks(newTasks);
             // スクロール量の引き継ぎ
             lastScroll.current = scroll;
         }
@@ -2041,7 +1681,7 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
     const onCellClick = (event) => {
         const id = Number(event.target.dataset.id);
         const task = displayTasks.filter((task) => task.id == id)[0];
-        const period = task.properties.filter((prop) => prop.id == 3)[0].values[0];
+        const period = task.properties.filter((prop) => prop.id == 2)[0].values[0];
         if (!period || !period.start) {
             const posX = Number(event.target.dataset.x);
             const start =
@@ -2066,6 +1706,7 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
     };
     // --------------------------------------------------------
     useEffect(() => {
+        /*
         //eventListenerの登録
         document.addEventListener('keydown', (event) => {
             console.log('key', event.key);
@@ -2178,6 +1819,7 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
                 selectedAreaElem.style.backgroundColor = '';
             }
         });
+        */
     }, []);
     useEffect(() => {
         // calenderBodyParamを更新
@@ -2248,7 +1890,6 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
                                 (24 / ganttParams.ganttCellDivideNumber),
                         ) + 1;
                     c = e + s;
-                    console.log('getTimeberWidth', { start_, end_, base, s, e, c });
                     break;
                 case 'date':
                     base = floor(
@@ -2257,13 +1898,85 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
                     s = floor((start_.getMinutes() - 0.01) / (60 / ganttParams.ganttCellDivideNumber)) * -1;
                     e = floor((end_.getMinutes() - 0.01) / (60 / ganttParams.ganttCellDivideNumber)) + 1;
                     c = e + s;
-                    console.log('getTimeberWidth', { start_, end_, base, s, e, c });
                     break;
             }
             block = base * ganttParams.ganttCellDivideNumber + c;
         }
         return c.cell.width * block;
     };
+    // --------------------------------------------------------
+    const GanttCalenderHeader = styled.div`
+        background-color: ${c.color.header};
+        width: ${ganttParams.calenderRangeDiff * (c.cell.width * ganttParams.ganttCellDivideNumber)};
+        height: ${c.ganttHeader.height};
+    `;
+    const GanttCalenderHeaderChild = styled.div`
+        width: ${c.cell.width * ganttParams.ganttCellDivideNumber};
+        height: ${c.ganttHeader.height / 2};
+    `;
+    const GanttCalenderBody = styled.div`
+        position: relative;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+    `;
+    const GanttCalenderRow = styled.div`
+        position: relative;
+        display: flex;
+        width: 100%;
+        height: ${c.cell.height};
+    `;
+    const GanttCalenderCell = styled.div`
+        position: relative;
+        width: ${c.cell.width};
+        height: ${c.cell.height};
+        flex: 0 0 ${c.cell.width};
+        flex-shrink: 0;
+        display: flex;
+        justify-content: start;
+        align-items: center;
+        float: 'left';
+        user-select: none;
+    `;
+    const GanttCalenderCellDot = styled.div`
+        width: 1px;
+        height: 100%;
+        background-image: linear-gradient(0deg, rgba(0, 0, 0) 50%, rgba(255, 255, 255, 0) 50% 100%);
+        background-size: 100% 10px;
+    `;
+    const GanttCalenderCellDotSub = styled.div`
+        width: 1px;
+        height: 100%;
+        background-image: linear-gradient(0deg, rgba(0, 0, 0) 10%, rgba(255, 255, 255, 0) 10% 100%);
+        background-size: 100% 10px;
+    `;
+    const GanttCalenderTimebarWrap = styled.div`
+        position: absolute;
+        /*left: ${c.cell.width * c.timebar.marginXCoef};*/
+        height: ${c.cell.height * c.timebar.yShrinkCoef};
+        border-radius: 7px;
+        background-color: gray;
+        z-index: 1;
+        user-select: none;
+    `;
+    const GanttCalenderTimebar = styled.div`
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: ${c.cell.height * c.timebar.yShrinkCoef};
+        border-radius: 7px;
+        background-color: transparent;
+        overflow: hidden;
+        display: flex;
+        justify-content: space-between;
+    `;
+    const GanttCalenderTimebarSide = styled.div`
+        height: 100%;
+        width: ${c.cell.width * c.timebar.sideWidthCoef};
+        border-radius: 7px;
+        background-color: transparent;
+        cursor: col-resize;
+    `;
     // --------------------------------------------------------
     return (
         <GanttCalenderContainer id="ganttCalenderContainer">
@@ -2301,117 +2014,77 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
             <GanttCalenderBodyWrapper>
                 <GanttCalenderBody id="GanttCalenderBody">
                     {displayTasks.map((task, y) => {
-                        const period = task.properties.filter((p) => p.id == 3)[0].values[0];
+                        const period = task.properties.filter((p) => p.id == 2)[0].values[0];
+                        const left =
+                            getTimeberWidth(ganttParams.calenderRange.start, period.start) -
+                            (ganttParams.calenderRange.start.getHours() != 0 ||
+                            ganttParams.calenderRange.start.getMinutes() != 0
+                                ? c.cell.width
+                                : 0);
                         const width = !!period ? getTimeberWidth(period.start, period.end) - c.cell.width * 0.02 : 0;
                         const tps = !!period ? new Date(period.start !== null ? period.start : period.end) : null;
+                        const cond = !!width && !!tps;
                         return (
-                            <GanttCalenderRow key={`calender-row-${y}`} data-id={task.id} data-y={y} data-target="row">
-                                {[
-                                    ...Array(ganttParams.calenderRangeDiff * ganttParams.ganttCellDivideNumber).keys(),
-                                ].map((x) => {
-                                    let cond = !!width && !!tps;
-                                    if (cond) {
-                                        const s = new Date(ganttParams.calenderRange.start);
-                                        switch (ganttParams.ganttScale) {
-                                            case 'month':
-                                                s.setHours(s.getHours() + x * (24 / ganttParams.ganttCellDivideNumber));
-                                                break;
-                                            case 'date':
-                                                s.setMinutes(
-                                                    s.getMinutes() + x * (60 / ganttParams.ganttCellDivideNumber),
-                                                );
-                                                break;
-                                        }
-                                        const year = s.getFullYear() == tps.getFullYear();
-                                        const month = s.getMonth() + 1 == tps.getMonth() + 1;
-                                        switch (ganttParams.ganttScale) {
-                                            case 'date':
-                                                const hourDate = s.getHours() == tps.getHours();
-                                                const minute =
-                                                    ceilfloor(s.getMinutes() / 60) == ceilfloor(tps.getMinutes() / 60);
-                                                cond = cond && hourDate && minute;
-                                            case 'month':
-                                                const date = s.getDate() == tps.getDate();
-                                                const hourMonth =
-                                                    ceilfloor(s.getHours() / 24) == ceilfloor(tps.getHours() / 24);
-                                                cond = cond && date && hourMonth;
-                                            case 'year':
-                                                cond = cond && year && month;
-                                        }
-                                    }
-                                    return (
-                                        <GanttCalenderCell
-                                            key={`calender-cell-${y}-${x}`}
-                                            className="ganttCalenderCell"
+                            <GanttCalenderRow
+                                key={`calender-row-${y}`}
+                                className="ganttCalenderRow"
+                                data-id={task.id}
+                                data-row={y}
+                                data-target="row"
+                            >
+                                <div style={{ width: '100%', height: '0', borderTop: '0.1px solid gray' }} />
+                                {cond ? (
+                                    <GanttCalenderTimebarWrap
+                                        className="ganttCalenderTimebarGroup"
+                                        key={`timebar-${y}`}
+                                        data-id={task.id}
+                                        data-row={y}
+                                        data-type="wrap"
+                                        style={{
+                                            width,
+                                            left,
+                                        }}
+                                    >
+                                        {task.properties.filter((prop) => prop.id == 0)[0].values[0]}
+                                        <GanttCalenderTimebar
+                                            className="ganttCalenderTimebarGroup"
+                                            draggable="true"
                                             data-id={task.id}
-                                            data-x={x}
-                                            data-y={y}
-                                            data-target="cell"
-                                            onClick={onCellClick}
+                                            data-row={y}
+                                            data-type="whole"
+                                            style={{
+                                                width,
+                                            }}
+                                            onDoubleClick={onTimebarDoubleClick}
+                                            onDragStart={onTimebarDragStart}
+                                            onDrag={onTimebarDrag}
+                                            onDragEnd={onTimebarDragEnd}
                                         >
-                                            {x % ganttParams.ganttCellDivideNumber == 0 ? (
-                                                <GanttCalenderCellDot />
-                                            ) : (
-                                                <GanttCalenderCellDotSub />
-                                            )}
-                                            {cond ? (
-                                                <GanttCalenderTimebarWrap
-                                                    className="ganttCalenderTimebarGroup"
-                                                    data-id={task.id}
-                                                    data-x={x}
-                                                    data-y={y}
-                                                    data-target="wrap"
-                                                    style={{
-                                                        width,
-                                                    }}
-                                                >
-                                                    {task.properties.filter((prop) => prop.id == 1)[0].values[0]}
-                                                    <GanttCalenderTimebar
-                                                        className="ganttCalenderTimebarGroup"
-                                                        draggable="true"
-                                                        data-id={task.id}
-                                                        data-x={x}
-                                                        data-y={y}
-                                                        data-target="whole"
-                                                        style={{
-                                                            width,
-                                                        }}
-                                                        onDoubleClick={onTimebarDoubleClick}
-                                                        onDragStart={onTimebarDragStart}
-                                                        onDrag={onTimebarDrag}
-                                                        onDragEnd={onTimebarDragEnd}
-                                                    >
-                                                        <GanttCalenderTimebarSide
-                                                            className="ganttCalenderTimebarGroup"
-                                                            draggable="true"
-                                                            data-id={task.id}
-                                                            data-x={x}
-                                                            data-y={y}
-                                                            data-target="left"
-                                                            onDragStart={onTimebarDragStart}
-                                                            onDrag={onTimebarDrag}
-                                                            onDragEnd={onTimebarDragEnd}
-                                                        />
-                                                        <GanttCalenderTimebarSide
-                                                            className="ganttCalenderTimebarGroup"
-                                                            draggable="true"
-                                                            data-id={task.id}
-                                                            data-x={x}
-                                                            data-y={y}
-                                                            data-target="right"
-                                                            onDragStart={onTimebarDragStart}
-                                                            onDrag={onTimebarDrag}
-                                                            onDragEnd={onTimebarDragEnd}
-                                                        />
-                                                    </GanttCalenderTimebar>
-                                                </GanttCalenderTimebarWrap>
-                                            ) : (
-                                                <></>
-                                            )}
-                                        </GanttCalenderCell>
-                                    );
-                                })}
-                                <div className="test" />
+                                            <GanttCalenderTimebarSide
+                                                className="ganttCalenderTimebarGroup"
+                                                draggable="true"
+                                                data-id={task.id}
+                                                data-row={y}
+                                                data-type="left"
+                                                onDragStart={onTimebarDragStart}
+                                                onDrag={onTimebarDrag}
+                                                onDragEnd={onTimebarDragEnd}
+                                            />
+                                            <GanttCalenderTimebarSide
+                                                className="ganttCalenderTimebarGroup"
+                                                draggable="true"
+                                                data-id={task.id}
+                                                data-row={y}
+                                                data-type="right"
+                                                onDragStart={onTimebarDragStart}
+                                                onDrag={onTimebarDrag}
+                                                onDragEnd={onTimebarDragEnd}
+                                            />
+                                        </GanttCalenderTimebar>
+                                    </GanttCalenderTimebarWrap>
+                                ) : (
+                                    <></>
+                                )}
                             </GanttCalenderRow>
                         );
                     })}

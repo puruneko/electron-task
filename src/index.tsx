@@ -10,6 +10,7 @@ import Kanban from './pages/kanban';
 import Page from './pages/page';
 
 import { useStore } from './lib/store';
+import Lab from './pages/lab';
 
 const container = document.getElementById('container');
 const store = useStore({});
@@ -20,6 +21,7 @@ ReactDOM.render(
         <BrowserRouter forceRefresh={false}>
             <Common>
                 <Route exact path="/" component={Top} />
+                <Route key={'lab'} path="/lab" component={Lab} />
                 <Route key={'gantt'} path="/:projectId/gantt" component={Gantt} />
                 <Route key={'kanban'} path="/:projectId/kanban" component={Kanban} />
                 <Route key={'page'} path="/:projectId/page/:pageId" component={Page} />

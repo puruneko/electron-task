@@ -70,6 +70,9 @@ const Header: React.FC<Props> = ({ height = 64, rightComponent = <></>, rightCom
                     <IconButton edge="start" color="inherit" aria-label="menu" onClick={onDrawerOpen}>
                         <MenuIcon />
                     </IconButton>
+                    <Link to="/lab">
+                        <a>Lab</a>
+                    </Link>
                     <Typography variant="h6" style={{ flexGrow: 1 }}>
                         {headerStates ? headerStates.title : ''}
                     </Typography>
