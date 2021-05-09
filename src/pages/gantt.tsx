@@ -248,15 +248,12 @@ const TaskModalWrapper = styled.div`
     background-color: white;
 `;
 const Main = styled.div`
-    /*
     position: absolute;
-    top: ${c.header.height + c.ganttHeader.height};
     left: 0;
-    */
-    position: sticky;
     min-width: 100%;
     min-height: calc(100% - ${c.header.height}px - ${c.ganttHeader.height}px);
     display: flex;
+    z-index: 0;
 `;
 
 const Gantt: React.FC = () => {
@@ -333,9 +330,10 @@ const Gantt: React.FC = () => {
     };
     console.log('ganttParams', ganttParams);
     // --------------------------------------------------------
-    const isMainScroll = useRef<NodeJS.Timeout>(null);
+    const [headerTop, setHeaderTop] = useState(0);
+    const headerTopSetTimeout = useRef(null);
     const previousScroll = useRef({ left: 0, top: 0 });
-    const onMainScroll = (event) => {
+    const onGnattScroll = (event) => {
         if (previousScroll.current.left != event.target.scrollLeft && event.target.scrollLeft == 0) {
             setCellOffset({
                 ...cellOffset,
@@ -351,17 +349,11 @@ const Gantt: React.FC = () => {
             left: event.target.scrollLeft,
             top: event.target.scrollTop,
         };
-        /*
-        clearTimeout(isMainScroll.current);
-        isMainScroll.current = setTimeout(() => {
-            const scrollWidth = event.target.scrollLeft;
-            const cellDiff = scrollWidth / c.cell.width;
-            const timeDiff = (cellDiff / ganttCellDivideNumber) * cellXUnit.current;
-            const targetDate = new Date(calenderRangeNow.current.start.getTime() + timeDiff);
-            console.log('onMainMouseUp', { scrollWidth, targetDate, cellXUnit: cellXUnit.current });
-            setScrollTargetDate(targetDate);
-        }, 1000);
-        */
+        clearTimeout(headerTopSetTimeout.current);
+        headerTopSetTimeout.current = setTimeout(() => {
+            setHeaderTop(event.target.scrollTop - (event.target.scrollTop < c.header.height ? 0 : c.header.height));
+            clearTimeout(headerTopSetTimeout.current);
+        }, 200);
     };
     // --------------------------------------------------------
     const itemSelectorDragParam = useRef(null);
@@ -388,7 +380,7 @@ const Gantt: React.FC = () => {
             projectId: project.id,
             propertyId: Number(event.target.dataset.id),
             property: {
-                width: itemSelectorDragParam.current.ref.style.width,
+                width: Number(itemSelectorDragParam.current.ref.style.width.replace('px', '')),
             },
         });
         itemSelectorDragParam.current = null;
@@ -468,27 +460,35 @@ const Gantt: React.FC = () => {
             });
         }
     }, []);
+    useEffect(() => {
+        setCalenderTaskHeaderWidth(
+            project.properties
+                .filter((prop) => prop.display)
+                .reduce((pre, current) => {
+                    return pre + current.width + 1;
+                }, 0),
+        );
+    }, [project.properties]);
     // --------------------------------------------------------
-    const calenderHeaderMargin =
+    const [calenderTaskHeaderWidth, setCalenderTaskHeaderWidth] = useState(
         project.properties
             .filter((prop) => prop.display)
             .reduce((pre, current) => {
-                return pre + current.width;
-            }, 0) +
-        c.task.container.leftMargin +
-        10;
+                return pre + current.width + 1;
+            }, 0),
+    );
     const GanttHeader = styled.div`
-        display: flex;
         background-color: ${c.color.header};
         height: ${c.ganttHeader.height};
         z-index: 1;
-        position: sticky;
-        top: 0;
+        position: relative;
+        left: 0;
+        top: ${headerTop};
     `;
     const GanttTaskHeader = styled.div`
         height: ${c.ganttHeader.height};
         background-color: ${c.color.header};
-        display: flex;
+        display: inline-flex;
         padding-left: ${c.task.container.leftMargin};
         position: sticky;
         left: 0;
@@ -513,8 +513,8 @@ const Gantt: React.FC = () => {
         background-color: ${c.color.header};
         width: ${ganttParams.calenderRangeDiff * (c.cell.width * ganttParams.ganttCellDivideNumber)};
         height: ${c.ganttHeader.height};
-        position: sticky;
-        left: ${calenderHeaderMargin};
+        position: absolute;
+        left: ${calenderTaskHeaderWidth + c.task.container.leftMargin};
         top: 0;
         z-index: 0;
     `;
@@ -523,6 +523,7 @@ const Gantt: React.FC = () => {
         display: flex;
     `;
     const GanttCalenderHeaderParent = styled.div`
+        background-color: ${c.color.header};
         height: ${c.ganttHeader.height / 2};
         position: sticky;
         left: 0;
@@ -538,7 +539,7 @@ const Gantt: React.FC = () => {
     `;
     // --------------------------------------------------------
     return (
-        <GanttContainer>
+        <GanttContainer onScroll={onGnattScroll}>
             <HeaderWrapper>
                 <Header
                     height={c.header.height}
@@ -563,70 +564,76 @@ const Gantt: React.FC = () => {
                     <PageComponent projectId={project.id} pageId={openTaskId} headless={false} />
                 </TaskModalWrapper>
             </Modal>
+            {/*
             <GanttHeader>
-                <GanttTaskHeader>
-                    {project.properties
-                        .filter((prop) => prop.display)
-                        .map((prop, index) => {
-                            return (
-                                <GanttTaskHeaderItem
-                                    key={`ganttTaskHeader-${index}`}
-                                    className="GanttTaskHeaderItem"
-                                    data-id={prop.id}
-                                    style={{
-                                        width: project.properties.filter((p) => p.id == prop.id)[0].width,
-                                    }}
-                                >
-                                    {prop.name}
-                                    <GanttTaskHeaderItemSelector
+            </GanttHeader>
+            */}
+            <div>
+                <GanttHeader>
+                    <GanttTaskHeader>
+                        {project.properties
+                            .filter((prop) => prop.display)
+                            .map((prop, index) => {
+                                return (
+                                    <GanttTaskHeaderItem
+                                        key={`ganttTaskHeader-${index}`}
+                                        className="GanttTaskHeaderItem"
                                         data-id={prop.id}
-                                        draggable={true}
-                                        onDragStart={onItemSelectorDragStart}
-                                        onDrag={onItemSelectorDrag}
-                                        onDragEnd={onItemSelectorDragEnd}
-                                    />
-                                </GanttTaskHeaderItem>
-                            );
-                        })}
-                </GanttTaskHeader>
-                <GanttCalenderHeader>
-                    <GanttCalenderHeaderParentContainer>
-                        {createParentGanttLabel().map((parent, index) => {
-                            return (
-                                <GanttCalenderHeaderParent key={`calender-header-parent-${index}`}>
-                                    <div
                                         style={{
-                                            position: 'sticky',
-                                            left: calenderHeaderMargin,
-                                            width: c.cell.width * ganttParams.ganttCellDivideNumber,
+                                            width: project.properties.filter((p) => p.id == prop.id)[0].width,
                                         }}
                                     >
-                                        {parent.parent}
-                                    </div>
-                                    <div
-                                        style={{
-                                            width: parent.number * c.cell.width * ganttParams.ganttCellDivideNumber,
-                                        }}
-                                    ></div>
-                                </GanttCalenderHeaderParent>
-                            );
-                        })}
-                    </GanttCalenderHeaderParentContainer>
-                    <GanttCalenderHeaderChildContainer>
-                        {createChildGanttLabel().map((x, j) => {
-                            return (
-                                <GanttCalenderHeaderChild key={`calender-header-child-${j}`}>
-                                    {x}
-                                </GanttCalenderHeaderChild>
-                            );
-                        })}
-                    </GanttCalenderHeaderChildContainer>
-                </GanttCalenderHeader>
-            </GanttHeader>
-            <Main id="ganttMain" onScroll={onMainScroll}>
-                <GanttTask locParams={locParams} ganttParams={ganttParams} displayTasks={displayTasks} />
-                <GanttCalender locParams={locParams} ganttParams={ganttParams} displayTasks={displayTasks} />
-            </Main>
+                                        {prop.name}
+                                        <GanttTaskHeaderItemSelector
+                                            data-id={prop.id}
+                                            draggable={true}
+                                            onDragStart={onItemSelectorDragStart}
+                                            onDrag={onItemSelectorDrag}
+                                            onDragEnd={onItemSelectorDragEnd}
+                                        />
+                                    </GanttTaskHeaderItem>
+                                );
+                            })}
+                    </GanttTaskHeader>
+                    <GanttCalenderHeader>
+                        <GanttCalenderHeaderParentContainer>
+                            {createParentGanttLabel().map((parent, index) => {
+                                return (
+                                    <GanttCalenderHeaderParent key={`calender-header-parent-${index}`}>
+                                        <div
+                                            style={{
+                                                position: 'sticky',
+                                                left: calenderTaskHeaderWidth + c.task.container.leftMargin,
+                                                width: c.cell.width * ganttParams.ganttCellDivideNumber,
+                                            }}
+                                        >
+                                            {parent.parent}
+                                        </div>
+                                        <div
+                                            style={{
+                                                width: parent.number * c.cell.width * ganttParams.ganttCellDivideNumber,
+                                            }}
+                                        ></div>
+                                    </GanttCalenderHeaderParent>
+                                );
+                            })}
+                        </GanttCalenderHeaderParentContainer>
+                        <GanttCalenderHeaderChildContainer>
+                            {createChildGanttLabel().map((x, j) => {
+                                return (
+                                    <GanttCalenderHeaderChild key={`calender-header-child-${j}`}>
+                                        {x}
+                                    </GanttCalenderHeaderChild>
+                                );
+                            })}
+                        </GanttCalenderHeaderChildContainer>
+                    </GanttCalenderHeader>
+                </GanttHeader>
+                <Main id="ganttMain">
+                    <GanttTask locParams={locParams} ganttParams={ganttParams} displayTasks={displayTasks} />
+                    <GanttCalender locParams={locParams} ganttParams={ganttParams} displayTasks={displayTasks} />
+                </Main>
+            </div>
         </GanttContainer>
     );
 };
