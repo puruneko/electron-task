@@ -43,7 +43,9 @@ import {
     DragHandle,
     Sort,
 } from '@material-ui/icons';
-import { KeyboardDatePicker } from '@material-ui/pickers';
+import 'date-fns';
+import DateFnsUtils from '@date-io/date-fns';
+import { DateTimePicker, KeyboardDatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers';
 
 const c = {
     color: {
@@ -362,34 +364,34 @@ const Gantt: React.FC = () => {
         */
     };
     // --------------------------------------------------------
-    const onTaskHeaderMoving = useRef(null);
-    const onTaskHeaderMouseDown = (event) => {
-        const id = Number(event.target.dataset.id);
-        const rect = event.target.getBoundingClientRect();
-        onTaskHeaderMoving.current = {
-            id: id,
-            width: project.properties.filter((prop) => prop.id == id)[0].width,
-            left: rect.left,
+    const itemSelectorDragParam = useRef(null);
+    const onItemSelectorDragStart = (event) => {
+        const ref = document.querySelector(`.GanttTaskHeaderItem[data-id='${event.target.dataset.id}']`) as HTMLElement;
+        itemSelectorDragParam.current = {
+            ref,
+            width: ref.style.width,
+            x: event.clientX,
         };
-        console.log('onTaskHeaderMouseDown', onTaskHeaderMoving.current);
     };
-    const onTaskHeaderMouseMove = (event) => {
-        if (onTaskHeaderMoving.current) {
-            const x = event.clientX;
-            const dx = x - onTaskHeaderMoving.current.left;
-            console.log('x', x, 'dx', dx, 'left', onTaskHeaderMoving.current.left);
-            dispatch({
-                type: 'editProperty',
-                projectId: project.id,
-                propertyId: onTaskHeaderMoving.current.id,
-                property: {
-                    width: onTaskHeaderMoving.current.width + dx,
-                },
-            });
+    const onItemSelectorDrag = (event) => {
+        const x = event.clientX;
+        const y = event.clinetY;
+        if (itemSelectorDragParam.current && x != 0 && y != 0) {
+            const dx = x - itemSelectorDragParam.current.x;
+            itemSelectorDragParam.current.ref.style.width =
+                Number(itemSelectorDragParam.current.width.replace('px', '')) + dx;
         }
     };
-    const onTaskHeaderMouseUp = (event) => {
-        onTaskHeaderMoving.current = null;
+    const onItemSelectorDragEnd = (event) => {
+        dispatch({
+            type: 'editProperty',
+            projectId: project.id,
+            propertyId: Number(event.target.dataset.id),
+            property: {
+                width: itemSelectorDragParam.current.ref.style.width,
+            },
+        });
+        itemSelectorDragParam.current = null;
     };
     // --------------------------------------------------------
     const createParentGanttLabel = () => {
@@ -569,6 +571,8 @@ const Gantt: React.FC = () => {
                             return (
                                 <GanttTaskHeaderItem
                                     key={`ganttTaskHeader-${index}`}
+                                    className="GanttTaskHeaderItem"
+                                    data-id={prop.id}
                                     style={{
                                         width: project.properties.filter((p) => p.id == prop.id)[0].width,
                                     }}
@@ -576,9 +580,10 @@ const Gantt: React.FC = () => {
                                     {prop.name}
                                     <GanttTaskHeaderItemSelector
                                         data-id={prop.id}
-                                        onMouseDown={onTaskHeaderMouseDown}
-                                        onMouseMove={onTaskHeaderMouseMove}
-                                        onMouseUp={onTaskHeaderMouseUp}
+                                        draggable={true}
+                                        onDragStart={onItemSelectorDragStart}
+                                        onDrag={onItemSelectorDrag}
+                                        onDragEnd={onItemSelectorDragEnd}
                                     />
                                 </GanttTaskHeaderItem>
                             );
@@ -1139,6 +1144,9 @@ const GanttTaskTag = styled.div`
     height: ${c.cell.height};
     max-height: ${c.cell.height};
     ${c.borderCss}
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
 `;
 
 const GanttTask = ({ locParams, ganttParams, displayTasks }) => {
@@ -1254,11 +1262,11 @@ const GanttTask = ({ locParams, ganttParams, displayTasks }) => {
                                     },
                                 });
                             }}
-                            input={<Input />}
+                            input={<Input disableUnderline={true} />}
                             renderValue={(selected: Array<any>) => (
                                 <div>
                                     {selected.map((value) => (
-                                        <Chip key={value.name} label={value.name} />
+                                        <Chip key={value.name} size="small" label={value.name} />
                                     ))}
                                 </div>
                             )}
@@ -1284,61 +1292,68 @@ const GanttTask = ({ locParams, ganttParams, displayTasks }) => {
                 if (!dateValues || !dateValues.length) {
                     return <GanttTaskTag key={`property-${propertySetting.type}-${task.id}`} style={{ width }} />;
                 }
-                const period = dateValues[0];
+                const periodDate = {
+                    start: new Date(dateValues[0].start),
+                    end: new Date(dateValues[0].end),
+                };
                 return (
                     <GanttTaskTag key={`property-${propertySetting.type}-${task.id}`} style={{ width }}>
-                        <TextField
-                            id="datetime-local-start"
-                            type="datetime-local"
-                            value={toISOLikeString(period.start)}
-                            onChange={(event) => {
-                                console.log('datetime-local', event.target.value);
-                                dispatch({
-                                    type: 'editPageProperty',
-                                    projectId: project.id,
-                                    pageId: task.id,
-                                    propertyId: propertySetting.id,
-                                    property: {
-                                        values: [
-                                            {
-                                                start: new Date(event.target.value).getTime(),
-                                                end: period.end,
-                                            },
-                                        ],
-                                    },
-                                });
-                            }}
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                            style={{ width: '190px' }}
-                        />
-                        〜
-                        <TextField
-                            id="datetime-local-end"
-                            type="datetime-local"
-                            value={toISOLikeString(period.end)}
-                            onChange={(event) => {
-                                dispatch({
-                                    type: 'editPageProperty',
-                                    projectId: project.id,
-                                    pageId: task.id,
-                                    propertyId: propertySetting.id,
-                                    property: {
-                                        values: [
-                                            {
-                                                start: period.start,
-                                                end: new Date(event.target.value).getTime(),
-                                            },
-                                        ],
-                                    },
-                                });
-                            }}
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                            style={{ width: '190px', fontSize: '10px' }}
-                        />
+                        <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                            <div style={{ display: 'flex' }}>
+                                <div style={{ width: '135px', minWidth: '135px' }}>
+                                    <DateTimePicker
+                                        value={periodDate.start}
+                                        ampm={false}
+                                        onChange={(date) => {
+                                            console.log('datetime-local', date);
+                                            dispatch({
+                                                type: 'editPageProperty',
+                                                projectId: project.id,
+                                                pageId: task.id,
+                                                propertyId: propertySetting.id,
+                                                property: {
+                                                    values: [
+                                                        {
+                                                            start: date.getTime(),
+                                                            end: periodDate.end.getTime(),
+                                                        },
+                                                    ],
+                                                },
+                                            });
+                                        }}
+                                        showTodayButton
+                                        format="yyyy/MM/dd HH:mm"
+                                        InputProps={{ disableUnderline: true }}
+                                    />
+                                </div>
+                                〜
+                                <div style={{ width: '135px', minWidth: '135px' }}>
+                                    <DateTimePicker
+                                        value={periodDate.end}
+                                        ampm={false}
+                                        onChange={(date) => {
+                                            dispatch({
+                                                type: 'editPageProperty',
+                                                projectId: project.id,
+                                                pageId: task.id,
+                                                propertyId: propertySetting.id,
+                                                property: {
+                                                    values: [
+                                                        {
+                                                            start: periodDate.start.getTime(),
+                                                            end: date.getTime(),
+                                                        },
+                                                    ],
+                                                },
+                                            });
+                                        }}
+                                        showTodayButton
+                                        format="yyyy/MM/dd HH:mm"
+                                        InputProps={{ disableUnderline: true }}
+                                    />
+                                </div>
+                            </div>
+                        </MuiPickersUtilsProvider>
                     </GanttTaskTag>
                 );
             case 'user':
@@ -1364,11 +1379,11 @@ const GanttTask = ({ locParams, ganttParams, displayTasks }) => {
                                     },
                                 });
                             }}
-                            input={<Input />}
+                            input={<Input disableUnderline={true} />}
                             renderValue={(selected: Array<any>) => (
-                                <div>
+                                <div style={{ overflowX: 'visible' }}>
                                     {selected.map((value) => (
-                                        <Chip key={value.name} label={value.name} />
+                                        <Chip key={value.name} size="small" label={value.name} />
                                     ))}
                                 </div>
                             )}
@@ -1424,11 +1439,11 @@ const GanttTask = ({ locParams, ganttParams, displayTasks }) => {
                                     },
                                 });
                             }}
-                            input={<Input />}
+                            input={<Input disableUnderline={true} />}
                             renderValue={(selected: Array<any>) => (
                                 <div>
                                     {selected.map((value) => (
-                                        <Chip key={value.name} label={value.name} />
+                                        <Chip key={value.name} size="small" label={value.name} />
                                     ))}
                                 </div>
                             )}
@@ -1451,7 +1466,10 @@ const GanttTask = ({ locParams, ganttParams, displayTasks }) => {
             case 'check':
                 const checkValues = task.properties.filter((p) => p.id == propertySetting.id)[0]?.values || [false];
                 return (
-                    <GanttTaskTag key={`property-${propertySetting.type}-${task.id}`} style={{ width }}>
+                    <GanttTaskTag
+                        key={`property-${propertySetting.type}-${task.id}`}
+                        style={{ width, justifyContent: 'center' }}
+                    >
                         <Checkbox
                             checked={checkValues[0]}
                             onChange={(event) => {
