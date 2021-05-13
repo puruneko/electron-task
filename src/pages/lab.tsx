@@ -33,12 +33,38 @@ const ContentsWrapper = styled.div`
     overflow-y: auto;
 `;
 const HeaderWrapper = styled.div`
-    width: ${calenderWidth}; /* 重要 */
+    /*width: ${calenderWidth}; /* 重要 */
     height: ${c.ganttHeader.height};
     display: flex;
     position: sticky;
     top: 0;
     z-index: 2;
+`;
+const TaskHeader = styled.div`
+    height: ${c.ganttHeader.height};
+    min-width: 300px;
+    background-color: gray;
+    position: sticky;
+    left: 0;
+    top: 0;
+    z-index: 2;
+`;
+const CalenderHeader = styled.div`
+    min-width: ${calenderWidth};
+    height: ${c.ganttHeader.height};
+    background-color: pink;
+    display: flex;
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 1;
+`;
+const CalenderPhase = styled.div`
+    width: 200;
+    height: ${c.ganttHeader.height};
+    position: sticky;
+    left: 300px;
+    background-color: inherit;
 `;
 const Main = styled.div`
     width: ${calenderWidth}; /* 重要 */
@@ -57,15 +83,6 @@ const TaskWrapper = styled.div`
     flex-direction: column;
     background-color: blue;
 `;
-const TaskHeader = styled.div`
-    height: ${c.ganttHeader.height};
-    min-width: 300px;
-    background-color: gray;
-    position: sticky;
-    left: 0;
-    top: 0;
-    z-index: 2;
-`;
 const Tasks = styled.div``;
 const TaskRow = styled.div`
     width: 300px;
@@ -76,23 +93,6 @@ const CalenderWrapper = styled.div`
     flex-direction: column;
     background-color: green;
     z-index: 0;
-`;
-const CalenderHeader = styled.div`
-    min-width: ${calenderWidth};
-    height: ${c.ganttHeader.height};
-    background-color: pink;
-    display: flex;
-    position: sticky;
-    top: 0;
-    left: 0;
-    z-index: 1;
-`;
-const CalenderPhase = styled.div`
-    width: 200;
-    height: ${c.ganttHeader.height};
-    position: sticky;
-    left: 300px;
-    background-color: inherit;
 `;
 const Calenders = styled.div``;
 const CalenderRow = styled.div`
