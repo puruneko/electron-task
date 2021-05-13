@@ -33,7 +33,7 @@ const ContentsWrapper = styled.div`
     overflow-y: auto;
 `;
 const HeaderWrapper = styled.div`
-    /*width: ${calenderWidth}; /* 重要 */
+    width: ${calenderWidth}; /* 重要 */
     height: ${c.ganttHeader.height};
     display: flex;
     position: sticky;

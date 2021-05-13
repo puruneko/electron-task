@@ -8,16 +8,17 @@ import * as isDev from 'electron-is-dev';
 const createWindow = (): void => {
     // レンダープロセスとなる、ウィンドウオブジェクトを作成する。
     const win = new BrowserWindow({
-        width: 60,
-        height: 1000,
+        width: 1000,
+        height: 500,
         webPreferences: {
-            nodeIntegration: false,
-            nodeIntegrationInWorker: true,
-            contextIsolation: true,
+            nodeIntegration: true,
+            nodeIntegrationInWorker: false,
+            contextIsolation: false,
             preload: `${__dirname}/preload.js`,
         },
     });
-    if (isDev) {
+    const a = false;
+    if (isDev && a) {
         win.loadURL('http://localhost:3000/index.html');
     } else {
         // 読み込む index.html。
@@ -26,15 +27,15 @@ const createWindow = (): void => {
     }
 
     // Hot Reloading
-    if (isDev) {
-        // 'node_modules/.bin/electronPath'
-        /* eslint @typescript-eslint/no-var-requires: 0 */
-        require('electron-reload')(__dirname, {
-            electron: path.join(__dirname, '..', '..', 'node_modules', '.bin', 'electron'),
-            forceHardReset: true,
-            hardResetMethod: 'exit',
-        });
-    }
+    // if (isDev) {
+    //     // 'node_modules/.bin/electronPath'
+    //     /* eslint @typescript-eslint/no-var-requires: 0 */
+    //     require('electron-reload')(__dirname, {
+    //         electron: path.join(__dirname, '..', '..', 'node_modules', '.bin', 'electron'),
+    //         forceHardReset: true,
+    //         hardResetMethod: 'exit',
+    //     });
+    // }
 
     // 開発者ツールを起動する
     win.webContents.openDevTools();
