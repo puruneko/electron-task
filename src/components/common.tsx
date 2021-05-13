@@ -8,21 +8,18 @@ import Header from './header';
 const headerHeight = 64;
 
 const Body = styled.div`
-    position: fixed;
-    top: 0;
-    left: 0;
     margin: 0;
     padding: 0;
     border: none;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
 `;
 const Contents = styled.div`
     position: absolute;
     /*top: ${headerHeight}px;*/
     left: 0;
-    height: 100%;
     width: 100%;
+    height: 100%;
 `;
 const Common: React.FC = ({ history, children }) => {
     const locParams = useParams<any>();
