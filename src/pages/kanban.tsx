@@ -10,12 +10,15 @@ import { IRootState } from '../type/store';
 import PageComponent from '../components/page';
 
 const KanbanContainer = styled.div`
+    width: 100%;
+    height: 100%;
     margin: 20px;
     padding: 0;
     border: none;
     display: flex;
     flex-direction: row;
     align-items: flex-start;
+    overflow-y: auto;
 `;
 const StatusContainer = styled.div`
     border: 1px solid black;
@@ -56,10 +59,11 @@ const Kanban: React.FC = () => {
     const params = useParams<any>();
     const queries = useQuery();
     const projectId = params.projectId;
-    const { project, statuses, tasks, openTaskId } = useSelector(
+    const { statuses, tasks, openTaskId } = useSelector(
         (props: IRootState) => ({
-            project: props.projects.filter((project) => project.id == projectId)[0],
-            statuses: props.projects.filter((project) => project.id == projectId)[0].properties[0].values,
+            statuses: props.projects
+                .filter((project) => project.id == projectId)[0]
+                .properties.filter((p) => p.id == 1)[0].values,
             tasks: props.projects
                 .filter((project) => project.id == projectId)[0]
                 .pages.filter((page) => page.type == 'task'),
@@ -69,8 +73,9 @@ const Kanban: React.FC = () => {
     );
     const dispatch = useDispatch();
     const selectedTaskElems = useRef([]);
+    const pointedTaskElem = useRef(null);
     const currentOverElem = useRef(null);
-    console.log('Kanban project', project, openTaskId);
+    console.log('Kanban project', tasks, openTaskId);
     // --------------------------------------------------------
     const getContainerByTaskId = (id) => {
         const container = document.querySelectorAll(`.kanbanTask[data-id="${id}"]`);
@@ -78,9 +83,10 @@ const Kanban: React.FC = () => {
     };
     const onDragStart = (event) => {
         const target = event.target;
+        pointedTaskElem.current = target;
         const taskElems = document.getElementsByClassName('kanbanTask');
-        for (const task of taskElems) {
-            task.style.opacity = '0.5';
+        for (const taskElem of taskElems) {
+            taskElem.style.opacity = '0.5';
         }
         //
         if (selectedTaskElems.current === null || selectedTaskElems.current.length == 0) {
@@ -93,8 +99,8 @@ const Kanban: React.FC = () => {
     const onDragEnd = (event) => {
         console.log('onDragEnd', currentOverElem.current, selectedTaskElems.current, event.target);
         const taskElems = document.getElementsByClassName('kanbanTask');
-        for (const task of taskElems) {
-            task.style.opacity = '';
+        for (const taskElem of taskElems) {
+            taskElem.style.opacity = '';
         }
         //
         const newTasks = [];
@@ -106,7 +112,9 @@ const Kanban: React.FC = () => {
         } else if (currentOverElem.current.dataset.id == -1) {
             // 最後尾にドロップした場合
             const statusTaskEnd = tasks
-                .filter((task) => task.statusId == currentOverElem.current.dataset.statusid)
+                .filter(
+                    (task) => task.properties.filter((p) => p.id == 1)[0] == currentOverElem.current.dataset.statusid,
+                )
                 .slice(-1)[0];
             // ステータスに要素が1つ以上存在する場合
             if (!!statusTaskEnd) {
@@ -115,10 +123,17 @@ const Kanban: React.FC = () => {
                         if (selectedTaskElems.current.filter((stask) => stask.dataset.id == task.id).length == 0) {
                             newTasks.push(task);
                         }
-                        for (const stask of selectedTaskElems.current) {
+                        for (const staskElem of selectedTaskElems.current) {
+                            const stask = tasks.filter((task) => task.id == staskElem.dataset.id)[0];
                             newTasks.push({
-                                ...tasks.filter((task) => task.id == stask.dataset.id)[0],
-                                statusId: task.statusId,
+                                ...stask,
+                                properties: stask.properties.map((p) => {
+                                    if (p.id == 1) {
+                                        return { ...task.properties.filter((p) => p.id == 1)[0] };
+                                    } else {
+                                        return { ...p };
+                                    }
+                                }),
                             });
                         }
                     } else if (selectedTaskElems.current.filter((stask) => stask.dataset.id == task.id).length != 0) {
@@ -137,7 +152,16 @@ const Kanban: React.FC = () => {
                     if (!!stask) {
                         newTasks.push({
                             ...task,
-                            statusId: parseInt(currentOverElem.current.dataset.statusid),
+                            properties: task.properties.map((p) => {
+                                if (p.id == 1) {
+                                    return {
+                                        ...p,
+                                        values: [Number(currentOverElem.current.dataset.statusid)],
+                                    };
+                                } else {
+                                    return { ...p };
+                                }
+                            }),
                         });
                     } else {
                         newTasks.push(task);
@@ -145,28 +169,48 @@ const Kanban: React.FC = () => {
                 }
             }
         } else {
+            // 最後尾以外にドロップした場合
+            const dy = Number(currentOverElem.current.dataset.y) - Number(pointedTaskElem.current.dataset.y);
             for (const task of tasks) {
+                // taskがドロップされたタスクの場合
                 if (task.id == currentOverElem.current.dataset.id) {
-                    for (const stask of selectedTaskElems.current) {
+                    if (currentOverElem.current.dataset.x == pointedTaskElem.current.dataset.x && dy > 0) {
+                        newTasks.push(task);
+                    }
+                    for (const staskElem of selectedTaskElems.current) {
+                        const stask = tasks.filter((task) => task.id == staskElem.dataset.id)[0];
                         newTasks.push({
-                            ...tasks.filter((task) => task.id == stask.dataset.id)[0],
-                            statusId: task.statusId,
+                            ...stask,
+                            properties: stask.properties.map((p) => {
+                                if (p.id == 1) {
+                                    return {
+                                        ...task.properties.filter((p) => p.id == 1)[0],
+                                    };
+                                } else {
+                                    return { ...p };
+                                }
+                            }),
                         });
                     }
-                    newTasks.push(task);
+                    if (currentOverElem.current.dataset.x != pointedTaskElem.current.dataset.x || dy < 0) {
+                        newTasks.push(task);
+                    }
                 } else if (selectedTaskElems.current.filter((stask) => stask.dataset.id == task.id).length != 0) {
+                    // taskがドロップされたタスクではなくて、かつ、選択されているタスクの場合
                     continue;
                 } else {
+                    // taskがドロップされたタスクではなくて、かつ、選択されているタスクでない場合
                     newTasks.push(task);
                 }
             }
         }
         dispatch({
             type: 'setTasks',
-            projectId: project.id,
+            projectId: projectId,
             tasks: newTasks,
         });
         selectedTaskElems.current = [];
+        pointedTaskElem.current = null;
         currentOverElem.current = null;
     };
     const onDragOver = (event) => {
@@ -203,31 +247,33 @@ const Kanban: React.FC = () => {
     // --------------------------------------------------------
     return (
         <KanbanContainer>
-            {statuses.map((status, index1) => {
+            {statuses.map((status, x) => {
                 return (
-                    <StatusContainer key={`statusContainer-${index1}`}>
+                    <StatusContainer key={`statusContainer-${x}`}>
                         <StatusHeader>
                             <span style={{ color: status.color }}>{status.name}</span>
                         </StatusHeader>
                         <StatusTasks>
                             {tasks
-                                .filter((task) => task.statusId == status.id)
-                                .map((task, index2) => {
+                                .filter((task) => task.properties.filter((p) => p.id == 1)[0].values[0] == status.id)
+                                .map((task, y) => {
+                                    const title = task.properties.filter((p) => p.id == 0)[0].values[0];
                                     return (
                                         <TaskContainer
-                                            key={`taskContainer-${index1}-${index2}`}
+                                            key={`taskContainer-${x}-${y}`}
                                             className={'kanbanTask'}
                                             data-id={task.id}
-                                            data-statusid={task.statusId}
-                                            data-y={index2}
+                                            data-statusid={task.properties.filter((p) => p.id == 1)[0]}
+                                            data-x={x}
+                                            data-y={y}
                                             draggable={true}
                                             onDragStart={onDragStart}
                                             onDragEnd={onDragEnd}
                                             onDragOver={onDragOver}
                                             onDragLeave={onDragLeave}
-                                            onClick={onClickTask}
+                                            onDoubleClick={onClickTask}
                                         >
-                                            <span data-id={task.id}>{task.title}</span>
+                                            <span data-id={task.id}>{title}</span>
                                             <span data-id={task.id}>dummy1</span>
                                             <span data-id={task.id}>dummy2</span>
                                         </TaskContainer>
@@ -258,7 +304,7 @@ const Kanban: React.FC = () => {
                 }}
             >
                 <TaskModalWrapper>
-                    <PageComponent projectId={project.id} pageId={openTaskId} headless={false} />
+                    <PageComponent projectId={projectId} pageId={openTaskId} headless={false} />
                 </TaskModalWrapper>
             </Modal>
         </KanbanContainer>

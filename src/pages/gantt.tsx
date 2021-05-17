@@ -476,8 +476,9 @@ const Gantt: React.FC = () => {
                     });
                 }}
             >
-                <div
+                <span
                     className="TaskModalWrapper"
+                    tabIndex={-1}
                     style={{
                         position: 'absolute',
                         top: '5%',
@@ -491,7 +492,7 @@ const Gantt: React.FC = () => {
                     }}
                 >
                     <PageComponent projectId={projectId} pageId={openTaskId} headless={false} />
-                </div>
+                </span>
             </Modal>
             <div
                 className="GanttHeaderWrapper"
