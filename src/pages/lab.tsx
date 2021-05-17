@@ -1,9 +1,10 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
+import Select from '../components/select';
 
 const c = {
     header: {
-        height: 50,
+        height: 500,
     },
     ganttHeader: {
         height: 50,
@@ -99,11 +100,21 @@ const CalenderRow = styled.div`
     min-width: ${calenderWidth};
     height: ${c.cell.height};
 `;
-
 const Lab: React.FC = () => {
+    const options = [
+        { value: 1, name: 'A' },
+        { value: 2, name: 'B' },
+        { value: 3, name: 'C' },
+        { value: 4, name: 'D' },
+        { value: 5, name: 'E' },
+    ];
+    const [s, setS] = useState([]);
+    const [open, setOpen] = useState(false);
     return (
         <Wrapper>
-            <Header />
+            <Header>
+                <Select options={options} values={s} setter={setS} multi={true} />
+            </Header>
             <ContentsWrapper>
                 <HeaderWrapper>
                     <TaskHeader></TaskHeader>

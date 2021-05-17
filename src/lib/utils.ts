@@ -1,3 +1,4 @@
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState, DependencyList } from 'react';
 import { useLocation } from 'react-router-dom';
 
 export const floor = Math.floor;
@@ -26,12 +27,23 @@ export const useQuery = (): { [key: string]: string } => {
     return pairs;
 };
 
-export const createDict = (keyArray: Array<string | number>, valueFunc: (key: string | number)=>any): any => {
+export const createDict = (keyArray: Array<string | number>, valueFunc: (key: string | number) => any): any => {
     return keyArray.reduce((aft, key) => ({ ...aft, [key]: valueFunc(key) }), {});
 };
 
-export const between = (target:number, start:number, end:number) => {
+export const between = (target: number, start: number, end: number) => {
     const s = start < end ? start : end;
     const e = start < end ? end : start;
     return s <= target && target <= e;
-}
+};
+
+export const useEffectSkip = (effect: any, deps: DependencyList, times = 1) => {
+    const [_times, setTimes] = useState(0);
+    useEffect(() => {
+        if (_times >= times) {
+            return effect();
+        } else {
+            setTimes(_times + 1);
+        }
+    }, deps);
+};
