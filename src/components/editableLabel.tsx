@@ -7,6 +7,8 @@ type Props = {
     value: string;
     setValue: any;
     onDoubleClick?: any;
+    id?: any;
+    style?: any;
 };
 
 const EditableLabel: React.FC<Props> = ({
@@ -15,6 +17,8 @@ const EditableLabel: React.FC<Props> = ({
     onDoubleClick = () => {
         return false;
     },
+    id = undefined,
+    style = {},
 }) => {
     const [localValue, setLocalValue] = useState(value);
     const onChange = (event) => {
@@ -33,6 +37,7 @@ const EditableLabel: React.FC<Props> = ({
     }, [value]);
     return (
         <input
+            id={id}
             type="text"
             value={localValue}
             onDoubleClick={onDoubleClick}
@@ -47,6 +52,7 @@ const EditableLabel: React.FC<Props> = ({
                 width: '100%',
                 height: '100%',
                 fontSize: 'inherit',
+                ...style,
             }}
         />
     );

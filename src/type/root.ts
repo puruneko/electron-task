@@ -20,6 +20,11 @@ export interface IProject {
         ganttFilterLigicalOperator: string;
         ganttFilters: Array<any>;
         ganttSorts: Array<any>;
+        kanbanFilterLigicalOperator: string;
+        kanbanFilters: Array<any>;
+        kanbanSorts: Array<any>;
+        kanbanPropertyVisibility: Array<ID>;
+        kanbanStatusVisibility: Array<ID>;
     };
     properties: Array<IProperty>;
     pages: Array<IPage>;

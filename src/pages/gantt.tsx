@@ -47,6 +47,7 @@ import 'date-fns';
 import DateFnsUtils from '@date-io/date-fns';
 import { DateTimePicker, KeyboardDatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers';
 import { Multiselect } from 'multiselect-react-dropdown';
+import commonCss from '../lib/commonCss';
 
 const gtime = new Date();
 const c = {
@@ -88,6 +89,7 @@ const c = {
         sideWidthCoef: 0.2,
         zIndex: 2,
     },
+    addCellOffset: 16,
 };
 
 const filterTasks = (tasksRaw, filters, globalOperator) => {
@@ -228,6 +230,7 @@ const Gantt: React.FC = () => {
         filters,
         filterOperator,
         sorts,
+        propertyVisibility,
         ganttScale,
         cellDivideNumber,
     } = useSelector(
@@ -245,6 +248,8 @@ const Gantt: React.FC = () => {
             filterOperator: props.projects.filter((project) => project.id == locParams.projectId)[0].settings
                 .ganttFilterLigicalOperator,
             sorts: props.projects.filter((project) => project.id == locParams.projectId)[0].settings.ganttSorts,
+            propertyVisibility: props.projects.filter((project) => project.id == locParams.projectId)[0].settings
+                .ganttPropertyVisibility,
         }),
         shallowEqual,
     );
@@ -265,7 +270,7 @@ const Gantt: React.FC = () => {
     now.setSeconds(0);
     now.setMilliseconds(0);
     const [scrollTargetDate, setScrollTargetDate] = useState(now);
-    const [cellOffset, setCellOffset] = useState({ start: 10, end: 10 });
+    const [cellOffset, setCellOffset] = useState({ start: 20, end: 20 });
     const calenderRangeNow = useRef({
         start: new Date(getTime(now) - cellXUnit.current * cellOffset.start), // 今の5cell前から
         end: new Date(getTime(now) + cellXUnit.current * cellOffset.end), // 30cell後まで
@@ -285,12 +290,12 @@ const Gantt: React.FC = () => {
     })(ganttScale);
     const [taskHeaderWidth, setTaskHeaderWidth] = useState(
         properties
-            .filter((prop) => prop.display)
+            .filter((prop) => propertyVisibility.indexOf(prop.id) != -1)
             .reduce((pre, current) => {
                 return pre + current.width + 1;
             }, 0),
     );
-    const calenderHeaderWidth = calenderRangeDiff * cellDivideNumber * c.cell.width;
+    const calenderHeaderWidth = (calenderRangeDiff + 31) * cellDivideNumber * c.cell.width;
     const ganttParams = {
         ganttScale,
         cellXUnit: cellXUnit.current,
@@ -420,18 +425,18 @@ const Gantt: React.FC = () => {
         // cellOffsetの調整
         if (document.getElementById('ganttCalenderContainer').clientWidth < window.innerWidth) {
             setCellOffset({
-                start: cellOffset.start + 5,
-                end: cellOffset.end + 5,
+                start: cellOffset.start + c.addCellOffset,
+                end: cellOffset.end + c.addCellOffset,
             });
         }
     }, []);
     useEffect(() => {
         setTaskHeaderWidth(
             properties
-                .filter((prop) => prop.display)
+                .filter((prop) => propertyVisibility.indexOf(prop.id) != -1)
                 .reduce((pre, current) => {
                     return pre + current.width + 1;
-                }, 0),
+                }, 0) + c.task.container.leftMargin,
         );
     }, [properties]);
     // --------------------------------------------------------
@@ -449,6 +454,7 @@ const Gantt: React.FC = () => {
                 overflowX: 'auto',
             }}
         >
+            <style>{commonCss}</style>
             <div
                 className="HeaderWrapper"
                 style={{ position: 'sticky', left: 0, top: 0, height: c.header.height, width: '100%', zIndex: 1 }}
@@ -520,7 +526,7 @@ const Gantt: React.FC = () => {
                     }}
                 >
                     {properties
-                        .filter((prop) => prop.display)
+                        .filter((prop) => propertyVisibility.indexOf(prop.id) != -1)
                         .map((prop, index) => {
                             return (
                                 <div
@@ -587,15 +593,15 @@ const Gantt: React.FC = () => {
                                     <div
                                         style={{
                                             position: 'sticky',
-                                            left: taskHeaderWidth + c.task.container.leftMargin,
-                                            width: c.cell.width * ganttParams.cellDivideNumber,
+                                            left: taskHeaderWidth,
+                                            minWidth: c.cell.width * ganttParams.cellDivideNumber,
                                         }}
                                     >
                                         {parent.parent}
                                     </div>
                                     <div
                                         style={{
-                                            width: parent.number * c.cell.width * ganttParams.cellDivideNumber,
+                                            minWidth: parent.number * c.cell.width * ganttParams.cellDivideNumber,
                                         }}
                                     ></div>
                                 </div>
@@ -612,7 +618,7 @@ const Gantt: React.FC = () => {
                                     className="GanttCalenderHeaderChild"
                                     key={`calender-header-child-${j}`}
                                     style={{
-                                        width: c.cell.width * ganttParams.cellDivideNumber,
+                                        minWidth: c.cell.width * ganttParams.cellDivideNumber,
                                         height: c.ganttHeader.height / 2,
                                     }}
                                 >
@@ -653,14 +659,17 @@ const RightComponent: React.FC<any> = ({ projectId }) => {
     );
     return (
         <div>
-            <PropertyVisibility projectId={projectId} properties={properties} />
+            <PropertyVisibility projectId={projectId} properties={properties} settings={settings} />
             <PropertyFilter projectId={projectId} properties={properties} settings={settings} />
             <PropertySort projectId={projectId} properties={properties} settings={settings} />
-            <ScaleChange projectId={projectId} settings={settings} />
         </div>
     );
 };
-const PropertyVisibility: React.FC<{ projectId: any; properties: any }> = ({ projectId, properties }) => {
+const PropertyVisibility: React.FC<{ projectId: any; properties: any; settings: any }> = ({
+    projectId,
+    properties,
+    settings,
+}) => {
     const dispatch = useDispatch();
     const [anchorProperty, setAnchorProperty] = useState(null);
     return (
@@ -689,13 +698,13 @@ const PropertyVisibility: React.FC<{ projectId: any; properties: any }> = ({ pro
                                 <FormControlLabel
                                     control={
                                         <Switch
-                                            checked={prop.display}
+                                            checked={settings.ganttPropertyVisibility.indexOf(prop.id) != -1}
                                             onChange={(event) => {
                                                 dispatch({
-                                                    type: 'editProperty',
+                                                    type: 'editGanttPropertyVisibility',
                                                     projectId: projectId,
                                                     propertyId: prop.id,
-                                                    property: { display: event.target.checked },
+                                                    visibility: event.target.checked,
                                                 });
                                             }}
                                             name={prop.name}
@@ -1179,13 +1188,15 @@ const GanttTaskTag = styled.div`
 `;
 
 const GanttTask = ({ locParams, ganttParams, displayTasks }) => {
-    const { globalSettings, projectId, pages, properties, filters } = useSelector(
+    const { globalSettings, projectId, pages, properties, filters, propertyVisibility } = useSelector(
         (props: IRootState) => ({
             globalSettings: props.settings,
             projectId: props.projects.filter((project) => project.id == locParams.projectId)[0].id,
             pages: props.projects.filter((project) => project.id == locParams.projectId)[0].pages,
             properties: props.projects.filter((project) => project.id == locParams.projectId)[0].properties,
             filters: props.projects.filter((project) => project.id == locParams.projectId)[0].settings.ganttFilters,
+            propertyVisibility: props.projects.filter((project) => project.id == locParams.projectId)[0].settings
+                .ganttPropertyVisibility,
         }),
         shallowEqual,
     );
@@ -1494,7 +1505,7 @@ const GanttTask = ({ locParams, ganttParams, displayTasks }) => {
         }
     }, []);
     // --------------------------------------------------------
-    const displayProps = properties.filter((prop) => prop.display);
+    const displayProps = properties.filter((prop) => propertyVisibility.indexOf(prop.id) != -1);
     const propParams = displayTasks.map((task) => {
         return displayProps.map((prop) => {
             switch (prop.type) {

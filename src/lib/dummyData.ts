@@ -1,6 +1,7 @@
 import { getTime } from './time';
 
 const now = new Date();
+const pageAmount = 500;
 
 const projectProperties = [
     // id:不変
@@ -23,7 +24,6 @@ const projectProperties = [
         name: 'title',
         type: 'title',
         values: null,
-        display: true,
         width: 100,
         color: '',
     },
@@ -64,7 +64,6 @@ const projectProperties = [
                 color: 'purple',
             },
         ],
-        display: true,
         width: 100,
         color: 'blue',
     },
@@ -74,7 +73,6 @@ const projectProperties = [
         name: 'date',
         type: 'date',
         values: null,
-        display: true,
         width: 100,
         color: 'blue',
     },
@@ -84,7 +82,6 @@ const projectProperties = [
         name: 'assign',
         type: 'user',
         values: null,
-        display: true,
         width: 100,
         color: 'blue',
     },
@@ -94,7 +91,6 @@ const projectProperties = [
         name: 'prop1',
         type: 'label',
         values: null,
-        display: true,
         width: 100,
         color: 'red',
     },
@@ -120,7 +116,6 @@ const projectProperties = [
                 color: 'red',
             },
         ],
-        display: true,
         width: 100,
         color: 'blue',
     },
@@ -130,7 +125,6 @@ const projectProperties = [
         name: 'prop3',
         type: 'check',
         values: null,
-        display: true,
         width: 100,
         color: 'blue',
     },
@@ -195,18 +189,21 @@ export const initialState = {
                 name: 'Ryutaro',
                 password: 'Password123456789',
                 authority: 0,
+                color: 'green',
             },
             {
                 id: 1,
                 name: 'Kota',
                 password: 'Password123456789',
                 authority: 1,
+                color: 'red',
             },
             {
                 id: 2,
                 name: 'Ojisan',
                 password: 'Password123456789',
                 authority: 2,
+                color: 'gray',
             },
         ],
     },
@@ -235,9 +232,30 @@ export const initialState = {
                         apply: true,
                     },
                 ],
+                ganttPropertyVisibility: [0, 1, 2, 3, 4, 5, 6],
+                kanbanFilterLigicalOperator: 'or',
+                kanbanFilters: [
+                    {
+                        id: 0,
+                        propertyId: 1,
+                        operator: 'eq',
+                        value: 1,
+                        apply: false,
+                    },
+                ],
+                kanbanSorts: [
+                    {
+                        id: 0,
+                        propertyId: 1,
+                        direction: 'asc',
+                        apply: true,
+                    },
+                ],
+                kanbanPropertyVisibility: [0, 1, 2, 3, 4, 5, 6],
+                kanbanStatusVisibility: [0, 1, 2, 3, 4],
             },
             properties: projectProperties,
-            pages: [...Array(200).keys()].map((id) => {
+            pages: [...Array(pageAmount).keys()].map((id) => {
                 const type = Math.floor(Math.random() * 2) % 2 == 0 ? 'page' : 'task';
                 const now1 = new Date(now);
                 now1.setDate(Math.floor(Math.random() * 29) + 1);

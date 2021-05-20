@@ -8,7 +8,13 @@ contextBridge.exposeInMainWorld('requires', {
     ipcRenderer: ipcRenderer,
 });
 */
+
+//機能しない・・・
 import ipcRenderer from 'electron';
-window.ipcRenderer = ipcRenderer;
 import remote from 'electron';
-window.remote = remote;
+window.bridge = {
+    ipcRenderer: ipcRenderer,
+    remote: remote,
+    Menu: remote.Menu,
+    MenuItem: remote.MenuItem,
+};

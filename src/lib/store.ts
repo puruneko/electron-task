@@ -270,6 +270,271 @@ export const reducer = (state, action) => {
                     }),
                 },
             );
+        case 'editGanttPropertyVisibility':
+            // projectId
+            // propertyId
+            // visibility: boolean
+            logger.debug('reducer editGanttPropertyVisibility', action);
+            const createGanttPropertyVisibility = (pvs) => {
+                return [...new Set([...pvs, action.propertyId])].filter(
+                    (pv) => action.visibility || pv != action.propertyId,
+                );
+            };
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map((project) => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                settings: {
+                                    ...project.settings,
+                                    ganttPropertyVisibility: createGanttPropertyVisibility(
+                                        project.settings.kanbanPropertyVisibility,
+                                    ),
+                                },
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'setKanbanFilter':
+            // projectId
+            // filterId
+            // filter
+            logger.debug('reducer setKanbanFilter', action);
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map((project) => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                settings: {
+                                    ...project.settings,
+                                    kanbanFilters: project.settings.kanbanFilters.map((filter) => {
+                                        if (filter.id == action.filterId) {
+                                            return {
+                                                ...filter,
+                                                ...action.filter,
+                                            };
+                                        } else {
+                                            return { ...filter };
+                                        }
+                                    }),
+                                },
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'addKanbanFilter':
+            // projectId
+            // filter
+            logger.debug('reducer addKanbanFilter', action);
+            const kanbanFilterId =
+                Math.max(
+                    ...state.projects
+                        .filter((proj) => proj.id == action.projectId)[0]
+                        .settings.kanbanFilters.map((filter) => Number(filter.id)),
+                ) + 1;
+            const kanbanDefaultFilter = {
+                id: kanbanFilterId,
+                propertyId: 2,
+                operator: 'eq',
+                value: 1,
+                apply: true,
+            };
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map((project) => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                settings: {
+                                    ...project.settings,
+                                    kanbanFilters: [
+                                        ...project.settings.kanbanFilters,
+                                        {
+                                            ...kanbanDefaultFilter,
+                                            ...action.filter,
+                                        },
+                                    ],
+                                },
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'setKanbanFilterLigicalOperator':
+            // projectId
+            // operator
+            logger.debug('reducer setKanbanFilterLigicalOperator', action);
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map((project) => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                settings: {
+                                    ...project.settings,
+                                    kanbanFilterLigicalOperator: action.operator,
+                                },
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'setKanbanSort':
+            // projectId
+            // sortId
+            // sort
+            logger.debug('reducer setKanbanSort', action);
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map((project) => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                settings: {
+                                    ...project.settings,
+                                    kanbanSorts: project.settings.kanbanSorts.map((sort) => {
+                                        if (sort.id == action.sortId) {
+                                            return {
+                                                ...sort,
+                                                ...action.sort,
+                                            };
+                                        } else {
+                                            return { ...sort };
+                                        }
+                                    }),
+                                },
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'addKanbanSort':
+            // projectId
+            // sort
+            logger.debug('reducer addKanbanSort', action);
+            const kanbaSortId =
+                Math.max(
+                    ...state.projects
+                        .filter((proj) => proj.id == action.projectId)[0]
+                        .settings.ganttSorts.map((sort) => Number(sort.id)),
+                ) + 1;
+            const kanbanDefaultSort = {
+                id: kanbaSortId,
+                propertyId: 2,
+                direction: 'asc',
+                apply: true,
+            };
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map((project) => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                settings: {
+                                    ...project.settings,
+                                    kanbanSorts: [
+                                        ...project.settings.kanbanSorts,
+                                        {
+                                            ...kanbanDefaultSort,
+                                            ...action.sort,
+                                        },
+                                    ],
+                                },
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'editKanbanPropertyVisibility':
+            // projectId
+            // propertyId
+            // visibility: boolean
+            logger.debug('reducer editKanbanPropertyVisibility', action);
+            const createKanbanPropertyVisibility = (pvs) => {
+                return [...new Set([...pvs, action.propertyId])].filter(
+                    (pv) => action.visibility || pv != action.propertyId,
+                );
+            };
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map((project) => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                settings: {
+                                    ...project.settings,
+                                    kanbanPropertyVisibility: createKanbanPropertyVisibility(
+                                        project.settings.kanbanPropertyVisibility,
+                                    ),
+                                },
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'editKanbanStatusVisibility':
+            // projectId
+            // statusId
+            // visibility: boolean
+            logger.debug('reducer editKanbanStatusVisibility', action);
+            const createKanbanStatusVisibility = (pvs) => {
+                return [...new Set([...pvs, action.statusId])].filter(
+                    (pv) => action.visibility || pv != action.statusId,
+                );
+            };
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map((project) => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                settings: {
+                                    ...project.settings,
+                                    kanbanStatusVisibility: createKanbanStatusVisibility(
+                                        project.settings.kanbanStatusVisibility,
+                                    ),
+                                },
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
         case 'editProperty':
             // projectId
             // propertyId
@@ -528,6 +793,26 @@ export const reducer = (state, action) => {
                                     ...project.pages,
                                     getBrandnewPage({ project: project, id: pageId, type: 'page', ...action.page }),
                                 ],
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'deletePage':
+            // projectId
+            // pageId
+            logger.debug('reducer deletePage', action);
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map((project) => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                pages: project.pages.filter((page) => page.id != action.pageId),
                             };
                         } else {
                             return { ...project };
