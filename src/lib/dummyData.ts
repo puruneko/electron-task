@@ -24,7 +24,7 @@ const projectProperties = [
         name: 'title',
         type: 'title',
         values: null,
-        width: 100,
+        width: 400,
         color: '',
     },
     {

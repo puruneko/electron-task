@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import Select from '../components/select';
+import { GeneratedIdentifierFlags } from 'typescript';
 
 const c = {
     header: {
@@ -110,10 +110,19 @@ const Lab: React.FC = () => {
     ];
     const [s, setS] = useState([]);
     const [open, setOpen] = useState(false);
+    const greenRef = useRef('');
     return (
         <Wrapper>
             <Header>
-                <Select options={options} values={s} setter={setS} multi={true} />
+                <button
+                    onClick={(event) => {
+                        greenRef.current = greenRef.current ? '' : 'green';
+                        console.log('greenRef', greenRef.current);
+                    }}
+                >
+                    GREEN
+                </button>
+                <div style={{ backgroundColor: greenRef.current }}>GREEN??</div>
             </Header>
             <ContentsWrapper>
                 <HeaderWrapper>

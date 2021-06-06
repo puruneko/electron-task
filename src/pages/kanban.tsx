@@ -474,6 +474,7 @@ const Kanban: React.FC = () => {
         elem.style.backgroundColor = '';
     };
     const onClickTask = (event) => {
+        event.stopPropagation();
         dispatch({
             type: 'setComponentState',
             componentName: 'kanban',
@@ -741,6 +742,7 @@ const Kanban: React.FC = () => {
                     </div>
                 );
             case 'check':
+                console.log('check!')
                 return (
                     <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                         <label htmlFor={`property-${taskId}-${propParam.id}`} style={{ fontSize: 12, marginRight: 5 }}>

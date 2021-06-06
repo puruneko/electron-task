@@ -1,6 +1,12 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, session } from 'electron';
 import path from 'path';
+import os from 'os';
 import * as isDev from 'electron-is-dev';
+
+const reactDevToolsPath = path.join(
+    os.homedir(),
+    '/.config/google-chrome/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/4.13.5_0',
+);
 
 // セキュアな Electron の構成
 // 参考: https://qiita.com/pochman/items/64b34e9827866664d436
@@ -12,7 +18,7 @@ const createWindow = (): void => {
         height: 500,
         webPreferences: {
             nodeIntegration: true,
-            nodeIntegrationInWorker: false,
+            nodeIntegrationInWorker: true,
             contextIsolation: false,
             preload: `${__dirname}/preload.js`,
         },
@@ -61,3 +67,10 @@ app.on('activate', () => {
         createWindow();
     }
 });
+
+app.whenReady().then(async () => {
+    await session.defaultSession.loadExtension(reactDevToolsPath);
+});
+
+//
+app.disableHardwareAcceleration();

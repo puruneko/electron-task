@@ -11,6 +11,14 @@ const commonCss = `
 .MuiChip-sizeSmall {
     height: 20px;
 }
+
+
+.picker-icon-del::-webkit-calendar-picker-indicator {
+    display: none;
+}
+.selectListItem:hover {
+    background-color: lightgray;
+}
 `;
 
 export default commonCss;

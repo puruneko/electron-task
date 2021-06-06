@@ -291,7 +291,7 @@ export const reducer = (state, action) => {
                                 settings: {
                                     ...project.settings,
                                     ganttPropertyVisibility: createGanttPropertyVisibility(
-                                        project.settings.kanbanPropertyVisibility,
+                                        project.settings.ganttPropertyVisibility,
                                     ),
                                 },
                             };
@@ -631,7 +631,7 @@ export const reducer = (state, action) => {
             // projectId
             // pageId
             // page
-            logger.debug('reducer setPage', action);
+            logger.debug('reducer setTask', action);
             const setTask = (project) => {
                 const pages = project.pages.filter((page) => page.type == 'page');
                 const newTasks = project.pages

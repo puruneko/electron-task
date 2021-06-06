@@ -47,3 +47,47 @@ export const useEffectSkip = (effect: any, deps: DependencyList, times = 1) => {
         }
     }, deps);
 };
+
+export const isSameElement = (elem1, elem2) => {
+    if (!elem1 || !elem2) {
+        return false;
+    }
+    return elem1.childNodes == elem2.childNodes && elem1.outerHTML == elem2.outerHTML;
+};
+
+export const isClosestElement = (basis, target) => {
+    if (!basis || !target) {
+        return false;
+    }
+    let res = isSameElement(basis, target);
+    if (!res) {
+        if (basis.childNodes?.length) {
+            for (let i = 0; i < basis.childNodes.length; i++) {
+                const c = basis.childNodes[i];
+                res = res || isClosestElement(c, target);
+            }
+        }
+    }
+    return res;
+};
+
+let raptimeCache = new Date();
+export const raptime = () => {
+    const diff = new Date().getTime() - raptimeCache.getTime();
+    raptimeCache = new Date();
+    return diff;
+};
+
+export const styledToRawcss = (...componentList) => {
+    return componentList
+        .map((component) => {
+            return {
+                name: String(component.styledComponentId).split('__')[1].split('-')[0],
+                css: component.componentStyle.rules.join(''),
+            };
+        })
+        .map((style) => {
+            return `.${style.name}{${style.css}}`;
+        })
+        .join('\n');
+};

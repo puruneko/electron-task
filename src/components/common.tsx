@@ -2,6 +2,7 @@ import React, { memo, PropsWithChildren, useCallback, useEffect, useState } from
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import Router, { Link, useParams, withRouter } from 'react-router-dom';
 import styled from 'styled-components';
+import { raptime } from '../lib/utils';
 import { IRootState } from '../type/store';
 import Header from './header';
 
@@ -21,9 +22,9 @@ const Contents = styled.div`
     width: 100%;
     height: 100%;
 `;
-const Common: React.FC = ({ history, children }) => {
+const Common: React.FC<{ history: any }> = ({ history, children }) => {
     const locParams = useParams<any>();
-    console.log('Common rerender', children, locParams, window.location);
+    console.log('Common rerender', raptime(), children, locParams, window.location);
     const dispatch = useDispatch();
     useEffect(() => {
         dispatch({
