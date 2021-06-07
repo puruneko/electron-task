@@ -18,7 +18,7 @@ import {
 import MenuIcon from '@material-ui/icons/Menu';
 
 import { IRootState } from '../type/store';
-import { createDict } from '../lib/utils';
+import { createDict, raptime } from '../lib/utils';
 import { ExpandLess, ExpandMore } from '@material-ui/icons';
 
 const Container = styled.div`
@@ -36,6 +36,7 @@ type Props = {
 };
 
 const Header: React.FC<Props> = ({ height = 64, rightComponent = <></>, rightComponentProps = {} }) => {
+    console.log('header start', raptime());
     const { projects, headerStates } = useSelector(
         (props: IRootState) => ({
             projects: props.projects,
@@ -62,7 +63,7 @@ const Header: React.FC<Props> = ({ height = 64, rightComponent = <></>, rightCom
     const onDrawerClose = () => {
         setIsDrawerOpen(false);
     };
-    console.log('header', headerStates ? headerStates.rightComponent : <></>);
+    console.log('header render', raptime());
     return (
         <Container>
             <AppBar position="static" style={{ flexGrow: 1, height: `${height}px`, maxHeight: `${height}px` }}>
@@ -70,6 +71,9 @@ const Header: React.FC<Props> = ({ height = 64, rightComponent = <></>, rightCom
                     <IconButton edge="start" color="inherit" aria-label="menu" onClick={onDrawerOpen}>
                         <MenuIcon />
                     </IconButton>
+                    <Link to="/lab">
+                        <a>Lab</a>
+                    </Link>
                     <Typography variant="h6" style={{ flexGrow: 1 }}>
                         {headerStates ? headerStates.title : ''}
                     </Typography>

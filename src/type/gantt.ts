@@ -25,15 +25,17 @@ export type Cell = {
 export type CalenderPeriod = 'year' | 'half' | 'month' | 'date' | 'day';
 export type TargetType = 'cell' | 'wrap' | 'whole' | 'left' | 'right';
 export interface ICalenderElement {
+    type: string | undefined;
     pos: Pos;
     size: Size;
-    cell: Cell;
+    cSize: Size;
+    row: number;
     dataset: { [key: string]: string | number };
     ref: HTMLElement;
 }
 export interface ITimebarDragInitial {
     id: number;
-    targetType: TargetType;
+    type: TargetType;
     all: ICalenderElement;
     min: ICalenderElement;
     pointed: ICalenderElement;

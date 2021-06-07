@@ -6,10 +6,20 @@ import { createDispatchHook, shallowEqual, useDispatch, useSelector } from 'reac
 type Props = {
     value: string;
     setValue: any;
-    onDoubleClick: any;
+    onDoubleClick?: any;
+    id?: any;
+    style?: any;
 };
 
-const EditableLabel: React.FC<Props> = ({ value, setValue, onDoubleClick }) => {
+const EditableLabel: React.FC<Props> = ({
+    value,
+    setValue,
+    onDoubleClick = () => {
+        return false;
+    },
+    id = undefined,
+    style = {},
+}) => {
     const [localValue, setLocalValue] = useState(value);
     const onChange = (event) => {
         setLocalValue(event.target.value);
@@ -22,8 +32,12 @@ const EditableLabel: React.FC<Props> = ({ value, setValue, onDoubleClick }) => {
             setValue(localValue);
         }
     };
+    useEffect(() => {
+        setLocalValue(value);
+    }, [value]);
     return (
         <input
+            id={id}
             type="text"
             value={localValue}
             onDoubleClick={onDoubleClick}
@@ -38,6 +52,7 @@ const EditableLabel: React.FC<Props> = ({ value, setValue, onDoubleClick }) => {
                 width: '100%',
                 height: '100%',
                 fontSize: 'inherit',
+                ...style,
             }}
         />
     );

@@ -1,6 +1,12 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, session } from 'electron';
 import path from 'path';
+import os from 'os';
 import * as isDev from 'electron-is-dev';
+
+const reactDevToolsPath = path.join(
+    os.homedir(),
+    '/.config/google-chrome/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/4.13.5_0',
+);
 
 // セキュアな Electron の構成
 // 参考: https://qiita.com/pochman/items/64b34e9827866664d436
@@ -8,16 +14,17 @@ import * as isDev from 'electron-is-dev';
 const createWindow = (): void => {
     // レンダープロセスとなる、ウィンドウオブジェクトを作成する。
     const win = new BrowserWindow({
-        width: 60,
-        height: 1000,
+        width: 1000,
+        height: 500,
         webPreferences: {
-            nodeIntegration: false,
-            nodeIntegrationInWorker: false,
-            contextIsolation: true,
+            nodeIntegration: true,
+            nodeIntegrationInWorker: true,
+            contextIsolation: false,
             preload: `${__dirname}/preload.js`,
         },
     });
-    if (isDev) {
+    const a = false;
+    if (isDev && a) {
         win.loadURL('http://localhost:3000/index.html');
     } else {
         // 読み込む index.html。
@@ -26,15 +33,15 @@ const createWindow = (): void => {
     }
 
     // Hot Reloading
-    if (isDev) {
-        // 'node_modules/.bin/electronPath'
-        /* eslint @typescript-eslint/no-var-requires: 0 */
-        require('electron-reload')(__dirname, {
-            electron: path.join(__dirname, '..', '..', 'node_modules', '.bin', 'electron'),
-            forceHardReset: true,
-            hardResetMethod: 'exit',
-        });
-    }
+    // if (isDev) {
+    //     // 'node_modules/.bin/electronPath'
+    //     /* eslint @typescript-eslint/no-var-requires: 0 */
+    //     require('electron-reload')(__dirname, {
+    //         electron: path.join(__dirname, '..', '..', 'node_modules', '.bin', 'electron'),
+    //         forceHardReset: true,
+    //         hardResetMethod: 'exit',
+    //     });
+    // }
 
     // 開発者ツールを起動する
     win.webContents.openDevTools();
@@ -60,3 +67,10 @@ app.on('activate', () => {
         createWindow();
     }
 });
+
+app.whenReady().then(async () => {
+    await session.defaultSession.loadExtension(reactDevToolsPath);
+});
+
+//
+app.disableHardwareAcceleration();

@@ -66,6 +66,15 @@ const PageComponent: React.FC<Props> = ({ projectId, pageId, headless = true }) 
     `;
     // --------------------------------------------------------
     useEffect(() => {
+        document.addEventListener(
+            'mousedown',
+            (event) => {
+                console.log('focus!', document.activeElement);
+            },
+            false,
+        );
+    }, []);
+    useEffect(() => {
         console.log('focusedId', page.settings.focusedId);
         const elem = document.getElementById(`documentCell-${page.settings.focusedId}`);
         if (elem) {
