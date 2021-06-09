@@ -5,8 +5,14 @@ import { createDispatchHook, shallowEqual, useDispatch, useSelector } from 'reac
 import { useEffectSkip } from '../lib/utils';
 
 const DatetimePicker = ({ dateValue, onChangeDate, style = {} }) => {
-    const [date, setDate] = useState(dateValue.toISOString().split('T')[0]);
-    const [time, setTime] = useState(dateValue.toISOString().split('T')[1].split(':').slice(0, 2).join(':'));
+    const isValidDate = !Number.isNaN(dateValue.getTime());
+    const offsetedDate = dateValue; /*isValidDate
+        ? new Date(dateValue.getTime() + dateValue.getTimezoneOffset() * 1000 * 60)
+        : undefined;*/
+    const [date, setDate] = useState(isValidDate ? offsetedDate.toISOString().split('T')[0] : '');
+    const [time, setTime] = useState(
+        isValidDate ? offsetedDate.toISOString().split('T')[1].split(':').slice(0, 2).join(':') : '',
+    );
     const focusRef = useRef([false, false, false, false, false, false]);
     const [focus, setFocus] = useState(focusRef.current);
     const setFocus_ = (no, bool) => {
@@ -30,18 +36,16 @@ const DatetimePicker = ({ dateValue, onChangeDate, style = {} }) => {
         }
     }, [focus]);
     return (
-        <form style={{ display: 'flex', ...style }}>
+        <form style={{ display: 'flex', padding: 0, margin: 0, ...style }}>
             <input
                 type="date"
-                className="picker-icon-del"
+                className="picker-icon-0margin"
                 value={date}
                 onChange={(event) => {
                     console.log('date', event.target.value);
                     setDate(event.target.value);
                 }}
-                maxLength={4}
-                placeholder="yyyy"
-                style={{ width: 90, padding: 0, border: 'none', backgroundColor: 'inherit' }}
+                style={{ width: 105, padding: 0, margin: 0, border: 'none', backgroundColor: 'inherit' }}
                 onFocus={() => {
                     setFocus_(0, true);
                 }}
@@ -54,15 +58,13 @@ const DatetimePicker = ({ dateValue, onChangeDate, style = {} }) => {
             />
             <input
                 type="time"
-                className="picker-icon-del"
+                className="picker-icon-0margin"
                 value={time}
                 onChange={(event) => {
                     console.log('time', event.target.value);
                     setTime(event.target.value);
                 }}
-                maxLength={2}
-                placeholder="SS"
-                style={{ width: 45, padding: 0, border: 'none', backgroundColor: 'inherit' }}
+                style={{ width: 60, padding: 0, margin: '0 0 0 5', border: 'none', backgroundColor: 'inherit' }}
                 onFocus={() => {
                     setFocus_(5, true);
                 }}

@@ -382,18 +382,18 @@ const Gantt: React.FC = () => {
         }
     })(ganttScale); //再描画後に更新するため
     const now = new Date();
-    now.setHours(0);
-    now.setMinutes(0);
-    now.setSeconds(0);
-    now.setMilliseconds(0);
-    const [scrollTargetDate, setScrollTargetDate] = useState(now);
+    now.setUTCHours(0);
+    now.setUTCMinutes(0);
+    now.setUTCSeconds(0);
+    now.setUTCMilliseconds(0);
+    const [scrollTargetUTCDate, setScrollTargetUTCDate] = useState(now);
     const [cellOffset, setCellOffset] = useState({
         start: Math.floor(window.innerWidth / c.cell.width),
         end: Math.floor(window.innerWidth / c.cell.width),
     });
     const calenderRangeNow = useRef({
-        start: new Date(getTime(now) - cellXUnit.current * cellOffset.start), // 今の5cell前から
-        end: new Date(getTime(now) + cellXUnit.current * cellOffset.end), // 30cell後まで
+        start: new Date(now.getTime() - cellXUnit.current * cellOffset.start), // 今の5cell前から
+        end: new Date(now.getTime() + cellXUnit.current * cellOffset.end), // 30cell後まで
     });
     const [calenderRange, setCalenderRange] = useState(calenderRangeNow.current);
     const setCalenderRangeNow = (c) => {
@@ -523,11 +523,11 @@ const Gantt: React.FC = () => {
             const d = new Date(start);
             switch (ganttParams.ganttScale) {
                 case 'month':
-                    d.setDate(start.getDate() + i);
-                    return d.getMonth() + 1;
+                    d.setUTCDate(start.getUTCDate() + i);
+                    return d.getUTCMonth() + 1;
                 case 'date':
-                    d.setHours(start.getHours() + i);
-                    return d.getDate();
+                    d.setUTCHours(start.getUTCHours() + i);
+                    return d.getUTCDate();
             }
         });
         return [...new Set(parents)].map((i) => {
@@ -542,11 +542,11 @@ const Gantt: React.FC = () => {
             const d = new Date(ganttParams.calenderRange.start);
             switch (ganttParams.ganttScale) {
                 case 'month':
-                    d.setDate(d.getDate() + j);
-                    return d.getDate();
+                    d.setUTCDate(d.getUTCDate() + j);
+                    return d.getUTCDate();
                 case 'date':
-                    d.setHours(d.getHours() + j);
-                    return d.getHours();
+                    d.setUTCHours(d.getUTCHours() + j);
+                    return d.getUTCHours();
             }
         });
         return children;
@@ -554,18 +554,18 @@ const Gantt: React.FC = () => {
     // --------------------------------------------------------
     useEffectSkip(() => {
         console.log('useEffect main ganttScale', raptime());
-        setScrollTargetDate(new Date());
+        setScrollTargetUTCDate(new Date());
         const newCalenderRange = {
-            start: new Date(getTime(now) - cellXUnit.current * cellOffset.start), // 今の5cell前から
-            end: new Date(getTime(now) + cellXUnit.current * cellOffset.end), // 30cell後まで
+            start: new Date(now.getTime() - cellXUnit.current * cellOffset.start), // 今の5cell前から
+            end: new Date(now.getTime() + cellXUnit.current * cellOffset.end), // 30cell後まで
         };
         setCalenderRangeNow(newCalenderRange);
     }, [ganttScale]);
     useEffectSkip(() => {
         console.log('useEffect main cellOffset', raptime());
         const newCalenderRange = {
-            start: new Date(getTime(now) - cellXUnit.current * cellOffset.start), // 今の5cell前から
-            end: new Date(getTime(now) + cellXUnit.current * cellOffset.end), // 30cell後まで
+            start: new Date(now.getTime() - cellXUnit.current * cellOffset.start), // 今の5cell前から
+            end: new Date(now.getTime() + cellXUnit.current * cellOffset.end), // 30cell後まで
         };
         setCalenderRangeNow(newCalenderRange);
     }, [cellOffset]);
@@ -586,8 +586,8 @@ const Gantt: React.FC = () => {
     useEffect(() => {
         console.log('useEffect main []', raptime());
         //scroll量の調整
-        if (scrollTargetDate) {
-            const timeDiff = scrollTargetDate.getTime() - calenderRangeNow.current.start.getTime();
+        if (scrollTargetUTCDate) {
+            const timeDiff = scrollTargetUTCDate.getTime() - calenderRangeNow.current.start.getTime();
             console.log('timeDiff', raptime());
             const cellDiff = (timeDiff / cellXUnit.current) * cellDivideNumber;
             console.log('cellDiff', raptime());
@@ -974,7 +974,7 @@ const PropertyFilterRow: React.FC<{ projectId: any; properties: any; filter: any
                         type="datetime-local"
                         value={toISOLikeString(filter.value?.start)}
                         onChange={(event) => {
-                            onChangeFilter('value', { start: getTime(new Date(event.target.value)), end: null });
+                            onChangeFilter('value', { start: new Date(event.target.value).getTime(), end: null });
                         }}
                         InputLabelProps={{
                             shrink: true,
@@ -1421,26 +1421,50 @@ const GanttTask: React.FC<{ locParams: any; ganttParams: any; displayTasks: any 
                     return <></>;
                 }
                 return (
-                    <DatetimePicker
-                        dateValue={new Date(propParam.periodDate.start)}
-                        onChangeDate={(date) => {
-                            console.log('datetime-local', date);
-                            dispatch({
-                                type: 'editPageProperty',
-                                projectId: projectId,
-                                pageId: taskId,
-                                propertyId: propParam.id,
-                                property: {
-                                    values: [
-                                        {
-                                            start: date.getTime(),
-                                            end: propParam.periodDate.end.getTime(),
-                                        },
-                                    ],
-                                },
-                            });
-                        }}
-                    />
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <DatetimePicker
+                            dateValue={new Date(propParam.periodDate.start)}
+                            onChangeDate={(date) => {
+                                console.log('datetime-local', date);
+                                dispatch({
+                                    type: 'editPageProperty',
+                                    projectId: projectId,
+                                    pageId: taskId,
+                                    propertyId: propParam.id,
+                                    property: {
+                                        values: [
+                                            {
+                                                start: date.Time(),
+                                                end: propParam.periodDate.end.getTime(),
+                                            },
+                                        ],
+                                    },
+                                });
+                            }}
+                            style={{ inlineHeight: '15px' }}
+                        />
+                        <DatetimePicker
+                            dateValue={new Date(propParam.periodDate.end)}
+                            onChangeDate={(date) => {
+                                console.log('datetime-local', date);
+                                dispatch({
+                                    type: 'editPageProperty',
+                                    projectId: projectId,
+                                    pageId: taskId,
+                                    propertyId: propParam.id,
+                                    property: {
+                                        values: [
+                                            {
+                                                start: propParam.periodDate.start.getTime(),
+                                                end: date.getTime(),
+                                            },
+                                        ],
+                                    },
+                                });
+                            }}
+                            style={{ inlineHeight: '15px' }}
+                        />
+                    </div>
                 );
             case 'user':
                 return (
@@ -1693,7 +1717,7 @@ const GanttTask: React.FC<{ locParams: any; ganttParams: any; displayTasks: any 
                                                 }}
                                             >
                                                 {displayCond ? (
-                                                    ShowProperty({ taskId: task.id, propParam: propParam })
+                                                    <ShowProperty taskId={task.id} propParam={propParam} />
                                                 ) : (
                                                     <React.Fragment />
                                                 )}
@@ -2141,28 +2165,44 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
             switch (ganttParams.ganttScale) {
                 case 'month':
                     base = floor(
-                        (start_.getHours() * 60 * 60 * 1000 + (end_.getTime() - start_.getTime())) /
+                        (start_.getUTCHours() * 60 * 60 * 1000 + (end_.getTime() - start_.getTime())) /
                             (60 * 60 * 24 * 1000),
                     );
                     s =
                         floor(
-                            (start_.getHours() + start_.getMinutes() / 60 - 0.01) / (24 / ganttParams.cellDivideNumber),
+                            (start_.getUTCHours() + start_.getUTCMinutes() / 60 - 0.01) /
+                                (24 / ganttParams.cellDivideNumber),
                         ) * -1;
                     e =
-                        floor((end_.getHours() + end_.getMinutes() / 60 - 0.01) / (24 / ganttParams.cellDivideNumber)) +
-                        1;
+                        floor(
+                            (end_.getUTCHours() + end_.getUTCMinutes() / 60 - 0.01) /
+                                (24 / ganttParams.cellDivideNumber),
+                        ) + 1;
                     c = e + s;
                     break;
                 case 'date':
                     base = floor(
-                        (start_.getMinutes() * 60 * 1000 + (end_.getTime() - start_.getTime())) / (60 * 60 * 1000),
+                        (start_.getUTCMinutes() * 60 * 1000 + (end_.getTime() - start_.getTime())) / (60 * 60 * 1000),
                     );
-                    s = floor((start_.getMinutes() - 0.01) / (60 / ganttParams.cellDivideNumber)) * -1;
-                    e = floor((end_.getMinutes() - 0.01) / (60 / ganttParams.cellDivideNumber)) + 1;
+                    s = floor((start_.getUTCMinutes() - 0.01) / (60 / ganttParams.cellDivideNumber)) * -1;
+                    e = floor((end_.getUTCMinutes() - 0.01) / (60 / ganttParams.cellDivideNumber)) + 1;
                     c = e + s;
                     break;
             }
             block = base * ganttParams.cellDivideNumber + c;
+        }
+        return c.cell.width * block;
+    };
+    const getLeft = (start: Date) => {
+        const delta = getTimedelta(ganttParams.calenderRange.start, start);
+        let block;
+        switch (ganttParams.ganttScale) {
+            case 'month':
+                block = delta.date * ganttParams.cellDivideNumber + Math.floor((delta.hours % 24) / 12);
+                break;
+            case 'date':
+                block = delta.hours * ganttParams.cellDivideNumber + Math.floor((delta.minutes % 60) / 30);
+                break;
         }
         return c.cell.width * block;
     };
@@ -2177,12 +2217,16 @@ const GanttCalender = ({ locParams, ganttParams, displayTasks }) => {
             period.end <= ganttParams.calenderRange.end.getTime() &&
             ganttParams.displayRange.top <= index &&
             index <= ganttParams.displayRange.bottom;
+        /*
         const left = cond
             ? getTimeberWidth(ganttParams.calenderRange.start, period.start) -
-              (ganttParams.calenderRange.start.getHours() != 0 || ganttParams.calenderRange.start.getMinutes() != 0
+              (ganttParams.calenderRange.start.getUTCHours() != 0 ||
+              ganttParams.calenderRange.start.getUTCMinutes() != 0
                   ? c.cell.width
                   : 0)
             : 0;
+        */
+        const left = cond ? getLeft(new Date(period.start)) : 0;
         return { display: cond ? '' : 'none', left, width };
     });
     // --------------------------------------------------------

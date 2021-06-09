@@ -4,7 +4,7 @@ import Modal from '@material-ui/core/Modal';
 import { useParams } from 'react-router-dom';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { TargetType } from '../type/gantt';
-import { floor, ceil, ceilfloor, topbottom, useQuery } from '../lib/utils';
+import { floor, ceil, ceilfloor, topbottom, useQuery, styledToRawcss } from '../lib/utils';
 import { getTimedelta, getYYYYMMDD, getHHMMSS, getMMDD, getHH, getTime, toISOLikeString } from '../lib/time';
 import { IRootState } from '../type/store';
 import PageComponent from '../components/page';
@@ -36,6 +36,8 @@ import AddIcon from '@material-ui/icons/Add';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import FilterListIcon from '@material-ui/icons/FilterList';
 import { DragHandle, ChevronLeft, Sort, ArrowDownward, ArrowUpward, ChevronRight } from '@material-ui/icons';
+import SelectList from '../components/selectList';
+import DatetimePicker from '../components/datetimePicker';
 
 const filterTasks = (tasksRaw, filters, globalOperator) => {
     console.log('do filter');
@@ -165,9 +167,16 @@ const sortTasks = (tasksRaw, properties, sortsObj) => {
 };
 
 const c = {
+    header: {
+        height: 64,
+    },
     status: {
         width: 250,
     },
+    taskContainer: {
+        marginTop: 5,
+    },
+    visibleTaskCoef: 2,
 };
 
 const KanbanContainer = styled.div`
@@ -207,7 +216,7 @@ const StatusTasks = styled.div`
 `;
 const TaskContainer = styled.div`
     position: relative;
-    margin-top: 5px;
+    margin-top: ${c.taskContainer.marginTop};
     width: 100%;
     border: 1px solid black;
     background-color: lightgray;
@@ -274,6 +283,56 @@ const Kanban: React.FC = () => {
     const pointedTaskElem = useRef(null);
     const currentOverElem = useRef(null);
     console.log('Kanban project', displayTasks, openTaskId);
+    // --------------------------------------------------------
+    const taskHeight = useRef((propertyVisibility.length - 3) * 30);
+    const topOffset = 0 - c.visibleTaskCoef * window.innerHeight; // - c.header.height - c.ganttHeader.height;
+    const [displayRange, setLoadedRange] = useState({
+        top: Math.floor(topOffset / (taskHeight.current + c.taskContainer.marginTop)),
+        bottom: Math.floor(
+            (topOffset + (c.visibleTaskCoef * 2 + 1) * window.innerHeight) /
+                (taskHeight.current + c.taskContainer.marginTop),
+        ),
+    });
+    const previousScroll = useRef({ left: 0, top: 0, topOffset: 0 });
+    const scrollTopTimer = useRef(null);
+    const scrollTopStopper = useRef(false);
+    const onKanbanScroll = (event) => {
+        const topOffset = event.target.scrollTop - c.visibleTaskCoef * window.innerHeight - c.header.height;
+        if (previousScroll.current.top != event.target.scrollTop) {
+            if (!scrollTopStopper.current) {
+                clearTimeout(scrollTopTimer.current);
+                console.log('scrollTop', event.target.scrollTop, window.innerHeight);
+                scrollTopTimer.current = setTimeout(() => {
+                    if (scrollTopTimer.current) {
+                        console.log('scrollTopUpdate', topOffset);
+                        setLoadedRange({
+                            top: Math.floor(topOffset / (taskHeight.current + c.taskContainer.marginTop)),
+                            bottom: Math.floor(
+                                (topOffset + (c.visibleTaskCoef * 2 + 1) * window.innerHeight) /
+                                    (taskHeight.current + c.taskContainer.marginTop),
+                            ),
+                        });
+                    }
+                    scrollTopStopper.current = true;
+                }, 500);
+            } else {
+                clearTimeout(scrollTopTimer.current);
+                scrollTopStopper.current = false;
+            }
+        }
+        previousScroll.current = {
+            left: event.target.scrollLeft,
+            top: event.target.scrollTop,
+            topOffset,
+        };
+        event.preventDefault();
+        event.stopPropagation();
+    };
+    useEffect(() => {
+        const task = document.getElementsByClassName('kanbanTask')[0];
+        taskHeight.current = task.clientHeight;
+        console.log('taskHeight', taskHeight.current);
+    }, [propertyVisibility]);
     // --------------------------------------------------------
     const getContainerByTaskId = (id) => {
         const container = document.querySelectorAll(`.kanbanTask[data-id="${id}"]`);
@@ -528,28 +587,24 @@ const Kanban: React.FC = () => {
         });
     };
     // --------------------------------------------------------
-    const showProperty = (taskId, propParam) => {
+    const ShowProperty = ({ taskId, propParam }) => {
         switch (propParam.type) {
             case 'title':
                 return (
                     <EditableLabel
-                        id={`property-${taskId}-${propParam.id}`}
                         value={propParam.title}
                         setValue={(v) => setProperty(taskId, propParam.id, [v])}
-                        onDoubleClick={() => {
-                            onClickTask(taskId);
-                        }}
-                        style={{ fontSize: 22, marginBottom: 5 }}
+                        style={{ fontSize: 22 }}
                     />
                 );
             case 'status':
                 return (
-                    <SelectMui
-                        id={`property-${taskId}-${propParam.id}`}
-                        multiple
-                        value={propParam.selectedStatusObjList}
-                        onChange={(event) => {
-                            const values: Array<any> = [...(event.target.value as Array<any>)];
+                    <SelectList
+                        selected={propParam.selectedStatusObjList}
+                        selectList={propParam.allStatusObjList}
+                        valueKey={'id'}
+                        nameKey={'name'}
+                        onValueChange={(values) => {
                             dispatch({
                                 type: 'editPageProperty',
                                 projectId: projectId,
@@ -560,79 +615,84 @@ const Kanban: React.FC = () => {
                                 },
                             });
                         }}
-                        input={<Input disableUnderline={true} style={{ margin: 0, padding: 0 }} />}
-                        renderValue={(selected: Array<any>) => (
-                            <div>
-                                {selected.map((value) => (
-                                    <Chip
-                                        key={value.name}
-                                        size="small"
-                                        label={value.name}
-                                        style={{ backgroundColor: value.color }}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                        style={{ maxHeight: '100%', maxWidth: '100%' }}
-                    >
-                        {propParam.allStatusObjList.map((statusObj) => (
-                            <MenuItemMui
-                                key={statusObj.name}
-                                value={statusObj}
-                                style={{
-                                    backgroundColor:
-                                        propParam.selectedStatusObjList.indexOf(statusObj) == -1 ? '' : '#6c6c6c80',
-                                }}
-                            >
-                                {statusObj.name}
-                            </MenuItemMui>
-                        ))}
-                    </SelectMui>
+                        renderFunc={(selected: Array<any>) => {
+                            const statuses = properties.filter((prop) => prop.id == 1)[0].values;
+                            return (
+                                <div style={{ display: 'flex' }}>
+                                    {selected.map((value) => (
+                                        <div
+                                            key={value.name}
+                                            style={{
+                                                backgroundColor: statuses.filter((s) => s.id == value.id)[0].color,
+                                                borderRadius: 5,
+                                                padding: '0 5 0 5',
+                                            }}
+                                        >
+                                            {value.name}
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        }}
+                    />
                 );
             case 'date':
                 if (!propParam.dateValues || !propParam.dateValues.length) {
-                    return <span id={`property-${taskId}-${propParam.id}`}></span>;
+                    return <></>;
                 }
                 return (
-                    <MuiPickersUtilsProvider utils={DateFnsUtils}>
-                        <div style={{ width: '135px', minWidth: '135px' }}>
-                            <DateTimePicker
-                                id={`property-${taskId}-${propParam.id}`}
-                                value={propParam.periodDate.start}
-                                ampm={false}
-                                invalidDateMessage={<></>}
-                                onChange={(date) => {
-                                    console.log('datetime-local', date);
-                                    dispatch({
-                                        type: 'editPageProperty',
-                                        projectId: projectId,
-                                        pageId: taskId,
-                                        propertyId: propParam.id,
-                                        property: {
-                                            values: [
-                                                {
-                                                    start: date.getTime(),
-                                                    end: propParam.periodDate.end.getTime(),
-                                                },
-                                            ],
-                                        },
-                                    });
-                                }}
-                                showTodayButton
-                                format="yyyy/MM/dd HH:mm"
-                                InputProps={{ disableUnderline: true, style: { fontSize: 14 } }}
-                            />
-                        </div>
-                    </MuiPickersUtilsProvider>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <DatetimePicker
+                            dateValue={new Date(propParam.periodDate.start)}
+                            onChangeDate={(date) => {
+                                console.log('datetime-local', date);
+                                dispatch({
+                                    type: 'editPageProperty',
+                                    projectId: projectId,
+                                    pageId: taskId,
+                                    propertyId: propParam.id,
+                                    property: {
+                                        values: [
+                                            {
+                                                start: date.getTime(),
+                                                end: propParam.periodDate.end.getTime(),
+                                            },
+                                        ],
+                                    },
+                                });
+                            }}
+                        />
+                        <DatetimePicker
+                            dateValue={new Date(propParam.periodDate.end)}
+                            onChangeDate={(date) => {
+                                console.log('datetime-local', date);
+                                dispatch({
+                                    type: 'editPageProperty',
+                                    projectId: projectId,
+                                    pageId: taskId,
+                                    propertyId: propParam.id,
+                                    property: {
+                                        values: [
+                                            {
+                                                start: propParam.periodDate.start.getTime(),
+                                                end: date.getTime(),
+                                            },
+                                        ],
+                                    },
+                                });
+                            }}
+                        />
+                    </div>
                 );
             case 'user':
                 return (
-                    <SelectMui
-                        id={`property-${taskId}-${propParam.id}`}
-                        multiple
-                        value={propParam.taskUserObjList}
-                        onChange={(event) => {
-                            const values: Array<any> = [...(event.target.value as Array<any>)];
+                    <SelectList
+                        selected={propParam.taskUserObjList}
+                        selectList={propParam.allUserObjList}
+                        valueKey={'id'}
+                        nameKey={'name'}
+                        onValueChange={(values) => {
+                            console.log('on change status', { taskId, propParam, values });
                             dispatch({
                                 type: 'editPageProperty',
                                 projectId: projectId,
@@ -643,128 +703,96 @@ const Kanban: React.FC = () => {
                                 },
                             });
                         }}
-                        input={<Input disableUnderline={true} />}
-                        renderValue={(selected: Array<any>) => (
-                            <div style={{ overflowX: 'visible' }}>
-                                {selected.map((value) => (
-                                    <Chip
-                                        key={value.name}
-                                        size="small"
-                                        label={value.name}
-                                        style={{ backgroundColor: value.color }}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                        style={{ maxHeight: '100%', maxWidth: '100%' }}
-                    >
-                        {propParam.allUserObjList.map((userObj) => (
-                            <MenuItemMui
-                                key={userObj.name}
-                                value={userObj}
-                                style={{
-                                    backgroundColor:
-                                        propParam.taskUserObjList.indexOf(userObj) == -1 ? '' : '#6c6c6c80',
-                                }}
-                            >
-                                {userObj.name}
-                            </MenuItemMui>
-                        ))}
-                    </SelectMui>
+                        renderFunc={(selected: Array<any>) => {
+                            const users = globalSettings.users;
+                            return (
+                                <div style={{ display: 'flex' }}>
+                                    {selected.map((value) => (
+                                        <div
+                                            key={value.name}
+                                            style={{
+                                                backgroundColor: users.filter((s) => s.id == value.id)[0].color,
+                                                borderRadius: 5,
+                                                padding: '0 5 0 5',
+                                            }}
+                                        >
+                                            {value.name}
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        }}
+                    />
                 );
             case 'label':
                 return (
-                    <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                        <label htmlFor={`property-${taskId}-${propParam.id}`} style={{ fontSize: 12, marginRight: 5 }}>
-                            {`${propParam.name}: `}
-                        </label>
-                        <EditableLabel
-                            id={`property-${taskId}-${propParam.id}`}
-                            value={propParam.labelValues}
-                            setValue={(v) => setProperty(taskId, propParam.id, [v])}
-                            onDoubleClick={() => {
-                                onClickTask(taskId);
-                            }}
-                            style={{ minWidth: 1 }}
-                        />
-                    </div>
+                    <EditableLabel
+                        value={propParam.labelValues}
+                        setValue={(v) => setProperty(taskId, propParam.id, [v])}
+                        onDoubleClick={() => {
+                            onClickTask(taskId);
+                        }}
+                    />
                 );
             case 'tag':
                 return (
-                    <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                        <label htmlFor={`property-${taskId}-${propParam.id}`} style={{ fontSize: 12, marginRight: 5 }}>
-                            {`${propParam.name}: `}
-                        </label>
-                        <SelectMui
-                            id={`property-${taskId}-${propParam.id}`}
-                            multiple
-                            value={propParam.selectedTagObjs}
-                            onChange={(event) => {
-                                const values: Array<any> = [...(event.target.value as Array<any>)];
-                                dispatch({
-                                    type: 'editPageProperty',
-                                    projectId: projectId,
-                                    pageId: taskId,
-                                    propertyId: propParam.id,
-                                    property: {
-                                        values: values.map((v) => v.id),
-                                    },
-                                });
-                            }}
-                            input={<Input disableUnderline={true} />}
-                            renderValue={(selected: Array<any>) => (
-                                <div>
+                    <SelectList
+                        selected={propParam.selectedTagObjs}
+                        selectList={propParam.tagObjs}
+                        valueKey={'id'}
+                        nameKey={'name'}
+                        onValueChange={(values) => {
+                            console.log('values', values);
+                            dispatch({
+                                type: 'editPageProperty',
+                                projectId: projectId,
+                                pageId: taskId,
+                                propertyId: propParam.id,
+                                property: {
+                                    values: values.map((v) => v.id),
+                                },
+                            });
+                        }}
+                        renderFunc={(selected: Array<any>) => {
+                            const tags = properties.filter((prop) => prop.id == propParam.id)[0].values;
+                            return (
+                                <div style={{ display: 'flex' }}>
                                     {selected.map((value) => (
-                                        <Chip
+                                        <div
                                             key={value.name}
-                                            size="small"
-                                            label={value.name}
-                                            style={{ backgroundColor: value.color }}
-                                        />
+                                            style={{
+                                                backgroundColor: tags.filter((s) => s.id == value.id)[0].color,
+                                                borderRadius: 5,
+                                                padding: '0 5 0 5',
+                                            }}
+                                        >
+                                            {value.name}
+                                        </div>
                                     ))}
                                 </div>
-                            )}
-                            style={{ maxHeight: '100%', maxWidth: '100%' }}
-                        >
-                            {propParam.tagObjs.map((tagObj) => (
-                                <MenuItemMui
-                                    key={tagObj.name}
-                                    value={tagObj}
-                                    style={{
-                                        backgroundColor:
-                                            propParam.selectedTagObjs.indexOf(tagObj) == -1 ? '' : '#6c6c6c80',
-                                    }}
-                                >
-                                    {tagObj.name}
-                                </MenuItemMui>
-                            ))}
-                        </SelectMui>
-                    </div>
+                            );
+                        }}
+                    />
                 );
             case 'check':
-                console.log('check!')
+                console.log('check!');
                 return (
-                    <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                        <label htmlFor={`property-${taskId}-${propParam.id}`} style={{ fontSize: 12, marginRight: 5 }}>
-                            {`${propParam.name}: `}
-                        </label>
-                        <input
-                            id={`property-${taskId}-${propParam.id}`}
-                            type="checkbox"
-                            checked={propParam.checkValues[0]}
-                            onChange={(event) => {
-                                dispatch({
-                                    type: 'editPageProperty',
-                                    projectId: projectId,
-                                    pageId: taskId,
-                                    propertyId: propParam.id,
-                                    property: {
-                                        values: [event.target.checked],
-                                    },
-                                });
-                            }}
-                        />
-                    </div>
+                    <input
+                        type="checkbox"
+                        checked={propParam.checkValues[0]}
+                        onChange={(event) => {
+                            console.log('ganttTaskContainer "none" ');
+                            dispatch({
+                                type: 'editPageProperty',
+                                projectId: projectId,
+                                pageId: taskId,
+                                propertyId: propParam.id,
+                                property: {
+                                    values: [event.target.checked],
+                                },
+                            });
+                        }}
+                    />
                 );
         }
     };
@@ -845,11 +873,22 @@ const Kanban: React.FC = () => {
             }),
         };
     });
-    console.log({ propParams });
+    console.log('reander', { propParams }, displayRange);
     // --------------------------------------------------------
+    const styleCssString = styledToRawcss(
+        KanbanContainer,
+        TaskModalWrapper,
+        Main,
+        StatusContainer,
+        StatusHeader,
+        StatusTasks,
+        TaskContainer,
+        StatusTaskTerm,
+    );
     return (
-        <KanbanContainer>
+        <div className="KanbanContainer" onScroll={onKanbanScroll}>
             <style>{commonCss}</style>
+            <style>{styleCssString}</style>
             <div
                 className="HeaderWrapper"
                 style={{ position: 'sticky', left: 0, top: 0, height: 64, width: '100%', zIndex: 1 }}
@@ -872,30 +911,31 @@ const Kanban: React.FC = () => {
                     });
                 }}
             >
-                <TaskModalWrapper>
+                <div className="TaskModalWrapper">
                     <PageComponent projectId={projectId} pageId={openTaskId} headless={false} />
-                </TaskModalWrapper>
+                </div>
             </Modal>
-            <Main>
+            <div className="Main">
                 {statuses
                     .filter((status) => statusVisibility.indexOf(status.id) != -1)
                     .map((status, x) => {
                         return (
-                            <StatusContainer key={`statusContainer-${x}`}>
-                                <StatusHeader>
+                            <div className="StatusContainer" key={`statusContainer-${x}`}>
+                                <div className="StatusHeader">
                                     <span style={{ color: status.color }}>{status.name}</span>
-                                </StatusHeader>
-                                <StatusTasks>
+                                </div>
+                                <div className="StatusTasks">
                                     {displayTasks
                                         .filter(
                                             (task) =>
                                                 task.properties.filter((p) => p.id == 1)[0].values[0] == status.id,
                                         )
                                         .map((task, y) => {
+                                            const displayCond = displayRange.top <= y && y <= displayRange.bottom;
                                             return (
-                                                <TaskContainer
+                                                <div
+                                                    className="TaskContainer kanbanTask"
                                                     key={`taskContainer-${x}-${y}`}
-                                                    className="kanbanTask"
                                                     data-id={task.id}
                                                     data-statusid={task.properties.filter((p) => p.id == 1)[0].id}
                                                     data-x={x}
@@ -906,8 +946,13 @@ const Kanban: React.FC = () => {
                                                     onDragOver={onDragOver}
                                                     onDragLeave={onDragLeave}
                                                     onDoubleClick={onClickTask}
+                                                    style={{ minHeight: taskHeight.current }}
                                                 >
-                                                    <TaskMenu projectId={projectId} taskId={task.id} />
+                                                    {displayCond ? (
+                                                        <TaskMenu projectId={projectId} taskId={task.id} />
+                                                    ) : (
+                                                        <React.Fragment />
+                                                    )}
                                                     {propParams
                                                         .filter((p) => p.taskId == task.id)[0]
                                                         .propParam.map((propParam, index) => {
@@ -921,9 +966,20 @@ const Kanban: React.FC = () => {
                                                                     }
                                                                     data-x={x}
                                                                     data-y={y}
-                                                                    style={{ height: 20 }}
+                                                                    style={{
+                                                                        minHeight: 20,
+                                                                        display: 'flex',
+                                                                        justifyContent: 'flex-start',
+                                                                    }}
                                                                 >
-                                                                    {showProperty(task.id, propParam)}
+                                                                    {displayCond ? (
+                                                                        <ShowProperty
+                                                                            taskId={task.id}
+                                                                            propParam={propParam}
+                                                                        />
+                                                                    ) : (
+                                                                        <React.Fragment />
+                                                                    )}
                                                                 </div>
                                                             );
                                                         })}
@@ -941,11 +997,11 @@ const Kanban: React.FC = () => {
                                                             height: 0,
                                                         }}
                                                     />
-                                                </TaskContainer>
+                                                </div>
                                             );
                                         })}
-                                    <StatusTaskTerm
-                                        className={'kanbanTask'}
+                                    <div
+                                        className="StatusTaskTerm kanbanTask"
                                         data-id={-1}
                                         data-statusid={status.id}
                                         data-y={-1}
@@ -955,13 +1011,13 @@ const Kanban: React.FC = () => {
                                         <button data-statusid={status.id} onClick={onClickAdd}>
                                             <AddIcon />
                                         </button>
-                                    </StatusTaskTerm>
-                                </StatusTasks>
-                            </StatusContainer>
+                                    </div>
+                                </div>
+                            </div>
                         );
                     })}
-            </Main>
-        </KanbanContainer>
+            </div>
+        </div>
     );
 };
 

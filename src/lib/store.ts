@@ -538,6 +538,7 @@ export const reducer = (state, action) => {
         case 'editProperty':
             // projectId
             // propertyId
+            logger.debug('reducer editProperty', action);
             return Object.assign(
                 {},
                 {
@@ -568,6 +569,7 @@ export const reducer = (state, action) => {
             // pageId
             // propertyId
             // property
+            logger.debug('reducer editPageProperty', action);
             return Object.assign(
                 {},
                 {

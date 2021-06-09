@@ -12,8 +12,8 @@ export const getTime = (d: Date): number => {
 
 export const getTimedelta = (start: Date, end: Date): ITimedelta => {
     const m = end.getTime() - start.getTime();
-    const year = end.getFullYear() - start.getFullYear();
-    const month = end.getMonth() - start.getMonth() + year * 12;
+    const year = end.getUTCFullYear() - start.getUTCFullYear();
+    const month = end.getUTCMonth() - start.getUTCMonth() + year * 12;
     const date = Math.floor(m / (60 * 60 * 24 * 1000));
     const hours = Math.floor(m / (60 * 60 * 1000));
     const minutes = Math.floor(m / (60 * 1000));
@@ -33,9 +33,9 @@ export const getTimeBlocks = (start: Date, end: Date, period: string): number =>
     switch (period) {
         case 'date':
             const s = new Date(start);
-            s.setHours(s.getHours() < 12 ? 0 : 12);
+            s.setUTCHours(s.getUTCHours() < 12 ? 0 : 12);
             const e = new Date(end);
-            e.setHours(e.getHours() < 12 ? 12 : 24);
+            e.setUTCHours(e.getUTCHours() < 12 ? 12 : 24);
             b = getTimedelta(s, e).hours / 24;
             b = (e.getTime() - s.getTime()) / (60 * 60 * 24 * 1000);
             break;
@@ -46,28 +46,17 @@ export const getTimeBlocks = (start: Date, end: Date, period: string): number =>
 
 export const getYYYYMMDD = (d: Date | number, sep = '/'): string => {
     const d_ = new Date(d);
-    return `${d_.getFullYear()}${sep}${d_.getMonth()}${sep}${d_.getDate()}`;
+    return `${d_.getUTCFullYear()}${sep}${d_.getUTCMonth()}${sep}${d_.getUTCDate()}`;
 };
 export const getHHMMSS = (d: Date | number, sep = ':'): string => {
     const d_ = new Date(d);
-    return `${d_.getHours()}${sep}${d_.getMinutes()}${sep}${d_.getSeconds()}`;
+    return `${d_.getUTCHours()}${sep}${d_.getUTCMinutes()}${sep}${d_.getUTCSeconds()}`;
 };
 export const getMMDD = (d: Date | number, sep = '/'): string => {
     const d_ = new Date(d);
-    return `${d_.getMonth()}${sep}${d_.getDate()}`;
+    return `${d_.getUTCMonth()}${sep}${d_.getUTCDate()}`;
 };
 export const getHH = (d: Date | number): string => {
     const d_ = new Date(d);
-    return `${d_.getHours()}`;
+    return `${d_.getUTCHours()}`;
 };
-
-export const toISOLikeString = (date: Date | number | string) => {
-    if (!date) {
-        return '';
-    }
-    let d = date
-    if (typeof(d) == 'number' || typeof(d) == 'string') {
-        d = new Date(d)
-    }
-    return `${d.getFullYear()}-${('00'+(d.getMonth()+1)).slice(-2)}-${('00'+d.getDate()).slice(-2)}T${('00'+d.getHours()).slice(-2)}:${('00'+d.getMinutes()).slice(-2)}`
-}

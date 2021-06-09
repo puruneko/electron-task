@@ -13,8 +13,9 @@ const commonCss = `
 }
 
 
-.picker-icon-del::-webkit-calendar-picker-indicator {
-    display: none;
+.picker-icon-0margin::-webkit-calendar-picker-indicator {
+    padding: 0;
+    margin: 0;
 }
 .selectListItem:hover {
     background-color: lightgray;

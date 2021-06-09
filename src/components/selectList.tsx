@@ -103,13 +103,14 @@ const SelectList = ({
             ref={containerRef}
             style={{
                 position: 'relative',
-                minWidth: 30,
-                minHeight: 30,
+                minHeight: 10,
+                minWidth: 10,
                 backgroundColor: 'inherit',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'center',
+                cursor: 'grab',
                 ...style,
             }}
             onClick={onClickOpen}

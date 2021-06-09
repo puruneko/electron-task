@@ -1,7 +1,7 @@
 import { getTime } from './time';
 
 const now = new Date();
-const pageAmount = 500;
+const pageAmount = 100;
 
 const projectProperties = [
     // id:不変
@@ -24,7 +24,7 @@ const projectProperties = [
         name: 'title',
         type: 'title',
         values: null,
-        width: 400,
+        width: 200,
         color: '',
     },
     {
@@ -73,7 +73,7 @@ const projectProperties = [
         name: 'date',
         type: 'date',
         values: null,
-        width: 100,
+        width: 180,
         color: 'blue',
     },
     {
@@ -293,24 +293,20 @@ export const initialState = {
                             id: 2,
                             values: [
                                 {
-                                    start: getTime(
-                                        new Date(
-                                            2021,
-                                            now1.getMonth(),
-                                            now1.getDate(),
-                                            now1.getHours(),
-                                            now1.getMinutes(),
-                                        ),
-                                    ),
-                                    end: getTime(
-                                        new Date(
-                                            2021,
-                                            now2.getMonth(),
-                                            now2.getDate(),
-                                            now2.getHours(),
-                                            now2.getMinutes(),
-                                        ),
-                                    ),
+                                    start: new Date(
+                                        2021,
+                                        now1.getMonth(),
+                                        now1.getDate(),
+                                        now1.getHours(),
+                                        now1.getMinutes(),
+                                    ).getTime(),
+                                    end: new Date(
+                                        2021,
+                                        now2.getMonth(),
+                                        now2.getDate(),
+                                        now2.getHours(),
+                                        now2.getMinutes(),
+                                    ).getTime(),
                                 },
                             ],
                         },
