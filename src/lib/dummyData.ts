@@ -270,11 +270,11 @@ export const initialState = {
                     documents: [
                         {
                             id: 0,
-                            document: `## test\n\n- list${id}\n- list${id}\n\n1. numbered list${id}\n1. numbered list${id}`,
+                            document: `## test\n\n- list${id}@@@@\n- list${id}\n\n1. numbered list${id}\n1. numbered list${id}`,
                         },
                         {
                             id: 1,
-                            document: `## test\n\n- list${id}\n- list${id}\n\n1. numbered list${id}\n1. numbered list${id}`,
+                            document: `## test\n\n- list${id}$$$$\n- list${id}\n\n1. numbered list${id}\n1. numbered list${id}`,
                         },
                     ],
                     properties: [

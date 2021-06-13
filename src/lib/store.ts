@@ -604,6 +604,38 @@ export const reducer = (state, action) => {
                     }),
                 },
             );
+        // --------------------------------------------------------------------------------------------------------------------all
+        case 'setPageOrTask':
+            // projectId
+            // pageOrTaskId
+            // pageOrTask
+            logger.debug('reducer setPageOrTask', action);
+            const setPageOrTask = (project) => {
+                const newPages = project.pages.map((page) => {
+                    if (page.id == action.pageOrTaskId) {
+                        return { ...action.pageOrTask };
+                    } else {
+                        return { ...page };
+                    }
+                });
+                return newPages;
+            };
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map((project) => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                pages: setPageOrTask(project),
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
         // --------------------------------------------------------------------------------------------------------------------task
         case 'setTasks':
             // projectId
@@ -762,7 +794,7 @@ export const reducer = (state, action) => {
                     });
                 return [...newPages, ...tasks];
             };
-            return Object.assign(
+            const a = Object.assign(
                 {},
                 {
                     ...state,
@@ -778,6 +810,8 @@ export const reducer = (state, action) => {
                     }),
                 },
             );
+            logger.debug('reducer setPage returns', a);
+            return a;
         case 'addPage':
             // projectId
             // page
@@ -1136,6 +1170,44 @@ export const reducer = (state, action) => {
                                         return {
                                             ...page,
                                             ...moveDocumentDown(page),
+                                        };
+                                    } else {
+                                        return { ...page };
+                                    }
+                                }),
+                            };
+                        } else {
+                            return { ...project };
+                        }
+                    }),
+                },
+            );
+        case 'setDocumentFocus':
+            // projectId
+            // pageId
+            // documentId
+            logger.debug('reducer setDocumentFocus', action);
+            const setDocumentFocus = (page) => {
+                return {
+                    settings: {
+                        ...page.settings,
+                        focusedId: action.documentId,
+                    },
+                };
+            };
+            return Object.assign(
+                {},
+                {
+                    ...state,
+                    projects: state.projects.map((project) => {
+                        if (project.id == action.projectId) {
+                            return {
+                                ...project,
+                                pages: project.pages.map((page) => {
+                                    if (page.id == action.pageId) {
+                                        return {
+                                            ...page,
+                                            ...setDocumentFocus(page),
                                         };
                                     } else {
                                         return { ...page };
