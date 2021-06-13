@@ -638,7 +638,7 @@ const Gantt: React.FC = () => {
                     });
                 }}
             >
-                <TaskModalWrapper tabIndex={-1}>
+                <TaskModalWrapper>
                     <PageComponent projectId={projectId} pageId={openTaskId} headless={false} />
                 </TaskModalWrapper>
             </Modal>
@@ -1434,7 +1434,7 @@ const GanttTask: React.FC<{ locParams: any; ganttParams: any; displayTasks: any 
                                     property: {
                                         values: [
                                             {
-                                                start: date.Time(),
+                                                start: date.getTime(),
                                                 end: propParam.periodDate.end.getTime(),
                                             },
                                         ],

@@ -64,6 +64,17 @@ const PageComponent: React.FC<Props> = ({ projectId, pageId, headless = true }) 
         padding: 20px;
         width: 90%;
     `;
+    //
+    const doFocus = (focusedId) => {
+        const elem = document.getElementById(`documentCell-${focusedId}`);
+        if (elem) {
+            elem.focus();
+        }
+    };
+    const onDocumentsFocus = (event) => {
+        console.log('onDocumentsFocus', event.target);
+        doFocus(page.settings.focusedId);
+    };
     // --------------------------------------------------------
     useEffect(() => {
         document.addEventListener(
@@ -76,10 +87,7 @@ const PageComponent: React.FC<Props> = ({ projectId, pageId, headless = true }) 
     }, []);
     useEffect(() => {
         console.log('focusedId', page.settings.focusedId);
-        const elem = document.getElementById(`documentCell-${page.settings.focusedId}`);
-        if (elem) {
-            elem.focus();
-        }
+        doFocus(page.settings.focusedId);
     }, [page.settings.focusedId]);
     // --------------------------------------------------------
     return (
@@ -91,7 +99,7 @@ const PageComponent: React.FC<Props> = ({ projectId, pageId, headless = true }) 
             >
                 <h1>{page.properties.filter((prop) => prop.id == 1)[0].values[0]}</h1>
             </Header>
-            <Documents>
+            <Documents onFocus={onDocumentsFocus}>
                 {page.documents.map((documentObj, index) => {
                     return (
                         <DocumentCell
@@ -135,7 +143,7 @@ const DocumentCell = ({ pageProperty, docId }) => {
     );
     const dispatch = useDispatch();
     const [cellEditorMode, setCellEditorMode] = useState<number | boolean>(docId);
-    const [focus, setFocus] = useState(false);
+    const [focus, setFocus] = useState(false); // セル間のフォーカス排他制御用
     const keyStack = useRef('');
     // --------------------------------------------------------
     const onClick = () => {
@@ -246,12 +254,13 @@ const DocumentCell = ({ pageProperty, docId }) => {
     // --------------------------------------------------------
     useEffect(() => {
         console.log('focus?', focus, cellEditorMode);
+        // 排他ロック解除でモードが表示モードの場合、フォーカス当てる
         if (focus && cellEditorMode === docId) {
-            console.log('focus!', cellEditorMode);
+            console.log('focus! cellEditorMode', cellEditorMode);
             const elem = document.getElementById(`documentCell-${docId}`);
             elem.focus();
         }
-    }, [cellEditorMode]);
+    }, [cellEditorMode, focus]);
     // --------------------------------------------------------
     return (
         <DocumentCellContainer

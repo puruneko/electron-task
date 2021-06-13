@@ -111,6 +111,12 @@ const Lab: React.FC = () => {
     const [s, setS] = useState([]);
     const [open, setOpen] = useState(false);
     const greenRef = useRef('');
+    //
+    useEffect(() => {
+        const elem = document.getElementById('calenderrow-1');
+        elem.focus();
+    }, []);
+    //
     return (
         <Wrapper>
             <Header>
@@ -159,7 +165,11 @@ const CalenderContainer: React.FC = () => {
         <CalenderWrapper>
             <Calenders>
                 {[...Array(taskNumber).keys()].map((i) => {
-                    return <CalenderRow key={`taskrow-${i}`}>{i}</CalenderRow>;
+                    return (
+                        <CalenderRow tabIndex={-1} key={`calenderrow-${i}`} id={`calenderrow-${i}`}>
+                            {i}
+                        </CalenderRow>
+                    );
                 })}
             </Calenders>
         </CalenderWrapper>
