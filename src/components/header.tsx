@@ -112,7 +112,7 @@ const Header: React.FC<Props> = ({ height = 64, rightComponent = <></>, rightCom
                                         {project.pages
                                             .filter((page) => page.type == 'page')
                                             .map((page, index2) => {
-                                                const title = page.properties.filter((p) => p.id == 1)[0].values[0];
+                                                const title = page.properties.filter((p) => p.id == 0)[0].values[0];
                                                 return (
                                                     <ListItem key={`navbar-page-${index}-${index2}`}>
                                                         <Link to={`/${project.id}/page/${page.id}`}>{title}</Link>

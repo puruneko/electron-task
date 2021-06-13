@@ -7,6 +7,21 @@ import { getTimedelta, getYYYYMMDD, getHHMMSS, getMMDD, getHH, getTime } from '.
 import { IPage } from '../type/root';
 import { IRootState } from '../type/store';
 import PageComponent from '../components/page';
+import Header from '../components/header';
+
+const c = {
+    header: {
+        height: 64,
+    },
+};
+const HeaderWrapper = styled.div`
+    position: sticky;
+    left: 0;
+    top: 0;
+    height: ${c.header.height};
+    width: 100%;
+    z-index: 2;
+`;
 
 const Page: React.FC = () => {
     const params = useParams<any>();
@@ -14,6 +29,9 @@ const Page: React.FC = () => {
     console.log('Page: window.location', window.location, 'params', params, 'queries', queries);
     return (
         <div>
+            <HeaderWrapper>
+                <Header height={c.header.height} rightComponent={<></>} rightComponentProps={{}} />
+            </HeaderWrapper>
             <PageComponent pageId={params.pageId} />
         </div>
     );
