@@ -28,11 +28,13 @@ const Page: React.FC = () => {
     const queries = useQuery();
     console.log('Page: window.location', window.location, 'params', params, 'queries', queries);
     return (
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
             <HeaderWrapper>
                 <Header height={c.header.height} rightComponent={<></>} rightComponentProps={{}} />
             </HeaderWrapper>
-            <PageComponent pageId={params.pageId} />
+            <div style={{ height: `calc(100vh - ${c.header.height}px)` }}>
+                <PageComponent pageId={params.pageId} />
+            </div>
         </div>
     );
 };

@@ -27,6 +27,12 @@ type Props = {
     headless?: boolean;
 };
 
+const c = {
+    scroll: {
+        margin: 15,
+    },
+};
+
 const Documents = styled.div`
     margin: 20x;
     padding: 20px;
@@ -39,7 +45,7 @@ const PageComponentContainer = styled.div`
     border: none;
     width: 100%;
     height: 100%;
-    max-height: 100vh;
+    max-height: 100%;
     overflow-y: auto;
 `;
 const PageHeader = styled.div`
@@ -399,15 +405,52 @@ const PageComponent: React.FC<Props> = ({ projectId, pageId, headless = true }) 
         setLocalPage(page);
     }, [page]);
     useEffect(() => {
+        //focus
         console.log('gFocusedId update', localPageState.settings.focusedId, localPage.current.settings.focusedId);
         setFocusedId(localPageState.settings.focusedId);
+        //scroll
+        const topOffset = containerRef.current.getBoundingClientRect().top;
+        const targetElem = document.getElementById(`documentCell-${localPageState.settings.focusedId}`);
+        const top = targetElem.getBoundingClientRect().top - topOffset;
+        const height = targetElem.clientHeight;
+        const bottom = top + height;
+        const scrollTop = containerRef.current.scrollTop;
+        const cHeight = containerRef.current.clientHeight;
+        let dy = 0;
+        //下部が隠れている場合
+        if (bottom > cHeight) {
+            //Cellの高さがwindowより小さい場合
+            if (height < cHeight) {
+                // 下部が見えるようにスクロール
+                dy = bottom - cHeight + c.scroll.margin;
+            } else {
+                // 上部が画面の一番上に表示されるようにスクロール
+                dy = top + c.scroll.margin;
+            }
+        } else if (top < 0) {
+            //上部が隠れている場合
+            //Cellの高さがwindowより小さい場合
+            if (height < cHeight) {
+                // 上部が見えるようにスクロール
+                dy = top - c.scroll.margin;
+            } else {
+                // 上部が画面の一番上に表示されるようにスクロール
+                dy = top - c.scroll.margin;
+            }
+        }
+        if (dy != 0) {
+            containerRef.current.scrollTo({
+                top: scrollTop + dy,
+            });
+        }
     }, [localPageState]);
     // --------------------------------------------------------
+    const containerRef = useRef(null);
     const styleCssString = styledToRawcss(PageComponentContainer, Documents, PageComponentContainer);
     return (
         <React.Fragment>
             <style>{styleCssString}</style>
-            <div className="PageComponentContainer">
+            <div className="PageComponentContainer" ref={containerRef}>
                 <PageHeader
                     style={{
                         display: headless ? 'none' : 'block',
